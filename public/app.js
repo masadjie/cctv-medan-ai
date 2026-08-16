@@ -141,6 +141,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const osdFps = document.getElementById('osdFps');
   const osdTimestamp = document.getElementById('osdTimestamp');
   const liveClock = document.getElementById('liveClock');
+  const videoContainer = document.getElementById('videoContainer');
+  const currentCityLabel = document.getElementById('currentCityLabel');
 
   const confSlider = document.getElementById('confSlider');
   const confVal = document.getElementById('confVal');
@@ -1481,8 +1483,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.setLineDash([8, 6]);
       ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
       ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 10;
       ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
       
       // Corner Brackets
@@ -1526,8 +1526,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.strokeStyle = '#00e5ff';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]);
-      ctx.shadowColor = '#00e5ff';
-      ctx.shadowBlur = 12;
       ctx.strokeRect(selX, selY, selW, selH);
 
       // Corner handles
@@ -1550,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.restore();
     }
 
-        // 3. Draw Tracked Vehicle & Pedestrian Bounding Boxes
+    // 3. Draw Tracked Vehicle & Pedestrian Bounding Boxes
     let totalSpeedSum = 0;
     let movingCount = 0;
 
@@ -1581,9 +1579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       ctx.save();
       ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = (obj.isContraflow || obj.noHelmet) ? 3.5 : 2.5;
-      ctx.shadowColor = strokeColor;
-      ctx.shadowBlur = (obj.isContraflow || obj.noHelmet) ? 14 : 8;
+      ctx.lineWidth = (obj.isContraflow || obj.noHelmet) ? 3.0 : 2.0;
 
       // Draw Main Bounding Box
       if (obj.isStalled) {
@@ -2328,7 +2324,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // HD Super-Resolution Upscaler Mode
   const hdUpscaleToggle = document.getElementById('hdUpscaleToggle');
   const osdHdBadge = document.getElementById('osdHdBadge');
-  const videoContainer = document.getElementById('videoContainer');
 
   if (hdUpscaleToggle) {
     hdUpscaleToggle.addEventListener('change', () => {
@@ -2662,7 +2657,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const citySelectorModal = document.getElementById('citySelectorModal');
   const btnOpenCityModal = document.getElementById('btnOpenCityModal');
   const btnCloseCityModal = document.getElementById('btnCloseCityModal');
-  const currentCityLabel = document.getElementById('currentCityLabel');
   const tabMapLabel = document.getElementById('tabMapLabel');
   const cityCards = document.querySelectorAll('.city-card');
 
