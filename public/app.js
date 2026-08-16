@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rawBikes = [];
     const rawPersons = [];
 
-    const minConf = confSlider ? parseInt(confSlider.value, 10) / 100 : 0.30;
+    const minConf = confSlider ? parseInt(confSlider.value, 10) / 100 : 0.40;
 
     // Step 1: Categorize and validate raw detections
     rawDetections.forEach(pred => {
