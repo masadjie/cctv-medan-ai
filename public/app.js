@@ -3102,6 +3102,252 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast(on ? '⏸ AI Matrix dinonaktifkan.' : '▶ AI Matrix aktif.');
       });
     }
+
+    // Master Matrix Multi-Grid Video Recorder
+    if (btnWarRecord) {
+      btnWarRecord.addEventListener('click', () => {
+        if (!isWarRecording) {
+          startWarRoomRecording();
+        } else {
+          stopWarRoomRecording();
+        }
+      });
+    }
+  }
+
+  // ---- War Room Master Grid Multi-Recorder Suite ----
+  let isWarRecording = false;
+  let warMediaRecorder = null;
+  let warRecordedChunks = [];
+  let warRecTimerInterval = null;
+  let warRecSeconds = 0;
+  let warRecCanvas = document.createElement('canvas');
+  let warRecCtx = warRecCanvas.getContext('2d');
+  let warRecAnimId = null;
+
+  const btnWarRecord = document.getElementById('btnWarRecord');
+  const warRecordBtnText = document.getElementById('warRecordBtnText');
+  const warRecBadge = document.getElementById('warRecBadge');
+  const warRecTimer = document.getElementById('warRecTimer');
+
+  function drawWarRecordingFrame() {
+    if (!isWarRecording) return;
+
+    const totalW = 1920;
+    const totalH = 1080;
+    if (warRecCanvas.width !== totalW || warRecCanvas.height !== totalH) {
+      warRecCanvas.width = totalW;
+      warRecCanvas.height = totalH;
+    }
+
+    // Fill sleek Command Center background
+    warRecCtx.fillStyle = '#0a0d14';
+    warRecCtx.fillRect(0, 0, totalW, totalH);
+
+    const cols = warCurrentCols || 2;
+    const rows = warCurrentRows || 2;
+    const footerH = 40;
+    const availH = totalH - footerH;
+    const tileW = totalW / cols;
+    const tileH = availH / rows;
+
+    // Composite all active slot videos into multi-grid
+    for (let i = 0; i < warTotalSlots; i++) {
+      const slotNum = i + 1;
+      const c = i % cols;
+      const r = Math.floor(i / cols);
+      const x = c * tileW;
+      const y = r * tileH;
+
+      const v = document.getElementById(`warVideo${slotNum}`);
+      const textEl = document.getElementById(`warComboText${slotNum}`);
+      const camLabel = textEl ? textEl.textContent.trim() : `Kamera #${slotNum}`;
+
+      if (v && v.readyState >= 2) {
+        try {
+          warRecCtx.drawImage(v, x, y, tileW, tileH);
+        } catch (e) {}
+      } else {
+        // Fallback tile pattern if loading
+        warRecCtx.fillStyle = '#111827';
+        warRecCtx.fillRect(x, y, tileW, tileH);
+        warRecCtx.fillStyle = '#6b7280';
+        warRecCtx.font = 'bold 16px sans-serif';
+        warRecCtx.textAlign = 'center';
+        warRecCtx.fillText(`[ Menghubungkan Kamera #${slotNum}... ]`, x + tileW / 2, y + tileH / 2);
+        warRecCtx.textAlign = 'left';
+      }
+
+      // Tile border
+      warRecCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      warRecCtx.lineWidth = 1.5;
+      warRecCtx.strokeRect(x, y, tileW, tileH);
+
+      // Tile Camera Badge Banner
+      warRecCtx.fillStyle = 'rgba(0, 0, 0, 0.70)';
+      warRecCtx.fillRect(x, y + tileH - 28, tileW, 28);
+
+      warRecCtx.fillStyle = '#10b981';
+      warRecCtx.beginPath();
+      warRecCtx.arc(x + 14, y + tileH - 14, 4, 0, Math.PI * 2);
+      warRecCtx.fill();
+
+      warRecCtx.fillStyle = '#ffffff';
+      warRecCtx.font = 'bold 12px sans-serif';
+      warRecCtx.fillText(camLabel, x + 24, y + tileH - 10);
+    }
+
+    // Master Footer Command Center Watermark Banner
+    warRecCtx.fillStyle = '#06080d';
+    warRecCtx.fillRect(0, totalH - footerH, totalW, footerH);
+
+    warRecCtx.fillStyle = '#ef4444';
+    warRecCtx.beginPath();
+    warRecCtx.arc(22, totalH - 20, 6, 0, Math.PI * 2);
+    warRecCtx.fill();
+
+    warRecCtx.fillStyle = '#ffffff';
+    warRecCtx.font = 'bold 14px monospace';
+    warRecCtx.fillText(`WAR ROOM MASTER MULTI-GRID REC [${formatTime(warRecSeconds)}]`, 36, totalH - 15);
+
+    warRecCtx.fillStyle = '#38bdf8';
+    const cityTitle = currentCityId === 'jogja' ? 'KOTA YOGYAKARTA' : 'KOTA MEDAN';
+    warRecCtx.fillText(`| NUSANTARA TRAFFIC VISION • ${cityTitle} (${warTotalSlots} KAMERA) | ${new Date().toLocaleString('id-ID')}`, 460, totalH - 15);
+
+    warRecAnimId = requestAnimationFrame(drawWarRecordingFrame);
+  }
+
+  function startWarRoomRecording() {
+    try {
+      warRecordedChunks = [];
+      warRecSeconds = 0;
+      isWarRecording = true;
+
+      drawWarRecordingFrame();
+
+      const stream = warRecCanvas.captureStream(30);
+
+      let mimeType = 'video/webm;codecs=vp9';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp8';
+      }
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm';
+      }
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/mp4';
+      }
+
+      warMediaRecorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: Math.max(3500000, recordingBitrate) // High bitrate for crystal-clear multi-grid
+      });
+
+      warMediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          warRecordedChunks.push(event.data);
+        }
+      };
+
+      warMediaRecorder.onstop = handleWarRecordingComplete;
+      warMediaRecorder.start(1000);
+
+      if (btnWarRecord) {
+        btnWarRecord.classList.add('recording');
+        if (warRecordBtnText) warRecordBtnText.textContent = 'Stop (00:00)';
+      }
+      if (warRecBadge) {
+        warRecBadge.classList.remove('hidden');
+        if (warRecTimer) warRecTimer.textContent = '00:00';
+      }
+
+      warRecTimerInterval = setInterval(() => {
+        warRecSeconds++;
+        const timeStr = formatTime(warRecSeconds);
+        if (warRecTimer) warRecTimer.textContent = timeStr;
+        if (warRecordBtnText) warRecordBtnText.textContent = `Stop (${timeStr})`;
+      }, 1000);
+
+      const targetLabel = storageDestination === 'drive' ? 'Target: Google Drive' : 'Target: Local Disk Laptop';
+      showToast(`🔴 Perekaman War Room Matriks Dimulai (${warTotalSlots} Kamera, ${targetLabel})...`);
+    } catch (err) {
+      console.error('War Room recording initialization failed:', err);
+      showToast('❌ Gagal memulai perekaman matriks.');
+      isWarRecording = false;
+    }
+  }
+
+  function stopWarRoomRecording() {
+    if (!isWarRecording || !warMediaRecorder) return;
+
+    clearInterval(warRecTimerInterval);
+    cancelAnimationFrame(warRecAnimId);
+
+    if (btnWarRecord) {
+      btnWarRecord.classList.remove('recording');
+      if (warRecordBtnText) warRecordBtnText.textContent = 'Rekam Matriks';
+    }
+    if (warRecBadge) {
+      warRecBadge.classList.add('hidden');
+    }
+
+    isWarRecording = false;
+    warMediaRecorder.stop();
+    showToast('⏹️ Perekaman Matriks Selesai — Menyimpan Video Komposit...');
+  }
+
+  function handleWarRecordingComplete() {
+    const mimeType = warMediaRecorder.mimeType || 'video/webm';
+    const blob = new Blob(warRecordedChunks, { type: mimeType });
+    const videoUrl = URL.createObjectURL(blob);
+
+    if (recordingPreviewVideo) {
+      recordingPreviewVideo.src = videoUrl;
+    }
+
+    const cityPrefix = currentCityId === 'jogja' ? 'Jogja' : 'Medan';
+    const timestampStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `CCTV_WarRoom_Matrix_${cityPrefix}_${warTotalSlots}Cam_${timestampStr}.webm`;
+
+    if (btnDownloadRecording) {
+      btnDownloadRecording.href = videoUrl;
+      btnDownloadRecording.download = filename;
+    }
+
+    if (recMetaCamName) recMetaCamName.textContent = `War Room Command Center (${warTotalSlots} Kamera Grid)`;
+    if (recMetaDuration) recMetaDuration.textContent = formatTime(warRecSeconds);
+    if (recMetaFileSize) {
+      const sizeMb = (blob.size / (1024 * 1024)).toFixed(2);
+      recMetaFileSize.textContent = `${sizeMb} MB`;
+    }
+    if (recMetaFormat) {
+      recMetaFormat.textContent = 'Master Multi-Grid HD (VP9/VP8)';
+    }
+
+    // Direct Google Drive Upload Action
+    if (btnOpenGDriveUpload) {
+      btnOpenGDriveUpload.onclick = () => {
+        btnDownloadRecording.click();
+        window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+        showToast('📂 Mengunduh video matriks & membuka Google Drive...');
+      };
+    }
+
+    // Destination Behavior Execution
+    if (storageDestination === 'local') {
+      if (autoDownloadRecording) {
+        btnDownloadRecording.click();
+        showToast('💻 Video Matriks otomatis disimpan ke Local Disk (Downloads)!');
+      }
+    } else if (storageDestination === 'drive') {
+      btnDownloadRecording.click();
+      window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+      showToast('☁️ Video Matriks diunduh & Google Drive terbuka untuk upload!');
+    }
+
+    if (recordingModal) {
+      recordingModal.style.display = 'flex';
+    }
   }
 
   // ---- Grid Picker Screen ----

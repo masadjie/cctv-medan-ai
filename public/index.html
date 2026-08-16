@@ -522,6 +522,11 @@
             <input type="text" id="warRoomGlobalSearch" class="war-room-search-input" placeholder="Cari kamera online..." autocomplete="off" />
           </div>
           <span class="live-pulse-badge" id="warRoomOnlineBadge">🟢 0 Online</span>
+          <button type="button" class="btn btn-record btn-sm" id="btnWarRecord" title="Mulai Rekam Seluruh Tampilan Grid Matriks Kamera (Full HD / 4K)">
+            <svg class="icon-rec" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><circle cx="12" cy="12" r="6" fill="#ef4444" stroke="#ef4444"/><circle cx="12" cy="12" r="10"/></svg>
+            <span id="warRecordBtnText">Rekam Matriks</span>
+          </button>
+          <span class="hud-badge rec-badge hidden" id="warRecBadge" style="font-size:0.74rem; padding: 3px 8px; border-radius: 4px;">🔴 REC <b id="warRecTimer">00:00</b></span>
           <button type="button" class="btn btn-secondary btn-sm" id="btnWarRoomFullscreen" title="Fullscreen War Room">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
             Fullscreen
