@@ -34,22 +34,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 600);
   }
 
-  // Click on splash screen instantly dismisses & enters fullscreen
+  // Click on splash screen instantly dismisses
   if (splashScreen) {
     splashScreen.addEventListener('click', () => {
       dismissSplashScreen();
-      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
     });
   }
-
-  // Click anywhere once to request fullscreen
-  document.addEventListener('click', () => {
-    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  }, { once: true });
 
   async function advanceSplash(percent, message, duration = 220) {
     if (isSplashDismissed) return;
