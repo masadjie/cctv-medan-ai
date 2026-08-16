@@ -18,6 +18,7 @@ class MedanCCTVMap {
     this.onlineCount = 0;
     this.offlineCount = 0;
     this.currentScanIndex = -1;
+    this.boundaryLayer = null;
   }
 
   init() {
@@ -60,7 +61,20 @@ class MedanCCTVMap {
     this.currentTileLayer = this.tileLayers.darkNight;
     this.currentTileLayer.addTo(this.map);
 
-    // 1. Check LocalStorage Cache for Instant / Resumable Device Health
+    // 1. Render boundary layer if Yogyakarta is active
+    if ((this.cityId === 'jogja' || (this.cameras && this.cameras[0] && this.cameras[0].city === 'jogja')) && window.JOGJA_MAPS_GEOJSON) {
+      this.boundaryLayer = L.geoJSON(window.JOGJA_MAPS_GEOJSON, {
+        style: {
+          fillColor: 'rgba(255, 105, 105, 0.12)',
+          color: '#FF6969',
+          weight: 2,
+          opacity: 0.95,
+          dashArray: '5, 5'
+        }
+      }).addTo(this.map);
+    }
+
+    // 2. Check LocalStorage Cache for Instant / Resumable Device Health
     const cacheState = this.loadCachedHealth();
 
     // Render Markers with cached or initial state
@@ -781,7 +795,28 @@ class MedanCCTVMap {
     this.isCheckingHls = false;
 
     if (this.map) {
-      this.map.setView([centerLat, centerLon], 13);
+      // 1. Remove previous boundary layer if any
+      if (this.boundaryLayer) {
+        this.map.removeLayer(this.boundaryLayer);
+        this.boundaryLayer = null;
+      }
+
+      // 2. Render Yogyakarta Administrative Boundary Polygon Layer if Jogja is active
+      if (cityId === 'jogja' && window.JOGJA_MAPS_GEOJSON) {
+        this.boundaryLayer = L.geoJSON(window.JOGJA_MAPS_GEOJSON, {
+          style: {
+            fillColor: 'rgba(255, 105, 105, 0.12)',
+            color: '#FF6969',
+            weight: 2,
+            opacity: 0.95,
+            dashArray: '5, 5'
+          }
+        }).addTo(this.map);
+      }
+
+      // 3. Center and zoom
+      const zoomLevel = cityId === 'jogja' ? 14 : 13;
+      this.map.setView([centerLat, centerLon], zoomLevel);
       this.loadCachedHealth();
       this.renderMarkers();
       this.startHlsBackgroundChecker(0);
