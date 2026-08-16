@@ -1349,134 +1349,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     trackedObjects = trackedObjects.filter(t => t.missedFrames <= 18);
   }
 
-  // 5. Enhanced Multi-Scale Slicing & Adaptive 5-Zone SAHI Dense Attention Pyramid
+  // 5. Ultra-Fast Zero-Lag AI Inference Pipeline (Hardware-Optimized)
   async function runMultiScaleInference(minConf, vWidth, vHeight) {
-    const rawResults = [];
-
-    // Preprocessing with high-definition edge contrast and neural sharpening
-    fullCropCanvas.width = vWidth;
-    fullCropCanvas.height = vHeight;
-    fullCropCtx.filter = 'contrast(1.15) brightness(1.05) saturate(1.10)';
-    fullCropCtx.drawImage(video, 0, 0, vWidth, vHeight);
-
     const effectiveConf = Math.max(0.16, minConf);
 
-    // Pass 1: If User-Defined ROI is Active, Dedicate Ultra High-Res Inference
-    if (roi && roi.width > 25 && roi.height > 25) {
-      roiCanvas.width = 512;
-      roiCanvas.height = 512;
-      roiCtx.drawImage(fullCropCanvas, roi.x, roi.y, roi.width, roi.height, 0, 0, 512, 512);
+    // Mode A: When User-Defined ROI Zone is active, dedicate 100% compute to the focus zone only
+    if (roi && roi.width > 20 && roi.height > 20) {
+      const targetW = Math.min(512, Math.max(256, Math.round(roi.width)));
+      const targetH = Math.min(512, Math.max(256, Math.round(roi.height)));
 
-      const roiDetections = await model.detect(roiCanvas, 36, effectiveConf * 0.70);
-      roiDetections.forEach(d => {
-        const scaleX = roi.width / 512;
-        const scaleY = roi.height / 512;
-        rawResults.push({
-          class: d.class,
-          score: d.score,
-          bbox: [
-            roi.x + d.bbox[0] * scaleX,
-            roi.y + d.bbox[1] * scaleY,
-            d.bbox[2] * scaleX,
-            d.bbox[3] * scaleY
-          ]
-        });
-      });
-    }
+      if (roiCanvas.width !== targetW || roiCanvas.height !== targetH) {
+        roiCanvas.width = targetW;
+        roiCanvas.height = targetH;
+      }
 
-    // Pass 2: Full Frame Global Detection (Captures foreground/midground vehicles)
-    const fullDetections = await model.detect(fullCropCanvas, 40, Math.max(0.18, effectiveConf * 0.70));
-    rawResults.push(...fullDetections);
+      roiCtx.drawImage(video, roi.x, roi.y, roi.width, roi.height, 0, 0, targetW, targetH);
+      const roiDetections = await model.detect(roiCanvas, 32, effectiveConf);
 
-    if (inferenceScale === 'nano_fast' || activeEngine === 'yolo26') {
-      return rawResults;
-    }
-
-    // Pass 3: Sliced Tile 1 (Distant Traffic Horizon - 2.2x High-Density Zoom for far cars & bikes)
-    const tile1W = Math.round(vWidth * 0.80);
-    const tile1H = Math.round(vHeight * 0.55);
-    const tile1X = Math.round(vWidth * 0.10);
-    const tile1Y = Math.round(vHeight * 0.08);
-
-    tileCanvas1.width = 512;
-    tileCanvas1.height = 512;
-    tileCtx1.drawImage(fullCropCanvas, tile1X, tile1Y, tile1W, tile1H, 0, 0, 512, 512);
-
-    const tile1Detections = await model.detect(tileCanvas1, 36, Math.max(0.18, effectiveConf * 0.65));
-    tile1Detections.forEach(d => {
-      const scaleX = tile1W / 512;
-      const scaleY = tile1H / 512;
-      rawResults.push({
+      const scaleX = roi.width / targetW;
+      const scaleY = roi.height / targetH;
+      return roiDetections.map(d => ({
         class: d.class,
         score: d.score,
         bbox: [
-          tile1X + d.bbox[0] * scaleX,
-          tile1Y + d.bbox[1] * scaleY,
+          roi.x + d.bbox[0] * scaleX,
+          roi.y + d.bbox[1] * scaleY,
           d.bbox[2] * scaleX,
           d.bbox[3] * scaleY
         ]
-      });
-    });
-
-    // Pass 4: Sliced Tile 2 (Main Roadway Core Corridor - Middle & Lower Traffic Corridor)
-    const tile2W = Math.round(vWidth * 0.90);
-    const tile2H = Math.round(vHeight * 0.70);
-    const tile2X = Math.round(vWidth * 0.05);
-    const tile2Y = Math.round(vHeight * 0.25);
-
-    tileCanvas2.width = 512;
-    tileCanvas2.height = 512;
-    tileCtx2.drawImage(fullCropCanvas, tile2X, tile2Y, tile2W, tile2H, 0, 0, 512, 512);
-
-    const tile2Detections = await model.detect(tileCanvas2, 36, Math.max(0.18, effectiveConf * 0.65));
-    tile2Detections.forEach(d => {
-      const scaleX = tile2W / 512;
-      const scaleY = tile2H / 512;
-      rawResults.push({
-        class: d.class,
-        score: d.score,
-        bbox: [
-          tile2X + d.bbox[0] * scaleX,
-          tile2Y + d.bbox[1] * scaleY,
-          d.bbox[2] * scaleX,
-          d.bbox[3] * scaleY
-        ]
-      });
-    });
-
-    // Pass 5: Dense Attention Pyramid (5-Zone High-Density Cross Slicing)
-    if (inferenceScale === 'transformer_dense') {
-      const tile3W = Math.round(vWidth * 0.60);
-      const tile3H = Math.round(vHeight * 0.60);
-      const tile3X = Math.round(vWidth * 0.20);
-      const tile3Y = Math.round(vHeight * 0.30);
-
-      tileCanvas1.width = 512;
-      tileCanvas1.height = 512;
-      tileCtx1.drawImage(fullCropCanvas, tile3X, tile3Y, tile3W, tile3H, 0, 0, 512, 512);
-
-      const tile3Detections = await model.detect(tileCanvas1, 36, Math.max(0.16, effectiveConf * 0.60));
-      tile3Detections.forEach(d => {
-        const scaleX = tile3W / 512;
-        const scaleY = tile3H / 512;
-        rawResults.push({
-          class: d.class,
-          score: d.score,
-          bbox: [
-            tile3X + d.bbox[0] * scaleX,
-            tile3Y + d.bbox[1] * scaleY,
-            d.bbox[2] * scaleX,
-            d.bbox[3] * scaleY
-          ]
-        });
-      });
+      }));
     }
 
-    return rawResults;
+    // Mode B: Full-Frame Direct Hardware Tensor Pass (Zero intermediate canvas copies)
+    const detections = await model.detect(video, 35, effectiveConf);
+    return detections;
   }
 
-  // 6. Detection Frame Loop
-  async function detectLoop() {
+  // 6. Decoupled 60 FPS Render Loop & Non-Blocking Asynchronous AI Worker
+  function detectLoop() {
     // 1. Guard: If no city has been activated yet, completely stop tracking & detection
     if (!isCityActivated) {
       trackedObjects = [];
@@ -1523,22 +1433,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // AI Multi-Scale Inference with Adaptive Lightweight Throttling (~20 FPS budget for low CPU/GPU load)
-    const INFERENCE_BUDGET_MS = 48; // ~20.8 FPS AI inference rate (industry standard for lightweight real-time surveillance)
+    // Non-blocking Asynchronous AI Inference (~25 FPS AI update rate decoupled from 60 FPS UI)
+    const INFERENCE_BUDGET_MS = 40;
     if (model && video.readyState >= 2 && !video.paused && !video.ended && !isDetecting && (now - lastInferenceTimestamp >= INFERENCE_BUDGET_MS)) {
       isDetecting = true;
       lastInferenceTimestamp = now;
-      try {
-        const minConf = parseInt(confSlider.value, 10) / 100;
-        const allPredictions = await runMultiScaleInference(minConf, vWidth, vHeight);
-        updateTracks(allPredictions, canvas.width, canvas.height);
-      } catch (err) {
-        console.warn('Detection error:', err);
-      } finally {
-        isDetecting = false;
-      }
+      const minConf = parseInt(confSlider.value, 10) / 100;
+
+      runMultiScaleInference(minConf, vWidth, vHeight)
+        .then(allPredictions => {
+          updateTracks(allPredictions, canvas.width, canvas.height);
+        })
+        .catch(err => {
+          console.warn('Inference error:', err);
+        })
+        .finally(() => {
+          isDetecting = false;
+        });
     }
 
+    // Always render smoothly on every animation frame (60 FPS V-Sync)
     renderScene();
     animationFrameId = requestAnimationFrame(detectLoop);
   }
