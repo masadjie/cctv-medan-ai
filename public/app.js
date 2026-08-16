@@ -174,6 +174,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let frameCount = 0;
   let lastFpsUpdate = performance.now();
   let isDetecting = false;
+  let lastInferenceTimestamp = 0;
+  let lastTelemetryUpdateTimestamp = 0;
 
   // ROI State & Live Visual Selection
   let roi = null;
@@ -1427,9 +1429,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // AI Multi-Scale Inference
-    if (model && video.readyState >= 2 && !video.paused && !video.ended && !isDetecting) {
+    // AI Multi-Scale Inference with Adaptive Lightweight Throttling (~20 FPS budget for low CPU/GPU load)
+    const INFERENCE_BUDGET_MS = 48; // ~20.8 FPS AI inference rate (industry standard for lightweight real-time surveillance)
+    if (model && video.readyState >= 2 && !video.paused && !video.ended && !isDetecting && (now - lastInferenceTimestamp >= INFERENCE_BUDGET_MS)) {
       isDetecting = true;
+      lastInferenceTimestamp = now;
       try {
         const minConf = parseInt(confSlider.value, 10) / 100;
         const allPredictions = await runMultiScaleInference(minConf, vWidth, vHeight);
@@ -1664,34 +1668,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.restore();
     });
 
-    // Update OSD average flow speed badge
-    const osdSpeedBadge = document.getElementById('osdSpeedBadge');
-    if (osdSpeedBadge) {
-      const avgSpeed = movingCount > 0 ? Math.round(totalSpeedSum / movingCount) : 0;
-      const flowLabel = avgSpeed > 40 ? 'Lancar' : avgSpeed > 20 ? 'Sedang' : avgSpeed > 5 ? 'Padat' : 'Macet';
-      osdSpeedBadge.innerHTML = `⚡ Arus: <b>${avgSpeed}</b> km/jam · ${flowLabel}`;
-    }
+    // Lightweight Throttle for DOM & Telemetry Updates (150ms interval to eliminate DOM thrashing & reduce CPU)
+    const nowTime = performance.now();
+    if (nowTime - lastTelemetryUpdateTimestamp >= 150) {
+      lastTelemetryUpdateTimestamp = nowTime;
 
-    // Update Analytics Telemetry
-    window.trafficAnalytics.update(liveCar, liveMotor);
+      // Update OSD average flow speed badge
+      const osdSpeedBadge = document.getElementById('osdSpeedBadge');
+      if (osdSpeedBadge) {
+        const avgSpeed = movingCount > 0 ? Math.round(totalSpeedSum / movingCount) : 0;
+        const flowLabel = avgSpeed > 40 ? 'Lancar' : avgSpeed > 20 ? 'Sedang' : avgSpeed > 5 ? 'Padat' : 'Macet';
+        osdSpeedBadge.innerHTML = `⚡ Arus: <b>${avgSpeed}</b> km/jam · ${flowLabel}`;
+      }
 
-    // Update Map Live Preview Mini-HUD
-    const mapPreviewCar = document.getElementById('mapPreviewCar');
-    const mapPreviewMotor = document.getElementById('mapPreviewMotor');
-    const mapPreviewDensity = document.getElementById('mapPreviewDensity');
-    if (mapPreviewCar) mapPreviewCar.textContent = liveCar;
-    if (mapPreviewMotor) mapPreviewMotor.textContent = liveMotor;
-    if (mapPreviewDensity) {
-      const total = liveCar + liveMotor;
-      if (total >= 10) {
-        mapPreviewDensity.textContent = 'Lalu Lintas: Padat';
-        mapPreviewDensity.style.color = '#f43f5e';
-      } else if (total >= 4) {
-        mapPreviewDensity.textContent = 'Lalu Lintas: Ramai';
-        mapPreviewDensity.style.color = '#fbbf24';
-      } else {
-        mapPreviewDensity.textContent = 'Lalu Lintas: Lancar';
-        mapPreviewDensity.style.color = '#10b981';
+      // Update Analytics Telemetry
+      if (window.trafficAnalytics) {
+        window.trafficAnalytics.update(liveCar, liveMotor);
+      }
+
+      // Update Map Live Preview Mini-HUD
+      const mapPreviewCar = document.getElementById('mapPreviewCar');
+      const mapPreviewMotor = document.getElementById('mapPreviewMotor');
+      const mapPreviewDensity = document.getElementById('mapPreviewDensity');
+      if (mapPreviewCar) mapPreviewCar.textContent = liveCar;
+      if (mapPreviewMotor) mapPreviewMotor.textContent = liveMotor;
+      if (mapPreviewDensity) {
+        const total = liveCar + liveMotor;
+        if (total >= 10) {
+          mapPreviewDensity.textContent = 'Lalu Lintas: Padat';
+          mapPreviewDensity.style.color = '#f43f5e';
+        } else if (total >= 4) {
+          mapPreviewDensity.textContent = 'Lalu Lintas: Ramai';
+          mapPreviewDensity.style.color = '#fbbf24';
+        } else {
+          mapPreviewDensity.textContent = 'Lalu Lintas: Lancar';
+          mapPreviewDensity.style.color = '#10b981';
+        }
       }
     }
   }
