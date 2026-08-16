@@ -2231,15 +2231,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = document.getElementById(`warComboList${slotIdx}`);
     if (!list) return;
     const query = filterText.toLowerCase().trim();
-    const filtered = query
-      ? warOnlineCameras.filter(c => `CAM ${c.id} ${c.name || c.alias || ''}`.toLowerCase().includes(query))
-      : warOnlineCameras;
+    const allCams = window.ATCS_MEDAN_CAMERAS && window.ATCS_MEDAN_CAMERAS.length > 0
+      ? window.ATCS_MEDAN_CAMERAS
+      : WAR_ROOM_DEFAULTS;
+    const health = window.medanCCTVMap && window.medanCCTVMap.healthStatus ? window.medanCCTVMap.healthStatus : {};
+
+    // Filter cameras
+    let filtered = query
+      ? allCams.filter(c => `CAM ${c.id} ${c.name || c.alias || ''}`.toLowerCase().includes(query))
+      : allCams;
+
+    // Sort: Online cameras first, then by ID
+    filtered = [...filtered].sort((a, b) => {
+      const aOn = health[a.id]?.online ? 1 : 0;
+      const bOn = health[b.id]?.online ? 1 : 0;
+      if (aOn !== bOn) return bOn - aOn; // online first
+      return (a.id || 0) - (b.id || 0);
+    });
 
     list.innerHTML = filtered.length === 0
       ? `<div class="combo-no-results">Tidak ada kamera ditemukan</div>`
       : filtered.map(c => {
-          const label = `CAM ${c.id}: ${c.name || c.alias || ''}`;
-          return `<div class="combo-item" data-url="${c.url}" data-label="${label}" data-slot="${slotIdx}">${label}</div>`;
+          const isOnline = health[c.id] ? health[c.id].online : true;
+          const label = `CAM #${c.id}: ${c.name || c.alias || ''}`;
+          return `
+            <div class="combo-item ${isOnline ? 'is-online' : 'is-offline'}" data-url="${c.url}" data-label="${label}" data-slot="${slotIdx}">
+              <span class="combo-status-pill ${isOnline ? 'online' : 'offline'}">
+                <span class="combo-dot ${isOnline ? 'online' : 'offline'}"></span>
+                ${isOnline ? 'ONLINE' : 'OFFLINE'}
+              </span>
+              <span class="combo-item-text">${label}</span>
+            </div>`;
         }).join('');
 
     list.querySelectorAll('.combo-item').forEach(item => {
@@ -2277,9 +2299,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (warHlsMap[idx]) { try { warHlsMap[idx].destroy(); } catch(e) {} warHlsMap[idx] = null; }
 
-    // Route through proxy just like the main stream player
-    const useProxy = document.getElementById('useProxyToggle');
-    const finalUrl = (useProxy && useProxy.checked) || url.startsWith('http')
+    // Respect the proxy toggle setting — same behaviour as main stream player
+    const useProxyToggle = document.getElementById('useProxyToggle');
+    const useProxy = useProxyToggle && useProxyToggle.checked;
+    const finalUrl = useProxy && (url.startsWith('http://') || url.startsWith('https://'))
       ? `/proxy?url=${encodeURIComponent(url)}`
       : url;
 
@@ -2295,23 +2318,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       hls.attachMedia(video);
       hls.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
       hls.on(window.Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          // On fatal error, retry once without proxy
-          if (finalUrl !== url) {
-            hls.destroy();
-            const hlsDirect = new window.Hls({ liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 4, lowLatencyMode: true });
-            hlsDirect.loadSource(url);
-            hlsDirect.attachMedia(video);
-            hlsDirect.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
-            warHlsMap[idx] = hlsDirect;
-          }
+        if (data.fatal && finalUrl !== url) {
+          // Fatal error with proxy → retry direct (only if proxy was used)
+          hls.destroy();
+          const hlsDirect = new window.Hls({ liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 4, lowLatencyMode: true });
+          hlsDirect.loadSource(url);
+          hlsDirect.attachMedia(video);
+          hlsDirect.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+          warHlsMap[idx] = hlsDirect;
         }
       });
       warHlsMap[idx] = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari native HLS — try proxy first
       video.src = finalUrl;
-      video.play().catch(() => { video.src = url; video.play().catch(() => {}); });
+      video.play().catch(() => {});
     }
   }
 
@@ -2334,6 +2354,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Show picker screen first, hide grid + header controls
     showWarRoomPicker();
 
+    // Back button in header: returns to dashboard / split mode
+    const btnBack = document.getElementById('btnWarRoomBack');
+    if (btnBack) {
+      btnBack.addEventListener('click', () => {
+        if (window.setViewModeGlobal) {
+          window.setViewModeGlobal('split');
+        }
+      });
+    }
+
+    // Mode nav buttons in header (Peta / AI / Layar Ganda)
+    document.querySelectorAll('.wr-nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-mode');
+        if (mode && window.setViewModeGlobal) {
+          window.setViewModeGlobal(mode);
+        }
+      });
+    });
+
     // Layout switcher buttons in header — re-pick layout & re-randomize
     document.querySelectorAll('.wr-layout-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -2341,7 +2381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const rows = parseInt(btn.getAttribute('data-rows'));
         document.querySelectorAll('.wr-layout-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        buildWarRoomGrid(cols, rows);
+        buildWarRoomGrid(cols, rows, true);
         showToast(`⬛ Layout ${cols}×${rows} — ${cols * rows} kamera aktif`);
       });
     });
@@ -2416,6 +2456,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       grid.style.gridTemplateRows = '';
       grid.innerHTML = `
         <div class="wr-picker-screen" id="wrPickerScreen">
+          <div class="wr-picker-topbar">
+            <button type="button" class="btn-wr-picker-back" id="btnPickerBack" title="Kembali ke Layar Utama">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              <span>Kembali ke Dashboard</span>
+            </button>
+            <div class="wr-picker-mode-nav">
+              <button type="button" class="wr-nav-btn" data-mode="split">📑 Layar Ganda</button>
+              <button type="button" class="wr-nav-btn" data-mode="map">🗺️ Peta</button>
+              <button type="button" class="wr-nav-btn" data-mode="console">🖥️ Konsol AI</button>
+            </div>
+          </div>
           <div class="wr-picker-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <h2>Pilih Jumlah Kamera</h2>
@@ -2434,6 +2485,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             `).join('')}
           </div>
         </div>`;
+
+      // Bind picker Back button
+      const btnPickerBack = document.getElementById('btnPickerBack');
+      if (btnPickerBack) {
+        btnPickerBack.addEventListener('click', () => {
+          if (window.setViewModeGlobal) window.setViewModeGlobal('split');
+        });
+      }
+
+      // Bind picker mode shortcuts
+      grid.querySelectorAll('.wr-picker-mode-nav .wr-nav-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          const mode = b.getAttribute('data-mode');
+          if (mode && window.setViewModeGlobal) window.setViewModeGlobal(mode);
+        });
+      });
 
       // Bind picker card clicks
       grid.querySelectorAll('.wr-picker-card').forEach(card => {

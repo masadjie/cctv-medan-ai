@@ -462,8 +462,19 @@
       <!-- War Room Floating Control Bar -->
       <div class="war-room-top-header" id="warRoomHeader">
         <div class="war-room-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <h3>CCTV WAR ROOM MATRIX</h3>
+          <button type="button" class="btn-wr-back" id="btnWarRoomBack" title="Kembali ke Layar Utama / Peta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span>Kembali</span>
+          </button>
+          <div class="wr-mode-nav">
+            <button type="button" class="wr-nav-btn" data-mode="split" title="Buka Mode Layar Ganda">📑 Layar Ganda</button>
+            <button type="button" class="wr-nav-btn" data-mode="map" title="Buka Mode Peta CCTV">🗺️ Peta</button>
+            <button type="button" class="wr-nav-btn" data-mode="console" title="Buka Mode Konsol AI">🖥️ AI</button>
+          </div>
+          <div class="wr-brand-heading">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>WAR ROOM</span>
+          </div>
         </div>
 
         <!-- Grid Layout Switcher -->

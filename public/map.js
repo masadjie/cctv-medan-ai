@@ -269,7 +269,7 @@ class MedanCCTVMap {
       this.currentScanIndex = -1;
     }
 
-    if (mapScannerHud) mapScannerHud.style.display = 'block';
+    this.expandScannerHud();
     if (scanStatusTitle) {
       scanStatusTitle.textContent = startIndex > 0 ? 'Melanjutkan Pemindaian CCTV...' : 'Memindai Status Live Stream...';
     }
@@ -346,9 +346,13 @@ class MedanCCTVMap {
     const mapScannerMiniBadge = document.getElementById('mapScannerMiniBadge');
     const miniBadgeText = document.getElementById('miniBadgeText');
 
-    if (mapScannerHud) mapScannerHud.classList.add('hidden');
+    if (mapScannerHud) {
+      mapScannerHud.classList.add('hidden');
+      mapScannerHud.style.display = 'none';
+    }
     if (mapScannerMiniBadge) {
       mapScannerMiniBadge.classList.remove('hidden');
+      mapScannerMiniBadge.style.display = 'inline-flex';
       if (miniBadgeText) {
         miniBadgeText.innerHTML = `<span style="color:#10b981">🟢 ${this.onlineCount} Online</span> &bull; <span style="color:#ef4444">🔴 ${this.offlineCount} Offline</span>`;
       }
@@ -359,7 +363,10 @@ class MedanCCTVMap {
     const mapScannerHud = document.getElementById('mapScannerHud');
     const mapScannerMiniBadge = document.getElementById('mapScannerMiniBadge');
 
-    if (mapScannerMiniBadge) mapScannerMiniBadge.classList.add('hidden');
+    if (mapScannerMiniBadge) {
+      mapScannerMiniBadge.classList.add('hidden');
+      mapScannerMiniBadge.style.display = 'none';
+    }
     if (mapScannerHud) {
       mapScannerHud.classList.remove('hidden');
       mapScannerHud.style.display = 'block';
