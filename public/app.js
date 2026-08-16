@@ -939,14 +939,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     trackedObjects.forEach((track, tIdx) => {
       if (!matchedTrackIndices.has(tIdx)) {
         track.missedFrames++;
-        if (track.missedFrames <= 2) {
-          track.bbox[0] += (track.vx || 0) * 0.8;
-          track.bbox[1] += (track.vy || 0) * 0.8;
+        if (track.missedFrames <= 4) {
+          track.bbox[0] += (track.vx || 0) * 0.7;
+          track.bbox[1] += (track.vy || 0) * 0.7;
         }
       }
     });
 
-    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 4);
+    // Keep tracks alive across brief occlusions/pauses at traffic lights
+    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 6);
   }
 
   // 5. Enhanced Multi-Scale Slicing & Adaptive ROI Pyramid Inference
