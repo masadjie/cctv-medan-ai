@@ -53,14 +53,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function runSplashSequence() {
     try {
-      await advanceSplash(25, '[1/4] Inisialisasi WebGL & Tensor Engine...', 200);
-      await advanceSplash(55, '[2/4] Sinkronisasi 60+ Titik Node CCTV Medan...', 250);
-      await advanceSplash(85, '[3/4] Kalibrasi Multi-Scale Neural Vision Slicers...', 200);
-      await advanceSplash(100, '[4/4] Sistem Surveillance Siap Dipantau.', 200);
+      await advanceSplash(35, '[1/3] Memuat Sistem Surveillance Nusantara...', 180);
+      await advanceSplash(75, '[2/3] Mempersiapkan Gateway Pemilihan Wilayah...', 200);
+      await advanceSplash(100, '[3/3] Silakan Pilih Kota Pemantauan.', 180);
     } catch (err) {
       console.warn('Splash animation error:', err);
     } finally {
-      setTimeout(dismissSplashScreen, 300);
+      setTimeout(dismissSplashScreen, 250);
     }
   }
 
@@ -1641,26 +1640,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  // 15c. On-Demand City Activation (Zero-Weight Startup)
+  let isCityActivated = false;
+
+  async function activateCity(cityId, cityName, lat, lon) {
+    if (cityId === 'medan') {
+      if (currentCityLabel) currentCityLabel.textContent = cityName;
+      localStorage.setItem('cctv_selected_city', 'medan');
+      closeCitySelectorModal();
+      showToast(`🏙️ ${cityName} Terpilih — Memuat Data CCTV & Neural Engine...`);
+
+      // 1. Initialize Map on-demand
+      if (window.medanCCTVMap && !window.medanCCTVMap.isInitialized) {
+        window.medanCCTVMap.init();
+      } else if (window.medanCCTVMap && window.medanCCTVMap.map) {
+        window.medanCCTVMap.map.setView([lat, lon], 13);
+      }
+
+      // 2. Lazy Load AI Model Engine
+      if (!model) {
+        await loadAiModel();
+      }
+
+      // 3. Start AI detection loop
+      if (!isDetecting) {
+        detectLoop();
+      }
+
+      isCityActivated = true;
+      showToast(`✅ 60+ Kamera ATCS ${cityName} Siap Dipantau`);
+    } else {
+      showToast(`⏳ Node CCTV ${cityName} sedang dalam tahap integrasi pipeline stream.`);
+    }
+  }
+
   cityCards.forEach(card => {
     card.addEventListener('click', () => {
       const cityId = card.getAttribute('data-city-id');
       const cityName = card.getAttribute('data-city-name');
       const lat = parseFloat(card.getAttribute('data-lat'));
       const lon = parseFloat(card.getAttribute('data-lon'));
-
-      if (cityId === 'medan') {
-        if (currentCityLabel) currentCityLabel.textContent = cityName;
-        if (tabMapLabel) tabMapLabel.textContent = `Peta CCTV ${cityName}`;
-        localStorage.setItem('cctv_selected_city', 'medan');
-        closeCitySelectorModal();
-        showToast(`🏙️ ${cityName} Terpilih — 60+ Kamera ATCS & Deteksi AI Aktif`);
-        
-        if (window.medanCCTVMap && window.medanCCTVMap.map) {
-          window.medanCCTVMap.map.setView([lat, lon], 13);
-        }
-      } else {
-        showToast(`⏳ Node CCTV ${cityName} sedang dalam tahap integrasi pipeline stream.`);
-      }
+      activateCity(cityId, cityName, lat, lon);
     });
   });
 
@@ -1677,10 +1697,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Start Application & Map (Idle State: Waits for Camera Selection)
-  await loadAiModel();
-  if (window.medanCCTVMap) {
-    window.medanCCTVMap.init();
-  }
-  detectLoop();
+  // Zero-Load Startup: Application waits for user to pick a city before loading heavy data
 });
