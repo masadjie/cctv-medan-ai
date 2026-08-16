@@ -513,7 +513,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     let finalUrl = url;
-    if (useProxyToggle.checked && (url.startsWith('http://') || url.startsWith('https://'))) {
+    const isExternalGovStream = url.includes('bandung.go.id') || url.includes('medan.go.id') || url.includes('jogjakota.go.id');
+    const isProxyEnabled = useProxyToggle ? useProxyToggle.checked : true;
+
+    if ((isProxyEnabled || isExternalGovStream) && (url.startsWith('http://') || url.startsWith('https://'))) {
       finalUrl = `/proxy?url=${encodeURIComponent(url)}`;
     }
 
