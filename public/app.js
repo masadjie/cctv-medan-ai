@@ -1796,7 +1796,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!favoritesList || !window.ATCS_MEDAN_CAMERAS) return;
     const onlineCams = window.ATCS_MEDAN_CAMERAS.filter(c => healthData[c.id] && healthData[c.id].online);
     if (onlineCams.length === 0) return; // keep defaults if none verified yet
-    favoritesList.innerHTML = onlineCams.slice(0, 8).map(c => `
+    favoritesList.innerHTML = onlineCams.slice(0, 3).map(c => `
       <button type="button" class="chip-btn" data-url="${c.url}">
         <span class="dot-online-chip"></span>CAM ${c.id} ${c.alias.substring(0, 22)}
       </button>`).join('');
