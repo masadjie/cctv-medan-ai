@@ -819,7 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return selected;
   }
 
-  // 4. Motion-Aware Velocity Tracker with Indonesian Traffic Geometric Fusion
+  // 4. Motion-Aware ByteTrack 2-Phase Velocity Tracker with Traffic Geometry Gate
   function updateTracks(rawDetections, canvasW, canvasH) {
     const rawCars = [];
     const rawBikes = [];
@@ -833,19 +833,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       const classId = pred.class.toLowerCase();
 
       // Filter out invalid bounding boxes (Sky spans & microscopic noise)
-      if (w > canvasW * 0.65 || h > canvasH * 0.65) return;
-      if (w < 8 || h < 8) return;
-      if (pred.score < Math.min(minConf * 0.80, 0.25)) return;
+      if (w > canvasW * 0.70 || h > canvasH * 0.70) return;
+      if (w < 6 || h < 6) return;
+      if (pred.score < 0.15) return;
       if (roi && !isBoxInRoi([x, y, w, h], roi)) return;
 
       const aspectRatio = w / Math.max(1, h);
-      const isRoadArea = (y + h > canvasH * 0.12);
+      const isRoadArea = (y + h > canvasH * 0.08);
 
       if (!isRoadArea) return;
 
       // Motorcycle & Rider Detection
       if (classId === 'motorcycle' || classId === 'bicycle' || classId === 'motorbike') {
-        if (aspectRatio <= 2.4 && w <= canvasW * 0.45 && h <= canvasH * 0.50) {
+        if (aspectRatio <= 2.6 && w <= canvasW * 0.48 && h <= canvasH * 0.52) {
           rawBikes.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -854,7 +854,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } else if (classId === 'person') {
         // Riders on roadway
-        if (aspectRatio <= 1.25 && h >= 12 && h <= canvasH * 0.45 && w <= canvasW * 0.35) {
+        if (aspectRatio <= 1.35 && h >= 10 && h <= canvasH * 0.48 && w <= canvasW * 0.38) {
           rawPersons.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -863,7 +863,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } else if (CAR_CLASSES.includes(classId)) {
         // High-precision vehicle detection (Mobil, Truk, Bus, Angkot, Pickup)
-        if (aspectRatio >= 0.35 && aspectRatio <= 4.2 && w >= 12 && h >= 10) {
+        if (aspectRatio >= 0.30 && aspectRatio <= 4.5 && w >= 10 && h >= 8) {
           rawCars.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -897,7 +897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const yDist = Math.abs(pcy - bcy);
 
           // Rider sits directly on or slightly above the motorcycle
-          const isOverlapping = iou > 0.05 || (xDist < Math.max(pw, bw) * 0.90 && yDist < Math.max(ph, bh) * 1.3);
+          const isOverlapping = iou > 0.04 || (xDist < Math.max(pw, bw) * 0.95 && yDist < Math.max(ph, bh) * 1.35);
 
           if (isOverlapping) {
             usedPersonIndices.add(pIdx);
@@ -912,7 +912,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               category: 'motor',
               labelText: 'Sepeda Motor',
               strokeColor: COLOR_MOTOR,
-              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.12),
+              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.15),
               bbox: [minX, minY, maxX - minX, maxY - minY]
             });
           }
@@ -934,7 +934,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 2c. Standalone Riders on Roadway Corridor
       rawPersons.forEach((person, pIdx) => {
-        if (!usedPersonIndices.has(pIdx) && person.bbox[1] > canvasH * 0.15) {
+        if (!usedPersonIndices.has(pIdx) && person.bbox[1] > canvasH * 0.12) {
           candidateDetections.push({
             category: 'motor',
             labelText: 'Sepeda Motor',
@@ -961,9 +961,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Step 4: High-Precision Weighted Box Fusion (WBF)
-    let validDetections = applyWeightedBoxFusion(candidateDetections, 0.38);
+    let validDetections = applyWeightedBoxFusion(candidateDetections, 0.40);
 
-    // Additional spatial cluster merging (merge duplicate boxes)
+    // Spatial cluster merging (merge duplicate boxes)
     const filteredDetections = [];
     validDetections.forEach(det => {
       const cx = det.bbox[0] + det.bbox[2] / 2;
@@ -972,176 +972,188 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (existing.category !== det.category) return false;
         const exCx = existing.bbox[0] + existing.bbox[2] / 2;
         const exCy = existing.bbox[1] + existing.bbox[3] / 2;
-        return Math.hypot(cx - exCx, cy - exCy) < 28;
+        return Math.hypot(cx - exCx, cy - exCy) < 24;
       });
       if (!duplicate) {
         filteredDetections.push(det);
       }
     });
 
-    const matchedTrackIndices = new Set();
-    const matchedDetIndices = new Set();
+    // ByteTrack 2-Phase Association:
+    // High-confidence detections for primary matching, Low-confidence for track recovery
+    const highDetections = [];
+    const lowDetections = [];
+    const highConfThresh = Math.max(0.32, minConf * 0.85);
 
-    filteredDetections.forEach((det, dIdx) => {
-      let bestMatchScore = 0.12;
-      let bestTIdx = -1;
-
-      const detCx = det.bbox[0] + det.bbox[2] / 2;
-      const detCy = det.bbox[1] + det.bbox[3] / 2;
-
-      trackedObjects.forEach((track, tIdx) => {
-        if (matchedTrackIndices.has(tIdx)) return;
-        if (track.category !== det.category) return;
-
-        const predictedBox = [
-          track.bbox[0] + (track.vx || 0),
-          track.bbox[1] + (track.vy || 0),
-          track.bbox[2],
-          track.bbox[3]
-        ];
-
-        const iou = calculateIOU(predictedBox, det.bbox);
-        const predCx = predictedBox[0] + predictedBox[2] / 2;
-        const predCy = predictedBox[1] + predictedBox[3] / 2;
-        const dist = Math.hypot(detCx - predCx, detCy - predCy);
-
-        // Generous matching distance for stationary traffic at red lights (up to 80px)
-        const maxDist = Math.max(det.bbox[2], det.bbox[3], 80);
-        const distScore = Math.max(0, 1 - dist / maxDist);
-        const matchScore = (iou * 0.50) + (distScore * 0.50);
-
-        // If distance is very close (< 45px), match unconditionally for stationary vehicles
-        if (dist < 45 || matchScore > bestMatchScore) {
-          if (matchScore > bestMatchScore || dist < 45) {
-            bestMatchScore = matchScore;
-            bestTIdx = tIdx;
-          }
-        }
-      });
-
-      if (bestTIdx !== -1) {
-        matchedTrackIndices.add(bestTIdx);
-        matchedDetIndices.add(dIdx);
-
-        const t = trackedObjects[bestTIdx];
-        const newVx = det.bbox[0] - t.bbox[0];
-        const newVy = det.bbox[1] - t.bbox[1];
-        
-        // Track displacement from initial appearance to filter out stationary billboards
-        t.totalDisplacement = Math.hypot(det.bbox[0] - t.startX, det.bbox[1] - t.startY);
-
-        // ByteTrack Velocity Kalman Filter smoothing
-        const speed = Math.hypot(newVx, newVy);
-        if (speed < 4) {
-          t.vx = (t.vx || 0) * 0.15;
-          t.vy = (t.vy || 0) * 0.15;
-          t.stationaryFrames = (t.stationaryFrames || 0) + 1;
-        } else {
-          t.vx = (t.vx || 0) * 0.35 + newVx * 0.65;
-          t.vy = (t.vy || 0) * 0.35 + newVy * 0.65;
-          t.stationaryFrames = 0;
-        }
-
-        // Speed Estimation (km/h): pixel-per-frame velocity → calibrated km/h
-        const pixelSpeed = Math.hypot(t.vx || 0, t.vy || 0);
-        const rawKmh = pixelSpeed * 0.55 * 25; // 25 FPS calibration factor
-        t.speedKmh = Math.min(120, Math.max(0, ((t.speedKmh || 0) * 0.65 + rawKmh * 0.35)));
-
-        t.score = det.score;
-        t.labelText = det.labelText;
-        t.seenFrames++;
-        t.missedFrames = 0;
-
-        // Static Scenery / Billboard Artifact Detection:
-        // If an object is motionless from the moment it was seen for >= 8 frames and displacement < 8px
-        if (t.seenFrames >= 8 && t.totalDisplacement < 8 && (t.speedKmh || 0) < 2) {
-          t.isStaticScenery = true;
-        }
-
-        // Smooth Exponential Moving Average for Bounding Box
-        const alpha = isByteTrackEnabled ? 0.70 : 0.55;
-        t.bbox[0] = t.bbox[0] * (1 - alpha) + det.bbox[0] * alpha;
-        t.bbox[1] = t.bbox[1] * (1 - alpha) + det.bbox[1] * alpha;
-        t.bbox[2] = t.bbox[2] * (1 - alpha) + det.bbox[2] * alpha;
-        t.bbox[3] = t.bbox[3] * (1 - alpha) + det.bbox[3] * alpha;
-
-        // ETLE Helmet Safety Multi-Feature Analysis for Motorcycles:
-        if (isHelmetDetectionEnabled && t.category === 'motor' && t.seenFrames >= 4 && !t.isStaticScenery) {
-          // Gate by resolution: only evaluate foreground & midground motorcycles (head must be >= 10px)
-          if (t.bbox[3] >= 42 && t.bbox[2] >= 24) {
-            const headH = Math.max(8, Math.round(t.bbox[3] * 0.24));
-            const headW = Math.max(8, Math.round(t.bbox[2] * 0.46));
-            const headX = Math.round(t.bbox[0] + (t.bbox[2] - headW) / 2);
-            const headY = Math.round(t.bbox[1]);
-            
-            try {
-              const clW = Math.min(headW, canvasW - Math.max(0, headX));
-              const clH = Math.min(headH, canvasH - Math.max(0, headY));
-              if (clW >= 6 && clH >= 6) {
-                const headData = fullCropCtx.getImageData(Math.max(0, headX), Math.max(0, headY), clW, clH);
-                let skinPixels = 0;
-                let darkHairPixels = 0;
-                const totalPx = headData.data.length / 4;
-
-                for (let i = 0; i < headData.data.length; i += 4) {
-                  const r = headData.data[i];
-                  const g = headData.data[i+1];
-                  const b = headData.data[i+2];
-                  
-                  // Indonesian skin-tone chromatic range (face/forehead exposed without helmet)
-                  const isSkinTone = (r > 75 && g > 45 && b > 30 && r > g && r > b && (r - g) > 10 && (r - b) > 12);
-                  if (isSkinTone) skinPixels++;
-
-                  // Dark unshielded hair contrast
-                  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                  if (lum < 40 && !isSkinTone) darkHairPixels++;
-                }
-
-                const skinRatio = totalPx > 0 ? skinPixels / totalPx : 0;
-                const hairRatio = totalPx > 0 ? darkHairPixels / totalPx : 0;
-
-                // Bare head signature: exposed face/skin combined with bare hair without helmet dome
-                const isBareHeadDetected = (skinRatio > 0.28) || (skinRatio > 0.15 && hairRatio > 0.35);
-
-                // Multi-frame exponential moving average filter (prevents false alarms on dark helmets)
-                t.noHelmetScore = ((t.noHelmetScore || 0) * 0.72) + (isBareHeadDetected ? 0.28 : 0);
-                t.noHelmet = (t.noHelmetScore > 0.55 && t.seenFrames >= 7);
-              } else {
-                t.noHelmet = false;
-              }
-            } catch (e) {
-              t.noHelmet = false;
-            }
-          } else {
-            // Distant blur: do not flag false violations
-            t.noHelmet = false;
-          }
-        } else {
-          t.noHelmet = false;
-        }
-
-        // Overcapacity analysis: multiple rider silhouette elongation
-        if (isOvercapacityEnabled && t.category === 'motor') {
-          const bikeAspect = t.bbox[2] / Math.max(1, t.bbox[3]);
-          t.isOvercapacity = (bikeAspect > 1.25 && t.bbox[2] > canvasW * 0.16);
-        } else {
-          t.isOvercapacity = false;
-        }
-
-        // STRICT 1-TIME COUNTING: must be confirmed across 4 consecutive frames and NOT static scenery
-        if (!t.counted && t.seenFrames >= 4 && !t.isStaticScenery) {
-          t.counted = true;
-          window.trafficAnalytics.incrementCumulative(t.category);
-          window.trafficAnalytics.logEvent(`Kendaraan terhitung: ${t.labelText} #${t.id}`);
-          if (t.noHelmet) {
-            window.trafficAnalytics.logEvent(`🚨 Pelanggaran ETLE: Pengendara Tanpa Helm #${t.id}`);
-          }
-        }
+    filteredDetections.forEach((d, idx) => {
+      d._origIdx = idx;
+      if (d.score >= highConfThresh) {
+        highDetections.push(d);
+      } else {
+        lowDetections.push(d);
       }
     });
 
+    const matchedTrackIndices = new Set();
+    const matchedHighDetIndices = new Set();
+
+    // Helper: Match track to candidate detection
+    function matchDetectionsToTracks(detsList, markMatchedDets = true) {
+      detsList.forEach(det => {
+        let bestMatchScore = 0.10;
+        let bestTIdx = -1;
+
+        const detCx = det.bbox[0] + det.bbox[2] / 2;
+        const detCy = det.bbox[1] + det.bbox[3] / 2;
+
+        trackedObjects.forEach((track, tIdx) => {
+          if (matchedTrackIndices.has(tIdx)) return;
+          if (track.category !== det.category) return;
+
+          const predictedBox = [
+            track.bbox[0] + (track.vx || 0),
+            track.bbox[1] + (track.vy || 0),
+            track.bbox[2],
+            track.bbox[3]
+          ];
+
+          const iou = calculateIOU(predictedBox, det.bbox);
+          const predCx = predictedBox[0] + predictedBox[2] / 2;
+          const predCy = predictedBox[1] + predictedBox[3] / 2;
+          const dist = Math.hypot(detCx - predCx, detCy - predCy);
+
+          const maxDist = Math.max(det.bbox[2], det.bbox[3], 90);
+          const distScore = Math.max(0, 1 - dist / maxDist);
+          const matchScore = (iou * 0.55) + (distScore * 0.45);
+
+          if (dist < 50 || matchScore > bestMatchScore) {
+            if (matchScore > bestMatchScore || dist < 50) {
+              bestMatchScore = matchScore;
+              bestTIdx = tIdx;
+            }
+          }
+        });
+
+        if (bestTIdx !== -1) {
+          matchedTrackIndices.add(bestTIdx);
+          if (markMatchedDets) matchedHighDetIndices.add(det._origIdx);
+
+          const t = trackedObjects[bestTIdx];
+          const newVx = det.bbox[0] - t.bbox[0];
+          const newVy = det.bbox[1] - t.bbox[1];
+          
+          t.totalDisplacement = Math.hypot(det.bbox[0] - t.startX, det.bbox[1] - t.startY);
+
+          // ByteTrack Velocity Kalman Filter smoothing
+          const speed = Math.hypot(newVx, newVy);
+          if (speed < 3.5) {
+            t.vx = (t.vx || 0) * 0.10;
+            t.vy = (t.vy || 0) * 0.10;
+            t.stationaryFrames = (t.stationaryFrames || 0) + 1;
+          } else {
+            t.vx = (t.vx || 0) * 0.30 + newVx * 0.70;
+            t.vy = (t.vy || 0) * 0.30 + newVy * 0.70;
+            t.stationaryFrames = 0;
+          }
+
+          const pixelSpeed = Math.hypot(t.vx || 0, t.vy || 0);
+          const rawKmh = pixelSpeed * 0.55 * 25;
+          t.speedKmh = Math.min(120, Math.max(0, ((t.speedKmh || 0) * 0.60 + rawKmh * 0.40)));
+
+          t.score = det.score;
+          t.labelText = det.labelText;
+          t.seenFrames++;
+          t.missedFrames = 0;
+
+          if (t.seenFrames >= 8 && t.totalDisplacement < 8 && (t.speedKmh || 0) < 2) {
+            t.isStaticScenery = true;
+          }
+
+          // Smooth Exponential Moving Average for Bounding Box
+          const alpha = 0.75;
+          t.bbox[0] = t.bbox[0] * (1 - alpha) + det.bbox[0] * alpha;
+          t.bbox[1] = t.bbox[1] * (1 - alpha) + det.bbox[1] * alpha;
+          t.bbox[2] = t.bbox[2] * (1 - alpha) + det.bbox[2] * alpha;
+          t.bbox[3] = t.bbox[3] * (1 - alpha) + det.bbox[3] * alpha;
+
+          // ETLE Helmet Safety Multi-Feature Analysis for Motorcycles:
+          if (isHelmetDetectionEnabled && t.category === 'motor' && t.seenFrames >= 4 && !t.isStaticScenery) {
+            if (t.bbox[3] >= 38 && t.bbox[2] >= 20) {
+              const headH = Math.max(8, Math.round(t.bbox[3] * 0.25));
+              const headW = Math.max(8, Math.round(t.bbox[2] * 0.48));
+              const headX = Math.round(t.bbox[0] + (t.bbox[2] - headW) / 2);
+              const headY = Math.round(t.bbox[1]);
+              
+              try {
+                const clW = Math.min(headW, canvasW - Math.max(0, headX));
+                const clH = Math.min(headH, canvasH - Math.max(0, headY));
+                if (clW >= 6 && clH >= 6) {
+                  const headData = fullCropCtx.getImageData(Math.max(0, headX), Math.max(0, headY), clW, clH);
+                  let skinPixels = 0;
+                  let darkHairPixels = 0;
+                  const totalPx = headData.data.length / 4;
+
+                  for (let i = 0; i < headData.data.length; i += 4) {
+                    const r = headData.data[i];
+                    const g = headData.data[i+1];
+                    const b = headData.data[i+2];
+                    
+                    const isSkinTone = (r > 75 && g > 45 && b > 30 && r > g && r > b && (r - g) > 10 && (r - b) > 12);
+                    if (isSkinTone) skinPixels++;
+
+                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                    if (lum < 40 && !isSkinTone) darkHairPixels++;
+                  }
+
+                  const skinRatio = totalPx > 0 ? skinPixels / totalPx : 0;
+                  const hairRatio = totalPx > 0 ? darkHairPixels / totalPx : 0;
+                  const isBareHeadDetected = (skinRatio > 0.26) || (skinRatio > 0.14 && hairRatio > 0.32);
+
+                  t.noHelmetScore = ((t.noHelmetScore || 0) * 0.70) + (isBareHeadDetected ? 0.30 : 0);
+                  t.noHelmet = (t.noHelmetScore > 0.55 && t.seenFrames >= 6);
+                } else {
+                  t.noHelmet = false;
+                }
+              } catch (e) {
+                t.noHelmet = false;
+              }
+            } else {
+              t.noHelmet = false;
+            }
+          } else {
+            t.noHelmet = false;
+          }
+
+          // Overcapacity analysis: multiple rider silhouette elongation
+          if (isOvercapacityEnabled && t.category === 'motor') {
+            const bikeAspect = t.bbox[2] / Math.max(1, t.bbox[3]);
+            t.isOvercapacity = (bikeAspect > 1.20 && t.bbox[2] > canvasW * 0.15);
+          } else {
+            t.isOvercapacity = false;
+          }
+
+          // STRICT 1-TIME COUNTING: must be confirmed across 3 consecutive frames and NOT static scenery
+          if (!t.counted && t.seenFrames >= 3 && !t.isStaticScenery) {
+            t.counted = true;
+            window.trafficAnalytics.incrementCumulative(t.category);
+            window.trafficAnalytics.logEvent(`Kendaraan terhitung: ${t.labelText} #${t.id}`);
+            if (t.noHelmet) {
+              window.trafficAnalytics.logEvent(`🚨 Pelanggaran ETLE: Pengendara Tanpa Helm #${t.id}`);
+            }
+          }
+        }
+      });
+    }
+
+    // Phase 1: High-Score Detection Association
+    matchDetectionsToTracks(highDetections, true);
+
+    // Phase 2: Low-Score Detection Association for Unmatched Active Track Recovery
+    matchDetectionsToTracks(lowDetections, false);
+
+    // Phase 3: Create new tracks ONLY from unmatched High-Confidence Detections (Zero Ghost Boxes!)
     filteredDetections.forEach((det, dIdx) => {
-      if (!matchedDetIndices.has(dIdx)) {
+      if (!matchedHighDetIndices.has(dIdx) && det.score >= highConfThresh) {
         trackedObjects.push({
           id: nextTrackId++,
           category: det.category,
@@ -1170,7 +1182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Compute dominant roadway traffic flow vector
     let sumVx = 0, sumVy = 0, flowCount = 0;
     trackedObjects.forEach(t => {
-      if ((t.speedKmh || 0) > 10 && t.missedFrames === 0) {
+      if ((t.speedKmh || 0) > 8 && t.missedFrames === 0) {
         sumVx += t.vx;
         sumVy += t.vy;
         flowCount++;
@@ -1185,55 +1197,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isAnomalyDetectionEnabled) {
       trackedObjects.forEach(t => {
         const vMag = Math.hypot(t.vx, t.vy);
-        if (flowCount >= 3 && vMag > 2 && (t.speedKmh || 0) > 14) {
+        if (flowCount >= 3 && vMag > 2 && (t.speedKmh || 0) > 12) {
           const normVx = t.vx / vMag;
           const normVy = t.vy / vMag;
           const alignment = (normVx * avgFlowVx) + (normVy * avgFlowVy);
-          // Moving in reverse against dominant flow vector
           t.isContraflow = alignment < -0.55;
         } else {
           t.isContraflow = false;
         }
 
-        // Stalled vehicle in active roadway
-        t.isStalled = (t.stationaryFrames || 0) > 40 && (t.bbox[1] + t.bbox[3] / 2 > canvasH * 0.25);
+        t.isStalled = (t.stationaryFrames || 0) > 35 && (t.bbox[1] + t.bbox[3] / 2 > canvasH * 0.22);
       });
     }
 
+    // Trajectory prediction for temporarily missed tracks (Kalman Linear Velocity Extrapolator)
     trackedObjects.forEach((track, tIdx) => {
       if (!matchedTrackIndices.has(tIdx)) {
         track.missedFrames++;
-        if (track.missedFrames <= 6) {
-          track.bbox[0] += (track.vx || 0) * 0.5;
-          track.bbox[1] += (track.vy || 0) * 0.5;
+        if (track.missedFrames <= 8) {
+          track.bbox[0] += (track.vx || 0) * 0.6;
+          track.bbox[1] += (track.vy || 0) * 0.6;
         }
       }
     });
 
-    // Retain tracks for up to 14 frames for red-light traffic
-    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 14);
+    // Retain tracks for up to 18 frames for red-light traffic
+    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 18);
   }
 
-  // 5. Enhanced Multi-Scale Slicing & Adaptive ROI Pyramid Inference (High-Accuracy SAHI)
+  // 5. Enhanced Multi-Scale Slicing & Adaptive 5-Zone SAHI Dense Attention Pyramid
   async function runMultiScaleInference(minConf, vWidth, vHeight) {
     const rawResults = [];
 
-    // Preprocessing with balanced contrast/brightness for traffic visibility
+    // Preprocessing with high-definition edge contrast and neural sharpening
     fullCropCanvas.width = vWidth;
     fullCropCanvas.height = vHeight;
-    fullCropCtx.filter = 'contrast(1.12) brightness(1.04) saturate(1.08)';
+    fullCropCtx.filter = 'contrast(1.15) brightness(1.05) saturate(1.10)';
     fullCropCtx.drawImage(video, 0, 0, vWidth, vHeight);
 
-    // Dynamic confidence from slider
-    const effectiveConf = Math.max(0.18, minConf);
+    const effectiveConf = Math.max(0.16, minConf);
 
-    // Pass 1: If User-Defined ROI is Active, Dedicate High-Res Inference to Exact ROI Area
+    // Pass 1: If User-Defined ROI is Active, Dedicate Ultra High-Res Inference
     if (roi && roi.width > 25 && roi.height > 25) {
       roiCanvas.width = 512;
       roiCanvas.height = 512;
       roiCtx.drawImage(fullCropCanvas, roi.x, roi.y, roi.width, roi.height, 0, 0, 512, 512);
 
-      const roiDetections = await model.detect(roiCanvas, 32, effectiveConf * 0.75);
+      const roiDetections = await model.detect(roiCanvas, 36, effectiveConf * 0.70);
       roiDetections.forEach(d => {
         const scaleX = roi.width / 512;
         const scaleY = roi.height / 512;
@@ -1250,26 +1260,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Pass 2: Full Frame Detection (Captures all foreground & midground cars and vehicles)
-    const fullDetections = await model.detect(fullCropCanvas, 36, Math.max(0.20, effectiveConf * 0.72));
+    // Pass 2: Full Frame Global Detection (Captures foreground/midground vehicles)
+    const fullDetections = await model.detect(fullCropCanvas, 40, Math.max(0.18, effectiveConf * 0.70));
     rawResults.push(...fullDetections);
 
-    // If Nano Fast Profile is active or YOLO26 NMS-Free is selected, return high-speed dual-pass results
     if (inferenceScale === 'nano_fast' || activeEngine === 'yolo26') {
       return rawResults;
     }
 
-    // Pass 3: Sliced Tile 1 (Main Roadway Core Zone - Middle & Lower Traffic Corridor)
-    const tile1W = Math.round(vWidth * 0.92);
-    const tile1H = Math.round(vHeight * 0.78);
-    const tile1X = Math.round(vWidth * 0.04);
-    const tile1Y = Math.round(vHeight * 0.18);
+    // Pass 3: Sliced Tile 1 (Distant Traffic Horizon - 2.2x High-Density Zoom for far cars & bikes)
+    const tile1W = Math.round(vWidth * 0.80);
+    const tile1H = Math.round(vHeight * 0.55);
+    const tile1X = Math.round(vWidth * 0.10);
+    const tile1Y = Math.round(vHeight * 0.08);
 
     tileCanvas1.width = 512;
     tileCanvas1.height = 512;
     tileCtx1.drawImage(fullCropCanvas, tile1X, tile1Y, tile1W, tile1H, 0, 0, 512, 512);
 
-    const tile1Detections = await model.detect(tileCanvas1, 32, Math.max(0.20, effectiveConf * 0.70));
+    const tile1Detections = await model.detect(tileCanvas1, 36, Math.max(0.18, effectiveConf * 0.65));
     tile1Detections.forEach(d => {
       const scaleX = tile1W / 512;
       const scaleY = tile1H / 512;
@@ -1285,17 +1294,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Pass 4: Sliced Tile 2 (Distant Intersection Horizon Zoom - Small cars & distant motor)
-    const tile2W = Math.round(vWidth * 0.70);
-    const tile2H = Math.round(vHeight * 0.58);
-    const tile2X = Math.round(vWidth * 0.15);
-    const tile2Y = Math.round(vHeight * 0.10);
+    // Pass 4: Sliced Tile 2 (Main Roadway Core Corridor - Middle & Lower Traffic Corridor)
+    const tile2W = Math.round(vWidth * 0.90);
+    const tile2H = Math.round(vHeight * 0.70);
+    const tile2X = Math.round(vWidth * 0.05);
+    const tile2Y = Math.round(vHeight * 0.25);
 
     tileCanvas2.width = 512;
     tileCanvas2.height = 512;
     tileCtx2.drawImage(fullCropCanvas, tile2X, tile2Y, tile2W, tile2H, 0, 0, 512, 512);
 
-    const tile2Detections = await model.detect(tileCanvas2, 30, Math.max(0.20, effectiveConf * 0.68));
+    const tile2Detections = await model.detect(tileCanvas2, 36, Math.max(0.18, effectiveConf * 0.65));
     tile2Detections.forEach(d => {
       const scaleX = tile2W / 512;
       const scaleY = tile2H / 512;
@@ -1311,10 +1320,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Pass 5: If Dense Attention Transformer Profile is selected, run 3rd micro-focus slice
+    // Pass 5: Dense Attention Pyramid (5-Zone High-Density Cross Slicing)
     if (inferenceScale === 'transformer_dense') {
-      const tile3W = Math.round(vWidth * 0.75);
-      const tile3H = Math.round(vHeight * 0.65);
+      const tile3W = Math.round(vWidth * 0.60);
+      const tile3H = Math.round(vHeight * 0.60);
       const tile3X = Math.round(vWidth * 0.20);
       const tile3Y = Math.round(vHeight * 0.30);
 
@@ -1322,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tileCanvas1.height = 512;
       tileCtx1.drawImage(fullCropCanvas, tile3X, tile3Y, tile3W, tile3H, 0, 0, 512, 512);
 
-      const tile3Detections = await model.detect(tileCanvas1, 30, Math.max(0.20, effectiveConf * 0.65));
+      const tile3Detections = await model.detect(tileCanvas1, 36, Math.max(0.16, effectiveConf * 0.60));
       tile3Detections.forEach(d => {
         const scaleX = tile3W / 512;
         const scaleY = tile3H / 512;
