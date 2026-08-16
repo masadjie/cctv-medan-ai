@@ -119,7 +119,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toastContainer = document.getElementById('toastContainer');
 
   // State Variables
-  let activeEngine = 'yolo';
   let model = null;
   let hls = null;
   let isAiRunning = true;
