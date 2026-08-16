@@ -2122,8 +2122,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   function getWarOnlineCameras() {
     const all = window.ATCS_MEDAN_CAMERAS || [];
     const health = window.medanCCTVMap && window.medanCCTVMap.healthStatus ? window.medanCCTVMap.healthStatus : {};
-    const online = all.filter(c => health[c.id] && health[c.id].online);
-    return online.length > 0 ? online : all.length > 0 ? all : WAR_ROOM_DEFAULTS;
+    let online = all.filter(c => health[c.id] && health[c.id].online);
+    
+    // Check localStorage cache if map healthStatus is not yet in memory
+    if (online.length === 0) {
+      try {
+        const raw = localStorage.getItem('cctv_medan_stream_health_v2');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.cameras) {
+            online = all.filter(c => parsed.cameras[c.id] && parsed.cameras[c.id].online);
+          }
+        }
+      } catch(e) {}
+    }
+
+    return online.length > 0 ? online : (all.length > 0 ? all : WAR_ROOM_DEFAULTS);
   }
 
   // ---- Slot HTML Factory ----
@@ -2150,6 +2164,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           <button type="button" class="btn-slot-expand" data-slot="${slotNum}" title="Fokus Slot">⛶</button>
         </div>
         <div class="slot-video-box">
+          <div class="slot-video-loader" id="warLoader${slotNum}">
+            <div class="sleek-spinner-mini"></div>
+            <span>Menghubungkan Stream...</span>
+          </div>
           <video id="warVideo${slotNum}" playsinline muted autoplay crossOrigin="anonymous"></video>
           <canvas id="warCanvas${slotNum}"></canvas>
           <div class="slot-osd" id="warOsd${slotNum}">${label}</div>
@@ -2158,7 +2176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ---- Build / Rebuild Grid ----
-  function buildWarRoomGrid(cols, rows, randomize = false) {
+  function buildWarRoomGrid(cols, rows, randomize = true) {
     const grid = document.getElementById('warRoomGrid');
     if (!grid) return;
 
@@ -2173,16 +2191,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     warCurrentRows = rows;
     warTotalSlots = newTotal;
 
+    // Always retrieve freshest verified online cameras
+    warOnlineCameras = getWarOnlineCameras();
+
     // Set CSS grid template
     grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
-    // Build camera pool: random online or fallback to defaults
-    const pool = randomize
-      ? shuffleArray(warOnlineCameras.length > 0 ? warOnlineCameras : WAR_ROOM_DEFAULTS)
-      : WAR_ROOM_DEFAULTS;
+    // ONLY pick from verified online cameras!
+    let pool = warOnlineCameras.length > 0 ? warOnlineCameras : WAR_ROOM_DEFAULTS;
+    if (randomize) {
+      pool = shuffleArray(pool);
+    }
 
-    // Rebuild slot HTML (label from pool)
+    // Rebuild slot HTML (label from online pool)
     grid.innerHTML = Array.from({ length: newTotal }, (_, i) => {
       const cam = pool[i % pool.length];
       return buildSlotHtml(i, cam);
@@ -2191,7 +2213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Bind all slot interactions
     bindAllSlots();
 
-    // Auto-load streams from pool
+    // Auto-load streams from online pool
     for (let i = 0; i < newTotal; i++) {
       const cam = pool[i % pool.length];
       if (cam) loadWarSlot(i, cam.url);
@@ -2294,10 +2316,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function loadWarSlot(idx, url) {
-    const video = document.getElementById(`warVideo${idx + 1}`);
+    const slotNum = idx + 1;
+    const video = document.getElementById(`warVideo${slotNum}`);
+    const loader = document.getElementById(`warLoader${slotNum}`);
     if (!video || !url) return;
 
+    if (loader) loader.classList.remove('hidden');
+
     if (warHlsMap[idx]) { try { warHlsMap[idx].destroy(); } catch(e) {} warHlsMap[idx] = null; }
+
+    const hideLoader = () => { if (loader) loader.classList.add('hidden'); };
+    video.onplaying = hideLoader;
+    video.onloadeddata = hideLoader;
 
     // Respect the proxy toggle setting — same behaviour as main stream player
     const useProxyToggle = document.getElementById('useProxyToggle');
@@ -2316,22 +2346,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       hls.loadSource(finalUrl);
       hls.attachMedia(video);
-      hls.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+      hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        video.play().then(hideLoader).catch(() => {});
+      });
       hls.on(window.Hls.Events.ERROR, (event, data) => {
         if (data.fatal && finalUrl !== url) {
-          // Fatal error with proxy → retry direct (only if proxy was used)
+          // Fatal error with proxy → retry direct
           hls.destroy();
           const hlsDirect = new window.Hls({ liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 4, lowLatencyMode: true });
           hlsDirect.loadSource(url);
           hlsDirect.attachMedia(video);
-          hlsDirect.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+          hlsDirect.on(window.Hls.Events.MANIFEST_PARSED, () => {
+            video.play().then(hideLoader).catch(() => {});
+          });
           warHlsMap[idx] = hlsDirect;
         }
       });
       warHlsMap[idx] = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = finalUrl;
-      video.play().catch(() => {});
+      video.play().then(hideLoader).catch(() => {});
     }
   }
 
