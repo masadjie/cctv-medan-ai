@@ -152,20 +152,27 @@ class MedanCCTVMap {
 
   /**
    * Sequential background verification loop: flips cameras from 🔴 OFFLINE -> 🟢 ONLINE
-   * and reports real-time scan progress in the UI
+   * and reports real-time scan progress in the prominent UI Scanner HUD
    */
   async startHlsBackgroundChecker() {
     if (this.isCheckingHls) return;
     this.isCheckingHls = true;
 
     const scanTextEl = document.getElementById('mapStreamScanText');
+    const scanStatusTitle = document.getElementById('scanStatusTitle');
+    const scanPercentPill = document.getElementById('scanPercentPill');
+    const scanProgressFill = document.getElementById('scanProgressFill');
+    const scanProcessedText = document.getElementById('scanProcessedText');
+    const scanOnlineCount = document.getElementById('scanOnlineCount');
+    const scanOfflineCount = document.getElementById('scanOfflineCount');
+    const mapScannerHud = document.getElementById('mapScannerHud');
+
     const totalCount = this.cameras.length;
     let onlineCount = 0;
     let offlineCount = 0;
 
-    if (scanTextEl) {
-      scanTextEl.textContent = `Memindai: 0/${totalCount}`;
-    }
+    if (mapScannerHud) mapScannerHud.style.display = 'block';
+    if (scanStatusTitle) scanStatusTitle.textContent = 'Memindai Status Live Stream CCTV...';
 
     for (let i = 0; i < totalCount; i++) {
       // Pause if map is actively moving
@@ -191,9 +198,18 @@ class MedanCCTVMap {
         // Dynamically transition marker from OFFLINE to ONLINE
         this.updateSingleMarkerDom(cam.id, res.online);
 
-        // Update Scan Counter Badge live
+        const scanned = i + 1;
+        const percent = Math.round((scanned / totalCount) * 100);
+
+        // Update Prominent Scanner HUD
+        if (scanPercentPill) scanPercentPill.textContent = `${percent}%`;
+        if (scanProgressFill) scanProgressFill.style.width = `${percent}%`;
+        if (scanProcessedText) scanProcessedText.textContent = `Node: ${scanned} / ${totalCount}`;
+        if (scanOnlineCount) scanOnlineCount.textContent = `🟢 ${onlineCount} Online`;
+        if (scanOfflineCount) scanOfflineCount.textContent = `🔴 ${offlineCount} Offline`;
+
+        // Update Toolbar Badge
         if (scanTextEl) {
-          const scanned = i + 1;
           scanTextEl.innerHTML = `Pindai ${scanned}/${totalCount} &bull; <span style="color:#10b981">🟢 ${onlineCount}</span> <span style="color:#ef4444">🔴 ${offlineCount}</span>`;
         }
       }
@@ -203,6 +219,7 @@ class MedanCCTVMap {
     }
 
     this.isCheckingHls = false;
+    if (scanStatusTitle) scanStatusTitle.textContent = '✅ Pemindaian CCTV Selesai';
     if (scanTextEl) {
       scanTextEl.innerHTML = `Node Selesai: <span style="color:#10b981">🟢 ${onlineCount} Online</span> &bull; <span style="color:#ef4444">🔴 ${offlineCount} Offline</span>`;
     }
