@@ -1,0 +1,101 @@
+/* ==========================================================================
+   MEDAN TRAFFIC VISION - BASE DESIGN TOKENS & RESET
+   Architect: Adjie Kurniawan (instagram.com/adjie.apk)
+   ========================================================================== */
+
+:root {
+  /* Neutral Executive Slate & Obsidian Surfaces */
+  --surface-base: #09090b;       /* Zinc 950 */
+  --surface-layer-1: #121215;    /* Neutral Dark 1 */
+  --surface-layer-2: #18181b;    /* Zinc 900 */
+  --surface-layer-3: #27272a;    /* Zinc 800 */
+  --surface-card: #18181b;
+  --surface-glass: rgba(18, 18, 21, 0.90);
+  --surface-glass-solid: rgba(24, 24, 27, 0.96);
+
+  /* Subtle Neutral Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
+  --border-strong: #3f3f46;      /* Zinc 700 */
+  --border-focus: #71717a;       /* Zinc 500 */
+
+  /* Typography Colors */
+  --text-pure: #ffffff;
+  --text-heading: #f4f4f5;       /* Zinc 100 */
+  --text-body: #d4d4d8;          /* Zinc 300 */
+  --text-muted: #a1a1aa;         /* Zinc 400 */
+  --text-faint: #71717a;         /* Zinc 500 */
+
+  /* Functional Accents */
+  --accent-car: #f4f4f5;         /* Pure Silver/White for 4-wheelers */
+  --accent-motor: #f59e0b;       /* Warm Amber for 2-wheelers */
+  --accent-total: #10b981;       /* Emerald Green for Flow/Total */
+  --accent-alert: #ef4444;       /* Signal Red */
+
+  /* Typography Definitions */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Radius & Geometry */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Subtle Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px 0 rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.7);
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--surface-base);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+body.light-theme {
+  --surface-base: #f4f4f5;
+  --surface-layer-1: #ffffff;
+  --surface-layer-2: #f1f1f4;
+  --surface-layer-3: #e4e4e7;
+  --surface-card: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.92);
+  --surface-glass-solid: rgba(255, 255, 255, 0.98);
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.15);
+  --border-strong: #d4d4d8;
+  --border-focus: #a1a1aa;
+
+  --text-pure: #09090b;
+  --text-heading: #18181b;
+  --text-body: #3f3f46;
+  --text-muted: #71717a;
+  --text-faint: #a1a1aa;
+
+  --accent-car: #18181b;
+  --accent-motor: #d97706;
+  --accent-total: #059669;
+  --accent-alert: #dc2626;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 14px 0 rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.12);
+}
