@@ -2260,19 +2260,21 @@ body.light-theme .combobox-search-input {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: rgba(8, 10, 15, 0.97);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  padding: 6px 14px;
+  background: rgba(10, 14, 23, 0.98);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.18);
   gap: 12px;
   flex-shrink: 0;
   z-index: 10;
+  white-space: nowrap;
 }
 
 .war-room-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   color: var(--text-heading);
+  white-space: nowrap;
 }
 
 .btn-wr-back {
@@ -2283,11 +2285,12 @@ body.light-theme .combobox-search-input {
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #ffffff;
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 5px 12px;
+  padding: 5px 11px;
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
@@ -2312,11 +2315,12 @@ body.light-theme .combobox-search-input {
 .wr-mode-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   padding: 2px;
+  white-space: nowrap;
 }
 
 .wr-nav-btn {
@@ -2326,9 +2330,10 @@ body.light-theme .combobox-search-input {
   font-family: var(--font-sans);
   font-size: 0.7rem;
   font-weight: 600;
-  padding: 4px 9px;
+  padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.15s ease;
 }
 
@@ -2338,38 +2343,46 @@ body.light-theme .combobox-search-input {
 }
 
 .wr-brand-heading {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: #38bdf8;
+  white-space: nowrap;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
 .wr-brand-heading svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   color: #38bdf8;
+  flex-shrink: 0;
 }
 
 .war-room-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Grid Layout Switcher Pills */
 .wr-layout-switcher {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 3px;
+  white-space: nowrap;
 }
 
 .wr-layout-btn {
