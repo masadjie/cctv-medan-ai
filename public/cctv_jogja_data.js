@@ -122,6 +122,8 @@ const ATCS_JOGJA_CAMERAS = [
   { id: 1874, city: "jogja", name: "Gardena Jl. Urip Sumoharjo V. Timur", alias: "Gardena Jl. Solo", url: "https://cctvjss.jogjakota.go.id/atcs/ATCS_Utara-Timur_Gardena_Jl_Urip Sumoharjo_V_Timur.stream/playlist.m3u8", lat: -7.782819, lon: 110.381248, category: "ATCS", kecamatan: "GONDOKUSUMAN", kelurahan: "KLITREN" },
   { id: 1896, city: "jogja", name: "Simpang Mirota V. Barat (FIX)", alias: "Simpang Mirota Kampus Barat", url: "https://cctvjss.jogjakota.go.id/atcs/ATCS_Simpang_Mirota_View_Barat.stream/playlist.m3u8", lat: -7.775990, lon: 110.374333, category: "ATCS", kecamatan: "GONDOKUSUMAN", kelurahan: "TERBAN" },
   { id: 1900, city: "jogja", name: "Simpang Jati Kencana V. Barat", alias: "Simpang Jati Kencana Bener", url: "https://cctvjss.jogjakota.go.id/atcs/ATCS_Simpang_JatiKencana_Fix.stream/playlist.m3u8", lat: -7.781448, lon: 110.352511, category: "ATCS", kecamatan: "TEGALREJO", kelurahan: "BENER" }
+];
+
 const JOGJA_MAPS_GEOJSON = {
   "type": "FeatureCollection",
   "features": [
