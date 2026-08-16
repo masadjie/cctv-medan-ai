@@ -305,15 +305,32 @@ class MedanCCTVMap {
       scanStatusTitle.textContent = startIndex > 0 ? 'Melanjutkan Pemindaian CCTV...' : 'Memindai Status Live Stream...';
     }
 
+    const currentSession = this.scanSessionId || 0;
+
     for (let i = startIndex; i < totalCount; i++) {
+      // Cancellation check
+      if (this.scanSessionId !== currentSession) {
+        this.isCheckingHls = false;
+        return;
+      }
+
       // Pause if map is actively moving
       while (this.isMapMoving) {
         await new Promise(r => setTimeout(r, 150));
+        if (this.scanSessionId !== currentSession) {
+          this.isCheckingHls = false;
+          return;
+        }
       }
 
       const cam = this.cameras[i];
       if (cam && cam.url) {
         const res = await this.checkHlsStreamHealth(cam.url);
+        if (this.scanSessionId !== currentSession) {
+          this.isCheckingHls = false;
+          return;
+        }
+
         this.healthStatus[cam.id] = {
           online: res.online,
           latencyMs: res.latencyMs,
@@ -352,7 +369,7 @@ class MedanCCTVMap {
       }
 
       // Smooth spacing between probes
-      await new Promise(r => setTimeout(r, 110));
+      await new Promise(r => setTimeout(r, 90));
     }
 
     this.isCheckingHls = false;
@@ -370,6 +387,51 @@ class MedanCCTVMap {
         this.minimizeScannerHud();
       }
     }, 2500);
+  }
+
+  /**
+   * Complete clean reset and rescan from 0
+   */
+  resetAndRescanAll() {
+    this.scanSessionId = (this.scanSessionId || 0) + 1;
+    this.isCheckingHls = false;
+
+    // 1. Wipe cache
+    try {
+      localStorage.removeItem(this.cacheKey);
+    } catch(e) {}
+
+    // 2. Reset counters & states
+    this.healthStatus = {};
+    this.onlineCount = 0;
+    this.offlineCount = 0;
+    this.currentScanIndex = -1;
+
+    // 3. Reset map marker icons cleanly
+    this.renderMarkers();
+
+    // 4. Reset HUD & Badge displays
+    const scanPercentPill = document.getElementById('scanPercentPill');
+    const scanProgressFill = document.getElementById('scanProgressFill');
+    const scanProcessedText = document.getElementById('scanProcessedText');
+    const scanOnlineCount = document.getElementById('scanOnlineCount');
+    const scanOfflineCount = document.getElementById('scanOfflineCount');
+    const scanStatusTitle = document.getElementById('scanStatusTitle');
+    const scanTextEl = document.getElementById('mapStreamScanText');
+
+    if (scanPercentPill) scanPercentPill.textContent = '0%';
+    if (scanProgressFill) scanProgressFill.style.width = '0%';
+    if (scanProcessedText) scanProcessedText.textContent = `Node: 0/${this.cameras.length}`;
+    if (scanOnlineCount) scanOnlineCount.textContent = '🟢 0 Online';
+    if (scanOfflineCount) scanOfflineCount.textContent = '🔴 0 Offline';
+    if (scanStatusTitle) scanStatusTitle.textContent = 'Memulai Pemindaian Bersih...';
+    if (scanTextEl) scanTextEl.innerHTML = 'Memulai Pemindaian...';
+
+    // 5. Expand HUD & start from 0
+    this.expandScannerHud();
+    setTimeout(() => {
+      this.startHlsBackgroundChecker(0);
+    }, 120);
   }
 
   minimizeScannerHud() {
@@ -409,6 +471,12 @@ class MedanCCTVMap {
     if (!modal) return;
 
     modal.style.display = 'flex';
+
+    // Update dynamic modal title
+    const modalTitle = document.getElementById('modalScannerCityTitle');
+    if (modalTitle) {
+      modalTitle.textContent = `Detail Jaringan & Status CCTV ATCS ${this.activeCityName || 'Aktif'}`;
+    }
 
     // Populate KPI
     const modalKpiOnline = document.getElementById('modalKpiOnline');
@@ -453,7 +521,8 @@ class MedanCCTVMap {
     listContainer.innerHTML = '';
 
     const results = this.cameras.filter(cam => {
-      const isOnline = this.streamStatusCache[cam.id] !== false;
+      const status = this.healthStatus[cam.id];
+      const isOnline = status ? status.online : false;
       const matchesFilter = filterType === 'all' || 
         (filterType === 'online' && isOnline) || 
         (filterType === 'offline' && !isOnline);
@@ -474,9 +543,11 @@ class MedanCCTVMap {
     }
 
     results.forEach(cam => {
-      const isOnline = this.streamStatusCache[cam.id] !== false;
+      const status = this.healthStatus[cam.id];
+      const isOnline = status ? status.online : false;
+      const latencyText = status && status.latencyMs ? ` (${status.latencyMs}ms)` : '';
       const card = document.createElement('div');
-      card.className = `scanner-cam-card ${this.activeCamId === cam.id ? 'is-active-cam' : ''}`;
+      card.className = `scanner-cam-card ${this.selectedCameraId === cam.id ? 'is-active-cam' : ''}`;
       card.innerHTML = `
         <div class="scanner-cam-meta">
           <span class="cam-title">CAM #${cam.id}: ${cam.name}</span>
@@ -484,20 +555,25 @@ class MedanCCTVMap {
         </div>
         <div class="scanner-cam-right">
           <span class="cam-status-pill ${isOnline ? 'pill-online' : 'pill-offline'}">
-            ${isOnline ? '🟢 Live' : '🔴 Offline'}
+            ${isOnline ? '🟢 Live' + latencyText : '🔴 Offline'}
           </span>
         </div>
       `;
 
       card.addEventListener('click', () => {
-        if (typeof window.loadStream === 'function') {
-          window.loadStream(cam.url);
+        if (window.loadStreamGlobal) {
+          window.loadStreamGlobal(cam.url);
         }
         if (this.map) {
-          this.map.setView([cam.lat, cam.lon], 16, { animate: true });
+          const lat = cam.lat !== undefined ? cam.lat : cam.latitude;
+          const lon = cam.lon !== undefined ? cam.lon : (cam.lng !== undefined ? cam.lng : cam.longitude);
+          this.map.setView([lat, lon], 16, { animate: true });
           this.highlightCamera(cam.id);
         }
         this.closeScannerDetailModal();
+        if (window.setViewModeGlobal) {
+          window.setViewModeGlobal('console');
+        }
       });
 
       listContainer.appendChild(card);
@@ -516,22 +592,14 @@ class MedanCCTVMap {
 
     if (btnRescan) {
       btnRescan.addEventListener('click', () => {
-        if (!this.isCheckingHls) {
-          localStorage.removeItem(this.cacheKey);
-          this.expandScannerHud();
-          this.startHlsBackgroundChecker(0);
-        }
+        this.resetAndRescanAll();
       });
     }
 
     if (btnRescanModal) {
       btnRescanModal.addEventListener('click', () => {
         this.closeScannerDetailModal();
-        if (!this.isCheckingHls) {
-          localStorage.removeItem(this.cacheKey);
-          this.expandScannerHud();
-          this.startHlsBackgroundChecker(0);
-        }
+        this.resetAndRescanAll();
       });
     }
 
@@ -808,6 +876,7 @@ class MedanCCTVMap {
 
   switchCity(cityId, cameras, centerLat, centerLon, cityName) {
     this.cityId = cityId;
+    this.activeCityName = cityName || (cityId === 'bandung' ? 'Kota Bandung' : (cityId === 'jogja' ? 'Kota Yogyakarta' : 'Kota Medan'));
     this.cameras = cameras || [];
     this.cacheKey = `cctv_health_cache_${cityId}_v2`;
     this.healthStatus = {};
