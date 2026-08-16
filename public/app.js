@@ -107,6 +107,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const useProxyToggle = document.getElementById('useProxyToggle');
   const modelEngineSelect = document.getElementById('modelEngineSelect');
 
+  // Purge deprecated cache from previous versions
+  try {
+    const cachedStream = localStorage.getItem('cctv_last_active_stream');
+    if (cachedStream && (cachedStream.includes('atcs-dishub.bandung.go.id') || cachedStream.includes('/proxy?url='))) {
+      localStorage.removeItem('cctv_last_active_stream');
+    }
+  } catch(e) {}
+
   const btnPlayPause = document.getElementById('btnPlayPause');
   const iconPlay = document.getElementById('iconPlay');
   const iconPause = document.getElementById('iconPause');

@@ -3,7 +3,7 @@
  * Engineered by Adjie Kurniawan (@adjie.apk)
  */
 
-const CACHE_NAME = 'medan-cctv-vision-v2.1';
+const CACHE_NAME = 'cctv-vision-v3.1.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
