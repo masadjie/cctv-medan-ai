@@ -1408,10 +1408,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnOpenConfigModal = document.getElementById('btnOpenConfigModal');
   const btnCloseConfigModalX = document.getElementById('btnCloseConfigModalX');
   const btnSaveConfigModal = document.getElementById('btnSaveConfigModal');
+  const btnToggleConfigFullscreen = document.getElementById('btnToggleConfigFullscreen');
+  const modalConfigCard = configModal ? configModal.querySelector('.modal-card-config') : null;
 
   if (btnOpenConfigModal && configModal) {
     btnOpenConfigModal.addEventListener('click', () => {
       configModal.style.display = 'flex';
+    });
+  }
+
+  if (btnToggleConfigFullscreen && modalConfigCard) {
+    btnToggleConfigFullscreen.addEventListener('click', () => {
+      const isFull = modalConfigCard.classList.toggle('is-fullscreen');
+      btnToggleConfigFullscreen.setAttribute('title', isFull ? 'Kecilkan Modal' : 'Layar Penuh Modal');
     });
   }
 

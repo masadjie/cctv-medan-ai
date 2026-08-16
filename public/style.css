@@ -3025,10 +3025,45 @@ body.light-theme .combobox-search-input {
   width: 100% !important;
 }
 
-/* Dedicated Config Modal Styling */
+/* Modal Header Actions */
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Dedicated Config Modal Styling (Spacious & Fullscreen Support) */
 .modal-card-config {
-  max-width: 580px;
+  max-width: 660px;
   width: 95%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-card-config .modal-body {
+  overflow-y: auto;
+  max-height: calc(88vh - 130px);
+  padding: 1.25rem 1.5rem;
+}
+
+/* Fullscreen Mode for Config Modal */
+.modal-card-config.is-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+.modal-card-config.is-fullscreen .modal-body {
+  max-height: calc(100vh - 130px) !important;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .config-toggles-grid {
