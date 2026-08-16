@@ -1814,7 +1814,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 10. Live CCTV Stream Video Recording Suite
+  // 10. Live CCTV Stream Video Recording Suite (Local Disk & Google Drive Configs)
   let isRecording = false;
   let mediaRecorder = null;
   let recordedChunks = [];
@@ -1823,6 +1823,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   let recCompositeCanvas = document.createElement('canvas');
   let recCompositeCtx = recCompositeCanvas.getContext('2d');
   let recAnimationId = null;
+
+  // Storage Destination & Quality Configs
+  let storageDestination = localStorage.getItem('cctv_storage_dest') || 'local'; // 'local' | 'drive'
+  let recordingBitrate = parseInt(localStorage.getItem('cctv_rec_bitrate') || '3000000', 10);
+  let recordingMode = localStorage.getItem('cctv_rec_mode') || 'annotated'; // 'annotated' | 'raw'
+  let autoDownloadRecording = localStorage.getItem('cctv_auto_dl_rec') !== 'false';
 
   const recordingModal = document.getElementById('recordingModal');
   const recordingPreviewVideo = document.getElementById('recordingPreviewVideo');
@@ -1834,6 +1840,81 @@ document.addEventListener('DOMContentLoaded', async () => {
   const recMetaDuration = document.getElementById('recMetaDuration');
   const recMetaFileSize = document.getElementById('recMetaFileSize');
   const recMetaFormat = document.getElementById('recMetaFormat');
+
+  // Config Modal Elements for Recording
+  const btnStorageLocal = document.getElementById('btnStorageLocal');
+  const btnStorageDrive = document.getElementById('btnStorageDrive');
+  const storageHintText = document.getElementById('storageHintText');
+  const recordingBitrateSelect = document.getElementById('recordingBitrateSelect');
+  const recordingModeSelect = document.getElementById('recordingModeSelect');
+  const autoDownloadRecordingToggle = document.getElementById('autoDownloadRecordingToggle');
+
+  function updateStorageUiState() {
+    if (btnStorageLocal && btnStorageDrive) {
+      btnStorageLocal.classList.toggle('active', storageDestination === 'local');
+      btnStorageDrive.classList.toggle('active', storageDestination === 'drive');
+    }
+    if (storageHintText) {
+      if (storageDestination === 'local') {
+        storageHintText.innerHTML = 'File video akan disimpan langsung ke folder <b>Downloads</b> laptop Anda secara otomatis setelah tombol Stop ditekan.';
+      } else {
+        storageHintText.innerHTML = 'File video akan disiapkan dan tab <b>Google Drive</b> akan otomatis terbuka untuk memudahkan upload rekaman ke Cloud.';
+      }
+    }
+    if (recordingBitrateSelect) {
+      recordingBitrateSelect.value = recordingBitrate.toString();
+    }
+    if (recordingModeSelect) {
+      recordingModeSelect.value = recordingMode;
+    }
+    if (autoDownloadRecordingToggle) {
+      autoDownloadRecordingToggle.checked = autoDownloadRecording;
+    }
+  }
+
+  if (btnStorageLocal) {
+    btnStorageLocal.addEventListener('click', () => {
+      storageDestination = 'local';
+      localStorage.setItem('cctv_storage_dest', 'local');
+      updateStorageUiState();
+      showToast('💻 Target Rekaman: Local Disk Laptop (Downloads)');
+    });
+  }
+
+  if (btnStorageDrive) {
+    btnStorageDrive.addEventListener('click', () => {
+      storageDestination = 'drive';
+      localStorage.setItem('cctv_storage_dest', 'drive');
+      updateStorageUiState();
+      showToast('☁️ Target Rekaman: Google Drive Cloud Backup');
+    });
+  }
+
+  if (recordingBitrateSelect) {
+    recordingBitrateSelect.addEventListener('change', () => {
+      recordingBitrate = parseInt(recordingBitrateSelect.value, 10);
+      localStorage.setItem('cctv_rec_bitrate', recordingBitrate.toString());
+      showToast(`Bitrate Rekaman Diperbarui: ${(recordingBitrate / 1000000).toFixed(1)} Mbps`);
+    });
+  }
+
+  if (recordingModeSelect) {
+    recordingModeSelect.addEventListener('change', () => {
+      recordingMode = recordingModeSelect.value;
+      localStorage.setItem('cctv_rec_mode', recordingMode);
+      showToast(recordingMode === 'annotated' ? '🎯 Mode Rekam: Lengkap Anotasi AI & Watermark' : '📹 Mode Rekam: Raw Clean Stream Asli');
+    });
+  }
+
+  if (autoDownloadRecordingToggle) {
+    autoDownloadRecordingToggle.addEventListener('change', () => {
+      autoDownloadRecording = autoDownloadRecordingToggle.checked;
+      localStorage.setItem('cctv_auto_dl_rec', autoDownloadRecording.toString());
+      showToast(autoDownloadRecording ? 'Auto-Download Rekaman: AKTIF' : 'Auto-Download Rekaman: NONAKTIF');
+    });
+  }
+
+  updateStorageUiState();
 
   function formatTime(totalSec) {
     const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
@@ -1857,27 +1938,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       recCompositeCtx.drawImage(video, 0, 0, w, h);
     } catch (e) {}
 
-    // 2. Overlay live AI Detection Bounding Boxes & HUD
-    try {
-      recCompositeCtx.drawImage(canvas, 0, 0, w, h);
-    } catch (e) {}
+    // 2. Overlay live AI Detection Bounding Boxes & HUD if annotated mode is active
+    if (recordingMode === 'annotated') {
+      try {
+        recCompositeCtx.drawImage(canvas, 0, 0, w, h);
+      } catch (e) {}
 
-    // 3. Render High-Tech Watermark & Timestamp banner
-    recCompositeCtx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-    recCompositeCtx.fillRect(0, h - 34, w, 34);
+      // 3. Render High-Tech Watermark & Timestamp banner
+      recCompositeCtx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      recCompositeCtx.fillRect(0, h - 34, w, 34);
 
-    recCompositeCtx.fillStyle = '#ef4444';
-    recCompositeCtx.beginPath();
-    recCompositeCtx.arc(16, h - 17, 5, 0, Math.PI * 2);
-    recCompositeCtx.fill();
+      recCompositeCtx.fillStyle = '#ef4444';
+      recCompositeCtx.beginPath();
+      recCompositeCtx.arc(16, h - 17, 5, 0, Math.PI * 2);
+      recCompositeCtx.fill();
 
-    recCompositeCtx.fillStyle = '#ffffff';
-    recCompositeCtx.font = 'bold 12px monospace';
-    recCompositeCtx.fillText(`REC ${formatTime(recordingSeconds)}`, 28, h - 13);
+      recCompositeCtx.fillStyle = '#ffffff';
+      recCompositeCtx.font = 'bold 12px monospace';
+      recCompositeCtx.fillText(`REC ${formatTime(recordingSeconds)}`, 28, h - 13);
 
-    recCompositeCtx.fillStyle = '#38bdf8';
-    const camLabel = osdCamName ? osdCamName.textContent : 'CCTV Live';
-    recCompositeCtx.fillText(`| ${camLabel} | ${new Date().toLocaleString('id-ID')}`, 110, h - 13);
+      recCompositeCtx.fillStyle = '#38bdf8';
+      const camLabel = osdCamName ? osdCamName.textContent : 'CCTV Live';
+      recCompositeCtx.fillText(`| ${camLabel} | ${new Date().toLocaleString('id-ID')}`, 110, h - 13);
+    }
 
     recAnimationId = requestAnimationFrame(drawRecordingFrame);
   }
@@ -1916,7 +1999,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       mediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        videoBitsPerSecond: 2500000 // 2.5 Mbps crisp traffic quality
+        videoBitsPerSecond: recordingBitrate
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -1946,7 +2029,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (recordBtnText) recordBtnText.textContent = `Stop (${timeStr})`;
       }, 1000);
 
-      showToast('🔴 Perekaman CCTV Dimulai...');
+      const targetLabel = storageDestination === 'drive' ? 'Target: Google Drive' : 'Target: Local Disk Laptop';
+      showToast(`🔴 Perekaman Dimulai (${targetLabel})...`);
     } catch (err) {
       console.error('Recording initialization failed:', err);
       showToast('❌ Browser tidak mendukung perekaman canvas stream.');
@@ -1970,7 +2054,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     isRecording = false;
     mediaRecorder.stop();
-    showToast('⏹️ Perekaman Selesai — Memproses Video...');
+    showToast('⏹️ Perekaman Selesai — Menyimpan Hasil...');
   }
 
   function handleRecordingComplete() {
@@ -2011,6 +2095,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
         showToast('📂 Mengunduh video & membuka Google Drive...');
       };
+    }
+
+    // Destination Behavior Execution:
+    if (storageDestination === 'local') {
+      if (autoDownloadRecording) {
+        btnDownloadRecording.click();
+        showToast('💻 Video otomatis disimpan ke Local Disk (Downloads)!');
+      }
+    } else if (storageDestination === 'drive') {
+      btnDownloadRecording.click();
+      window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+      showToast('☁️ Video diunduh & Google Drive terbuka untuk upload!');
     }
 
     if (recordingModal) {
@@ -2132,10 +2228,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnToggleConfigFullscreen = document.getElementById('btnToggleConfigFullscreen');
   const modalConfigCard = configModal ? configModal.querySelector('.modal-card-config') : null;
 
-  // Config Modal Tabs (AI / Display / About)
+  // Config Modal Tabs (AI / Display / Recording / About)
   const configTabBtns = document.querySelectorAll('.config-tab-btn');
   const tabPaneAi = document.getElementById('tabPaneAi');
   const tabPaneDisplay = document.getElementById('tabPaneDisplay');
+  const tabPaneRecording = document.getElementById('tabPaneRecording');
   const tabPaneAbout = document.getElementById('tabPaneAbout');
 
   configTabBtns.forEach(btn => {
@@ -2144,6 +2241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       configTabBtns.forEach(b => b.classList.toggle('active', b === btn));
       if (tabPaneAi) tabPaneAi.classList.toggle('active', targetTab === 'ai');
       if (tabPaneDisplay) tabPaneDisplay.classList.toggle('active', targetTab === 'display');
+      if (tabPaneRecording) tabPaneRecording.classList.toggle('active', targetTab === 'recording');
       if (tabPaneAbout) tabPaneAbout.classList.toggle('active', targetTab === 'about');
     });
   });

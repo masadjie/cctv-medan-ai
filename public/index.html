@@ -769,6 +769,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           <span>Tampilan & Video</span>
         </button>
+        <button type="button" class="config-tab-btn" data-tab="recording">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="6" fill="#ef4444"/><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span>Perekaman & Storage</span>
+        </button>
         <button type="button" class="config-tab-btn" data-tab="about">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <span>Tentang & Open Source</span>
@@ -902,7 +906,60 @@
           </div>
         </div>
 
-        <!-- TAB 3: About & Open Source -->
+        <!-- TAB 3: Recording & Storage Destination Settings -->
+        <div class="config-tab-pane" id="tabPaneRecording">
+          <!-- Storage Destination Mode -->
+          <div class="control-row">
+            <label class="control-label">Target Lokasi Default Penyimpanan Rekaman:</label>
+            <div class="theme-selector-pills">
+              <button type="button" class="theme-pill-btn active" id="btnStorageLocal" data-set-storage="local">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span>💻 Local Disk Laptop (Download Langsung)</span>
+              </button>
+              <button type="button" class="theme-pill-btn" id="btnStorageDrive" data-set-storage="drive">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                <span>☁️ Google Drive / Cloud Backup</span>
+              </button>
+            </div>
+            <p class="control-hint" id="storageHintText" style="margin-top: 6px; font-size: 0.76rem; color: var(--text-muted);">
+              File video akan disimpan langsung ke folder <b>Downloads</b> laptop Anda secara otomatis setelah tombol Stop ditekan.
+            </p>
+          </div>
+
+          <!-- Video Quality & Bitrate -->
+          <div class="control-row">
+            <label class="control-label" for="recordingBitrateSelect">Kualitas & Bitrate Rekaman Video:</label>
+            <div class="select-wrapper">
+              <select id="recordingBitrateSelect" class="clean-select">
+                <option value="3000000" selected>🚀 1080p HD Crisp (3.0 Mbps — Rekomendasi Jernih)</option>
+                <option value="1500000">⚡ 720p Standar (1.5 Mbps — Hemat Ruang Penyimpanan)</option>
+                <option value="5000000">🏆 2K Ultra HQ (5.0 Mbps — Definisi Maksimal)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Annotation Mode -->
+          <div class="control-row">
+            <label class="control-label" for="recordingModeSelect">Lapisan Video yang Direkam:</label>
+            <div class="select-wrapper">
+              <select id="recordingModeSelect" class="clean-select">
+                <option value="annotated" selected>🎯 Lengkap dengan Bounding Box AI, Kecepatan & Watermark Resmi</option>
+                <option value="raw">📹 Video Asli Polos (Raw Clean Stream)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Auto-download switch -->
+          <div class="config-toggles-grid">
+            <label class="clean-checkbox" title="Otomatis unduh file rekaman ke folder Downloads tanpa harus klik tombol tambahan">
+              <input type="checkbox" id="autoDownloadRecordingToggle" checked />
+              <span class="checkbox-box"></span>
+              <span>Otomatis Unduh ke Local Disk saat Tombol Stop Ditekan</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- TAB 4: About & Open Source -->
         <div class="config-tab-pane" id="tabPaneAbout">
           <div class="about-app-card">
             <div class="about-app-header">
