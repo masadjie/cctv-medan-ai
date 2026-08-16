@@ -200,6 +200,22 @@
         <!-- The Leaflet Map Container -->
         <div id="cctvMapContainer"></div>
 
+        <!-- Standby Placeholder when No City is Selected -->
+        <div class="map-standby-overlay" id="mapStandbyOverlay">
+          <div class="standby-overlay-card">
+            <div class="standby-radar-ring">
+              <span class="standby-pulse-dot"></span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 16 12 12 8"/></svg>
+            </div>
+            <h2 class="standby-heading">Silakan Pilih Kota Terlebih Dahulu</h2>
+            <p class="standby-desc">Pilih wilayah kota di Indonesia untuk memuat peta interaktif dan jaringan siaran CCTV lalu lintas.</p>
+            <button type="button" class="btn btn-primary btn-standby-select-city" id="btnStandbySelectCity">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>Pilih Kota Sekarang</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Prominent Live Stream Scanner HUD on Map -->
         <div class="map-scanner-hud" id="mapScannerHud">
           <div class="scanner-hud-header">

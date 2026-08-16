@@ -1704,14 +1704,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // 15c. On-Demand City Activation (Zero-Weight Startup)
+  // 15c. On-Demand City Activation & Map Standby Overlay
+  const mapStandbyOverlay = document.getElementById('mapStandbyOverlay');
+  const btnStandbySelectCity = document.getElementById('btnStandbySelectCity');
   let isCityActivated = false;
+
+  if (btnStandbySelectCity) {
+    btnStandbySelectCity.addEventListener('click', openCitySelectorModal);
+  }
 
   async function activateCity(cityId, cityName, lat, lon) {
     if (cityId === 'medan') {
       if (currentCityLabel) currentCityLabel.textContent = cityName;
       localStorage.setItem('cctv_selected_city', 'medan');
       closeCitySelectorModal();
+
+      // Hide standby placeholder and reveal map
+      if (mapStandbyOverlay) {
+        mapStandbyOverlay.classList.add('hidden');
+      }
+
       showToast(`🏙️ ${cityName} Terpilih — Memuat Data CCTV & Neural Engine...`);
 
       // 1. Initialize Map on-demand
@@ -1719,6 +1731,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.medanCCTVMap.init();
       } else if (window.medanCCTVMap && window.medanCCTVMap.map) {
         window.medanCCTVMap.map.setView([lat, lon], 13);
+        window.medanCCTVMap.startHlsBackgroundChecker();
       }
 
       // 2. Lazy Load AI Model Engine
