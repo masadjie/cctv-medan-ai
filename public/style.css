@@ -1348,6 +1348,99 @@ body.light-theme .combobox-search-input {
   font-family: var(--font-mono);
 }
 
+/* Custom Leaflet Hover Tooltip */
+.leaflet-tooltip.cctv-map-hover-tooltip {
+  background: rgba(12, 14, 22, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  padding: 8px 12px !important;
+  color: var(--text-heading) !important;
+  pointer-events: none !important;
+  animation: modal-pop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.leaflet-tooltip-top.cctv-map-hover-tooltip::before {
+  border-top-color: rgba(12, 14, 22, 0.94) !important;
+}
+
+.map-hover-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 170px;
+  max-width: 260px;
+}
+
+.hover-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.hover-cam-id {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.hover-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.hover-status-badge.online {
+  color: #10b981;
+}
+
+.hover-status-badge.offline {
+  color: #ef4444;
+}
+
+.hover-status-badge .dot-sm {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.hover-status-badge .dot-sm.green {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.hover-status-badge .dot-sm.red {
+  background: #ef4444;
+}
+
+.hover-cam-name {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.hover-cam-alias {
+  font-family: var(--font-sans);
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
 .popup-status-badge.online {
   color: var(--accent-total);
 }

@@ -642,6 +642,27 @@ class MedanCCTVMap {
         </div>
       `;
 
+      // Interactive Hover Tooltip showing exact location & name
+      const tooltipHtml = `
+        <div class="map-hover-card">
+          <div class="hover-top-row">
+            <span class="hover-cam-id">CAM #${cam.id}</span>
+            <span class="hover-status-badge ${isOnline ? 'online' : 'offline'}">
+              <span class="dot-sm ${isOnline ? 'green' : 'red'}"></span> ${isOnline ? 'Live' : 'Offline'}
+            </span>
+          </div>
+          <div class="hover-cam-name">${cam.name}</div>
+          <div class="hover-cam-alias">${cam.alias}</div>
+        </div>
+      `;
+
+      marker.bindTooltip(tooltipHtml, {
+        direction: 'top',
+        offset: [0, -42],
+        className: 'cctv-map-hover-tooltip',
+        opacity: 1
+      });
+
       marker.bindPopup(popupHtml, {
         className: 'cctv-custom-leaflet-popup',
         maxWidth: 290,
