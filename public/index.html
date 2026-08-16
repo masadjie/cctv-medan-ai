@@ -651,41 +651,66 @@
     </div>
   </div>
 
-  <!-- City Selection Modal Dialog (Executive Command Center Gateway) -->
-  <div class="modal-backdrop" id="citySelectorModal">
-    <div class="modal-card modal-card-cities">
-      <!-- Modal Executive Top Banner -->
-      <div class="city-modal-hero">
-        <div class="hero-left-content">
-          <div class="city-hero-pill">
-            <span class="pulse-dot green"></span>
-            <span>PUSAT KENDALI SURVEILLANCE ATCS NASIONAL</span>
+  <!-- Full-Screen Immersive City Selection Gateway (Searchable Nationwide Command Center) -->
+  <div class="modal-backdrop city-gateway-fullscreen" id="citySelectorModal">
+    <div class="city-gateway-container">
+      
+      <!-- Gateway Top Header Bar -->
+      <div class="city-gateway-topbar">
+        <div class="gateway-brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 7l-7 5 7 5V7z" />
+              <rect x="1" y="5" width="15" height="14" rx="2.5" ry="2.5" />
+              <circle cx="8.5" cy="12" r="2.5" />
+            </svg>
           </div>
-          <h2 class="city-hero-title">Pilih Kota Pemantauan Lalu Lintas</h2>
-          <p class="city-hero-sub">Integrasi Multi-Node AI Vision, Peta Topologi Geografis & Penghitung Telemetri Kendaraan Real-Time</p>
+          <div>
+            <div class="gateway-brand-title">NUSANTARA TRAFFIC VISION</div>
+            <div class="gateway-brand-sub">PUSAT KENDALI SURVEILLANCE LALU LINTAS ATCS NASIONAL</div>
+          </div>
         </div>
-        <button id="btnCloseCityModal" class="btn-icon-close" title="Tutup Modal">
+
+        <button id="btnCloseCityModal" class="btn-gateway-close" title="Tutup / Kembali ke Peta">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Tutup / Kembali</span>
         </button>
       </div>
 
-      <div class="modal-body-cities">
-        <!-- Region Filter Pills -->
-        <div class="city-region-filter-bar">
-          <span class="region-filter-label">Wilayah:</span>
-          <div class="region-filter-pills">
-            <button type="button" class="region-pill active" data-region="all">Semua Wilayah</button>
-            <button type="button" class="region-pill" data-region="sumatera">Sumatera</button>
-            <button type="button" class="region-pill" data-region="jawa">Jawa & Bali</button>
-            <button type="button" class="region-pill" data-region="lainnya">Kalimantan & Lainnya</button>
-          </div>
+      <!-- Gateway Hero Content & Search Bar -->
+      <div class="city-gateway-hero-section">
+        <div class="gateway-hero-badge">
+          <span class="pulse-dot green"></span>
+          <span>MULTI-NODE GEOSPATIAL INTELLIGENCE & TELEMETRY</span>
+        </div>
+        <h1 class="gateway-hero-heading">Pilih Kota Pemantauan Lalu Lintas</h1>
+        <p class="gateway-hero-desc">Pilih atau cari kota di Indonesia untuk memantau siaran CCTV ATCS live feed dan analisis deteksi kendaraan berbasis AI Vision.</p>
+
+        <!-- Giant Live Search Bar -->
+        <div class="city-search-giant-wrapper">
+          <svg class="search-giant-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchCityInput" class="search-giant-input" placeholder="Ketik nama kota, daerah, atau provinsi (e.g. Medan, Jakarta, Bandung, Surabaya, Bali, Solo, Makassar)..." autocomplete="off" />
+          <button type="button" class="search-giant-clear hidden" id="btnClearCitySearch" title="Reset Pencarian">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
-        <!-- City Cards Grid -->
-        <div class="cities-grid-selection">
+        <!-- Filter Region Pills -->
+        <div class="gateway-region-pills-bar">
+          <button type="button" class="gateway-region-pill active" data-region="all">Semua Kota (13)</button>
+          <button type="button" class="gateway-region-pill" data-region="sumatera">Sumatera</button>
+          <button type="button" class="gateway-region-pill" data-region="jawa">Jawa</button>
+          <button type="button" class="gateway-region-pill" data-region="bali">Bali & Nusa Tenggara</button>
+          <button type="button" class="gateway-region-pill" data-region="lainnya">Kalimantan & Sulawesi</button>
+        </div>
+      </div>
+
+      <!-- Search Results Grid -->
+      <div class="city-gateway-grid-scroll">
+        <div class="city-gateway-cards-grid" id="cityCardsGrid">
+          
           <!-- 1. Kota Medan (ACTIVE) -->
-          <div class="city-card active" data-region="sumatera" data-city-id="medan" data-city-name="Kota Medan" data-lat="3.5896" data-lon="98.6738" data-cams="60+">
-            <div class="city-card-glow-bg"></div>
+          <div class="city-card active" data-region="sumatera" data-city-id="medan" data-city-name="Kota Medan" data-lat="3.5896" data-lon="98.6738" data-cams="60+" data-search="medan sumatera utara diskominfo atcs dishub">
             <div class="city-card-top-row">
               <div class="city-icon-badge">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
@@ -699,18 +724,10 @@
             </div>
 
             <div class="city-specs-row">
-              <div class="spec-col">
-                <span class="spec-label">Latency</span>
-                <span class="spec-val emerald-val">~85ms</span>
-              </div>
-              <div class="spec-col">
-                <span class="spec-label">AI Engine</span>
-                <span class="spec-val">YOLOv8 Multi-Scale</span>
-              </div>
-              <div class="spec-col">
-                <span class="spec-label">Cakupan</span>
-                <span class="spec-val">60 Simpang Utama</span>
-              </div>
+              <div class="spec-col"><span class="spec-label">Latency</span><span class="spec-val emerald-val">~85ms</span></div>
+              <div class="spec-col"><span class="spec-label">AI Engine</span><span class="spec-val">YOLOv8 Slicing</span></div>
+              <div class="spec-col"><span class="spec-label">Cakupan</span><span class="spec-val">60 Simpang Utama</span></div>
+              <div class="spec-col"><span class="spec-label">Koneksi</span><span class="spec-val">HLS Live Stream</span></div>
             </div>
 
             <div class="city-action-container">
@@ -721,138 +738,254 @@
             </div>
           </div>
 
-          <!-- 2. DKI Jakarta (COMING SOON) -->
-          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="jakarta" data-city-name="DKI Jakarta">
+          <!-- 2. DKI Jakarta -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="jakarta" data-city-name="DKI Jakarta" data-search="jakarta dki jabodetabek tmc polda monas">
             <div class="city-card-top-row">
               <div class="city-icon-badge muted-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="8" y1="6" x2="8" y2="6.01"/><line x1="16" y1="6" x2="16" y2="6.01"/><line x1="12" y1="6" x2="12" y2="6.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="12" y1="18" x2="12" y2="18.01"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="16" y1="14" x2="16" y2="14.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="8" y1="6" x2="8" y2="6.01"/><line x1="16" y1="6" x2="16" y2="6.01"/><line x1="12" y1="6" x2="12" y2="6.01"/></svg>
               </div>
               <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            
             <div class="city-card-main-info">
               <h3 class="city-name-text">DKI Jakarta</h3>
               <p class="city-sub-text">Jabodetabek &bull; TMC Polda & Dishub Jakarta</p>
             </div>
-
             <div class="city-specs-row">
               <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">120+ Node</span></div>
               <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
               <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / RTSP</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Metropolitan</span></div>
             </div>
-
-            <div class="city-action-container">
-              <span class="btn-city-disabled">Segera Hadir</span>
-            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
           </div>
 
-          <!-- 3. Kota Bandung (COMING SOON) -->
-          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="bandung" data-city-name="Kota Bandung">
+          <!-- 3. Kota Bandung -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="bandung" data-city-name="Kota Bandung" data-search="bandung jawa barat jabar gedung sate dishub">
             <div class="city-card-top-row">
               <div class="city-icon-badge muted-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               </div>
               <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            
             <div class="city-card-main-info">
               <h3 class="city-name-text">Kota Bandung</h3>
               <p class="city-sub-text">Jawa Barat &bull; Jaringan ATCS Dishub Bandung</p>
             </div>
-
             <div class="city-specs-row">
               <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">80+ Node</span></div>
               <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
               <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / WebRTC</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Jawa Barat</span></div>
             </div>
-
-            <div class="city-action-container">
-              <span class="btn-city-disabled">Segera Hadir</span>
-            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
           </div>
 
-          <!-- 4. Kota Surabaya (COMING SOON) -->
-          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="surabaya" data-city-name="Kota Surabaya">
+          <!-- 4. Kota Surabaya -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="surabaya" data-city-name="Kota Surabaya" data-search="surabaya jawa timur jatim sits pahlawan dishub">
             <div class="city-card-top-row">
               <div class="city-icon-badge muted-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               </div>
               <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            
             <div class="city-card-main-info">
               <h3 class="city-name-text">Kota Surabaya</h3>
               <p class="city-sub-text">Jawa Timur &bull; SITS Dishub Surabaya</p>
             </div>
-
             <div class="city-specs-row">
               <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">90+ Node</span></div>
               <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
               <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Jawa Timur</span></div>
             </div>
-
-            <div class="city-action-container">
-              <span class="btn-city-disabled">Segera Hadir</span>
-            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
           </div>
 
-          <!-- 5. Kota Semarang (COMING SOON) -->
-          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="semarang" data-city-name="Kota Semarang">
+          <!-- 5. Kota Semarang -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="semarang" data-city-name="Kota Semarang" data-search="semarang jawa tengah jateng lawang sewu dishub">
             <div class="city-card-top-row">
               <div class="city-icon-badge muted-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               </div>
               <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            
             <div class="city-card-main-info">
               <h3 class="city-name-text">Kota Semarang</h3>
               <p class="city-sub-text">Jawa Tengah &bull; ATCS Dishub Semarang</p>
             </div>
-
             <div class="city-specs-row">
               <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">50+ Node</span></div>
               <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
               <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Jawa Tengah</span></div>
             </div>
-
-            <div class="city-action-container">
-              <span class="btn-city-disabled">Segera Hadir</span>
-            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
           </div>
 
-          <!-- 6. Kota Denpasar (COMING SOON) -->
-          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="denpasar" data-city-name="Kota Denpasar">
+          <!-- 6. Kota Denpasar -->
+          <div class="city-card coming-soon-card" data-region="bali" data-city-id="denpasar" data-city-name="Kota Denpasar" data-search="denpasar bali kuta sanur gwk dishub">
             <div class="city-card-top-row">
               <div class="city-icon-badge muted-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               </div>
               <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            
             <div class="city-card-main-info">
               <h3 class="city-name-text">Kota Denpasar</h3>
               <p class="city-sub-text">Bali &bull; Jaringan ATCS Dishub Denpasar</p>
             </div>
-
             <div class="city-specs-row">
               <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">45+ Node</span></div>
               <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
               <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Bali</span></div>
             </div>
-
-            <div class="city-action-container">
-              <span class="btn-city-disabled">Segera Hadir</span>
-            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
           </div>
+
+          <!-- 7. Kota Yogyakarta -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="jogja" data-city-name="Kota Yogyakarta" data-search="yogyakarta jogja diy malioboro tugu">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
+            </div>
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Yogyakarta</h3>
+              <p class="city-sub-text">DI Yogyakarta &bull; ATCS Dishub DIY</p>
+            </div>
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">65+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">DI Yogyakarta</span></div>
+            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
+          </div>
+
+          <!-- 8. Kota Surakarta / Solo -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="solo" data-city-name="Kota Surakarta (Solo)" data-search="solo surakarta jawa tengah jateng slamet riyadi">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
+            </div>
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Surakarta (Solo)</h3>
+              <p class="city-sub-text">Jawa Tengah &bull; CC Room Dishub Surakarta</p>
+            </div>
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">45+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Jawa Tengah</span></div>
+            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
+          </div>
+
+          <!-- 9. Kota Palembang -->
+          <div class="city-card coming-soon-card" data-region="sumatera" data-city-id="palembang" data-city-name="Kota Palembang" data-search="palembang sumatera selatan sumsel ampera lrt dishub">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
+            </div>
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Palembang</h3>
+              <p class="city-sub-text">Sumatera Selatan &bull; ATCS Dishub Palembang</p>
+            </div>
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">40+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Sumatera</span></div>
+            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
+          </div>
+
+          <!-- 10. Kota Batam -->
+          <div class="city-card coming-soon-card" data-region="sumatera" data-city-id="batam" data-city-name="Kota Batam" data-search="batam kepulauan riau kepri barelang dishub bp">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
+            </div>
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Batam</h3>
+              <p class="city-sub-text">Kepulauan Riau &bull; BP Batam & Dishub</p>
+            </div>
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">35+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / RTSP</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Kep. Riau</span></div>
+            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
+          </div>
+
+          <!-- 11. Kota Makassar -->
+          <div class="city-card coming-soon-card" data-region="lainnya" data-city-id="makassar" data-city-name="Kota Makassar" data-search="makassar sulawesi selatan sulsel losari dishub war room">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
+            </div>
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Makassar</h3>
+              <p class="city-sub-text">Sulawesi Selatan &bull; Operation War Room Makassar</p>
+            </div>
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">50+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / RTSP</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Sulawesi</span></div>
+            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
+          </div>
+
+          <!-- 12. Kota Balikpapan (IKN Corridor) -->
+          <div class="city-card coming-soon-card" data-region="lainnya" data-city-id="balikpapan" data-city-name="Kota Balikpapan (IKN)" data-search="balikpapan kalimantan timur kaltim ikn nusantara dishub">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
+            </div>
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Balikpapan (IKN)</h3>
+              <p class="city-sub-text">Kalimantan Timur &bull; Koridor IKN Nusantara</p>
+            </div>
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">35+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / RTSP</span></div>
+              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">Kalimantan</span></div>
+            </div>
+            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
+          </div>
+        </div>
+
+        <!-- No Results Fallback -->
+        <div class="city-no-results hidden" id="cityNoResults">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <h3>Kota Tidak Ditemukan</h3>
+          <p>Coba kata kunci pencarian lain atau pilih salah satu filter wilayah di atas.</p>
         </div>
       </div>
 
-      <!-- Modal Footer -->
-      <div class="city-modal-footer">
+      <!-- Gateway Bottom Footer -->
+      <div class="city-gateway-footer">
         <div class="footer-left-security">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>Enkripsi Node &bull; Anti-SSRF Protection &bull; By <b>Adjie Kurniawan</b> (<a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer">@adjie.apk</a>)</span>
+          <span>Enkripsi Node CCTV Nusantara &bull; Anti-SSRF Protection &bull; By <b>Adjie Kurniawan</b> (<a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer">@adjie.apk</a>)</span>
+        </div>
+        <div class="footer-right-stats">
+          <span>Platform Version: <b>2.6.0 PRO</b></span>
         </div>
       </div>
     </div>

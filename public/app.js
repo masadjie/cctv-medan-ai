@@ -1621,22 +1621,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Region Filter Tabs inside City Modal
-  const regionPills = document.querySelectorAll('.region-pill');
-  regionPills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      regionPills.forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      const region = pill.getAttribute('data-region');
+  // 15b. Searchable City Filter & Region Filter Logic
+  const searchCityInput = document.getElementById('searchCityInput');
+  const btnClearCitySearch = document.getElementById('btnClearCitySearch');
+  const cityNoResults = document.getElementById('cityNoResults');
+  const gatewayRegionPills = document.querySelectorAll('.gateway-region-pill');
+  let currentActiveRegion = 'all';
 
-      cityCards.forEach(card => {
-        const cardRegion = card.getAttribute('data-region');
-        if (region === 'all' || cardRegion === region) {
-          card.style.display = 'flex';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+  function filterCityCards() {
+    const query = searchCityInput ? searchCityInput.value.toLowerCase().trim() : '';
+    let visibleCount = 0;
+
+    cityCards.forEach(card => {
+      const cardRegion = card.getAttribute('data-region') || '';
+      const cardName = card.getAttribute('data-city-name') || '';
+      const cardSearchData = card.getAttribute('data-search') || '';
+      const cardText = (cardName + ' ' + cardSearchData + ' ' + card.innerText).toLowerCase();
+
+      const matchesRegion = currentActiveRegion === 'all' || cardRegion === currentActiveRegion;
+      const matchesSearch = !query || cardText.includes(query);
+
+      if (matchesRegion && matchesSearch) {
+        card.style.display = 'flex';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (cityNoResults) {
+      cityNoResults.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    if (btnClearCitySearch) {
+      btnClearCitySearch.classList.toggle('hidden', query.length === 0);
+    }
+  }
+
+  if (searchCityInput) {
+    searchCityInput.addEventListener('input', filterCityCards);
+  }
+
+  if (btnClearCitySearch) {
+    btnClearCitySearch.addEventListener('click', () => {
+      if (searchCityInput) {
+        searchCityInput.value = '';
+        searchCityInput.focus();
+      }
+      filterCityCards();
+    });
+  }
+
+  gatewayRegionPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      gatewayRegionPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentActiveRegion = pill.getAttribute('data-region') || 'all';
+      filterCityCards();
     });
   });
 
