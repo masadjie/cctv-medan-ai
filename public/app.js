@@ -32,12 +32,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       try { splashScreen.remove(); } catch (e) {}
 
-      // Auto-restore previously selected city from localStorage
+      // Auto-restore previously selected city from localStorage if available
       const savedCity = localStorage.getItem('cctv_selected_city');
-      if (savedCity === 'medan') {
-        activateCity('medan', 'Kota Medan', 3.5896, 98.6738);
+      if (savedCity === 'medan' || savedCity === 'jogja' || savedCity === 'bandung') {
+        const card = document.querySelector(`.city-card[data-city-id="${savedCity}"]`);
+        if (card) {
+          const cityName = card.getAttribute('data-city-name');
+          const lat = parseFloat(card.getAttribute('data-lat'));
+          const lon = parseFloat(card.getAttribute('data-lon'));
+          activateCity(savedCity, cityName, lat, lon);
+        }
       } else {
-        // Show City Selector Gateway for first-time visitors
+        // Show City Selector Gateway for first-time visitors - keep standby and zero tracking
+        isCityActivated = false;
+        resetActiveCameraMonitoring();
         openCitySelectorModal();
       }
     }, 550);
@@ -1382,7 +1390,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 6. Detection Frame Loop
   async function detectLoop() {
+    // 1. Guard: If no city has been activated yet, completely stop tracking & detection
+    if (!isCityActivated) {
+      trackedObjects = [];
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      animationFrameId = requestAnimationFrame(detectLoop);
+      return;
+    }
+
     if (!isAiRunning) {
+      trackedObjects = [];
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       animationFrameId = requestAnimationFrame(detectLoop);
       return;
@@ -2501,6 +2518,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       setTimeout(() => {
         if (window.medanCCTVMap) window.medanCCTVMap.invalidateSize();
       }, 80);
+    }
+
+    // Automatically reset currently playing camera when moving to Map view
+    if (mode === 'map') {
+      resetActiveCameraMonitoring();
     }
   }
 
