@@ -851,14 +851,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Step 4: Strict NMS per category to prevent duplicate bounding boxes
-    const validDetections = applyNMS(candidateDetections, 0.40);
+    // Step 4: Strict NMS per category & spatial cluster deduplication
+    let validDetections = applyNMS(candidateDetections, 0.35);
+
+    // Additional spatial cluster merging (merge boxes whose centers are within 28px of each other)
+    const filteredDetections = [];
+    validDetections.forEach(det => {
+      const cx = det.bbox[0] + det.bbox[2] / 2;
+      const cy = det.bbox[1] + det.bbox[3] / 2;
+      const duplicate = filteredDetections.find(existing => {
+        if (existing.category !== det.category) return false;
+        const exCx = existing.bbox[0] + existing.bbox[2] / 2;
+        const exCy = existing.bbox[1] + existing.bbox[3] / 2;
+        return Math.hypot(cx - exCx, cy - exCy) < 28;
+      });
+      if (!duplicate) {
+        filteredDetections.push(det);
+      }
+    });
+
     const matchedTrackIndices = new Set();
     const matchedDetIndices = new Set();
 
-    validDetections.forEach((det, dIdx) => {
-      let bestMatchScore = 0.18;
+    filteredDetections.forEach((det, dIdx) => {
+      let bestMatchScore = 0.12;
       let bestTIdx = -1;
+
+      const detCx = det.bbox[0] + det.bbox[2] / 2;
+      const detCy = det.bbox[1] + det.bbox[3] / 2;
 
       trackedObjects.forEach((track, tIdx) => {
         if (matchedTrackIndices.has(tIdx)) return;
@@ -872,19 +892,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         ];
 
         const iou = calculateIOU(predictedBox, det.bbox);
-        const detCx = det.bbox[0] + det.bbox[2] / 2;
-        const detCy = det.bbox[1] + det.bbox[3] / 2;
         const predCx = predictedBox[0] + predictedBox[2] / 2;
         const predCy = predictedBox[1] + predictedBox[3] / 2;
         const dist = Math.hypot(detCx - predCx, detCy - predCy);
 
-        const maxDist = Math.max(det.bbox[2], det.bbox[3], 70);
+        // Generous matching distance for stationary traffic at red lights (up to 80px)
+        const maxDist = Math.max(det.bbox[2], det.bbox[3], 80);
         const distScore = Math.max(0, 1 - dist / maxDist);
-        const matchScore = (iou * 0.65) + (distScore * 0.35);
+        const matchScore = (iou * 0.50) + (distScore * 0.50);
 
-        if (matchScore > bestMatchScore) {
-          bestMatchScore = matchScore;
-          bestTIdx = tIdx;
+        // If distance is very close (< 45px), match unconditionally for stationary vehicles
+        if (dist < 45 || matchScore > bestMatchScore) {
+          if (matchScore > bestMatchScore || dist < 45) {
+            bestMatchScore = matchScore;
+            bestTIdx = tIdx;
+          }
         }
       });
 
@@ -895,31 +917,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         const t = trackedObjects[bestTIdx];
         const newVx = det.bbox[0] - t.bbox[0];
         const newVy = det.bbox[1] - t.bbox[1];
-        t.vx = (t.vx || 0) * 0.30 + newVx * 0.70;
-        t.vy = (t.vy || 0) * 0.30 + newVy * 0.70;
+        
+        // Dampen velocity for stationary vehicles to prevent jitter drift
+        const speed = Math.hypot(newVx, newVy);
+        if (speed < 5) {
+          t.vx = (t.vx || 0) * 0.20;
+          t.vy = (t.vy || 0) * 0.20;
+        } else {
+          t.vx = (t.vx || 0) * 0.40 + newVx * 0.60;
+          t.vy = (t.vy || 0) * 0.40 + newVy * 0.60;
+        }
 
         t.score = det.score;
         t.labelText = det.labelText;
         t.seenFrames++;
         t.missedFrames = 0;
 
-        // Kalman-inspired Exponential Smoothing
-        const alpha = 0.70;
+        // Smooth Exponential Moving Average for Bounding Box
+        const alpha = 0.65;
         t.bbox[0] = t.bbox[0] * (1 - alpha) + det.bbox[0] * alpha;
         t.bbox[1] = t.bbox[1] * (1 - alpha) + det.bbox[1] * alpha;
         t.bbox[2] = t.bbox[2] * (1 - alpha) + det.bbox[2] * alpha;
         t.bbox[3] = t.bbox[3] * (1 - alpha) + det.bbox[3] * alpha;
 
-        // Accurate Cumulative Counting: must be seen across 2 consecutive frames
-        if (!t.counted && t.seenFrames >= 2) {
+        // STRICT 1-TIME COUNTING: must be confirmed across 4 consecutive frames
+        if (!t.counted && t.seenFrames >= 4) {
           t.counted = true;
           window.trafficAnalytics.incrementCumulative(t.category);
-          window.trafficAnalytics.logEvent(`Objek terdeteksi: ${t.labelText} #${t.id}`);
+          window.trafficAnalytics.logEvent(`Kendaraan terhitung: ${t.labelText} #${t.id}`);
         }
       }
     });
 
-    validDetections.forEach((det, dIdx) => {
+    filteredDetections.forEach((det, dIdx) => {
       if (!matchedDetIndices.has(dIdx)) {
         trackedObjects.push({
           id: nextTrackId++,
@@ -940,15 +970,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     trackedObjects.forEach((track, tIdx) => {
       if (!matchedTrackIndices.has(tIdx)) {
         track.missedFrames++;
-        if (track.missedFrames <= 4) {
-          track.bbox[0] += (track.vx || 0) * 0.7;
-          track.bbox[1] += (track.vy || 0) * 0.7;
+        if (track.missedFrames <= 6) {
+          track.bbox[0] += (track.vx || 0) * 0.5;
+          track.bbox[1] += (track.vy || 0) * 0.5;
         }
       }
     });
 
-    // Keep tracks alive across brief occlusions/pauses at traffic lights
-    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 6);
+    // Retain tracks for up to 12 frames (~3 seconds) for stationary red-light vehicles
+    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 12);
   }
 
   // 5. Enhanced Multi-Scale Slicing & Adaptive ROI Pyramid Inference
