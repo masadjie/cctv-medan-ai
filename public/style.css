@@ -376,6 +376,18 @@ body.light-theme .combobox-search-input {
   height: 15px;
 }
 
+.author-threads-badge {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f3f4f6;
+}
+
+.author-threads-badge:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
 /* Header Right Actions */
 .header-right {
   display: flex;
@@ -3888,6 +3900,15 @@ body.light-theme .combobox-search-input {
   color: var(--accent-total);
 }
 
+.splash-social-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 1.6rem;
+}
+
 .splash-instagram-link {
   display: inline-flex;
   align-items: center;
@@ -3901,8 +3922,20 @@ body.light-theme .combobox-search-input {
   border: 1px solid rgba(245, 158, 11, 0.2);
   padding: 5px 14px;
   border-radius: var(--radius-xs);
-  margin-bottom: 1.6rem;
+  margin-bottom: 0;
   transition: all 0.2s ease;
+}
+
+.splash-threads-link {
+  color: #f3f4f6;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.splash-threads-link:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
 }
 
 .splash-instagram-link:hover {
@@ -4615,6 +4648,18 @@ body.light-theme .combobox-search-input {
 .about-ig-pill svg {
   width: 12px;
   height: 12px;
+}
+
+.about-threads-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f3f4f6;
+}
+
+.about-threads-pill:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
 }
 
 /* ==========================================================================

@@ -2,7 +2,7 @@
 
 Platform pemantauan dan analisis lalu lintas kamera CCTV ATCS multi-wilayah Indonesia berbasis Web & Computer Vision. Aplikasi ini memproses video streaming CCTV secara real-time langsung di browser menggunakan WebGL/TensorFlow.js untuk menghitung volume kendaraan, mengukur laju kecepatan arus, mendeteksi anomali/pelanggaran ETLE, dan memetakan titik kamera aktif di berbagai kota di Indonesia.
 
-**Pengembang**: [Adjie Kurniawan](https://instagram.com/adjie.apk)  
+**Pengembang**: [Adjie Kurniawan](https://instagram.com/adjie.apk) ([Threads](https://www.threads.net/@adjie.apk))  
 **Lisensi**: MIT  
 
 ---
@@ -88,4 +88,5 @@ Buka browser di: **`http://localhost:3000`**
 
 Dibuat oleh **Adjie Kurniawan**.  
 Instagram: [@adjie.apk](https://instagram.com/adjie.apk)  
+Threads: [@adjie.apk](https://www.threads.net/@adjie.apk)  
 Email: bgdjie46@gmail.com
