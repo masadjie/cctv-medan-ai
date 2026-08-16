@@ -2109,6 +2109,22 @@ body.light-theme .combobox-search-input {
   color: var(--accent-total);
 }
 
+.hud-badge.audio-badge {
+  transition: all 0.2s ease;
+}
+
+.hud-badge.audio-badge.audio-live {
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.12);
+  font-weight: 700;
+}
+
+.hud-badge.audio-badge.audio-none {
+  color: var(--text-muted);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .hud-bottom-bar {
   position: absolute;
   bottom: 10px;

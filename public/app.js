@@ -133,6 +133,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const videoLoadingOverlay = document.getElementById('videoLoadingOverlay');
   const videoStateText = document.getElementById('videoStateText');
   const osdCamName = document.getElementById('osdCamName');
+  const osdAudioBadge = document.getElementById('osdAudioBadge');
+  const btnToggleAudio = document.getElementById('btnToggleAudio');
+  const iconAudioMuted = document.getElementById('iconAudioMuted');
+  const iconAudioUnmuted = document.getElementById('iconAudioUnmuted');
+  const audioBtnText = document.getElementById('audioBtnText');
   const osdFps = document.getElementById('osdFps');
   const osdTimestamp = document.getElementById('osdTimestamp');
   const liveClock = document.getElementById('liveClock');
@@ -594,10 +599,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         videoLoadingOverlay.classList.add('hidden');
         video.play().catch(err => console.log('Autoplay policy caught:', err));
         showToast('Terhubung ke CCTV Live Feed');
+        detectStreamAudio();
 
         if (matchedCam && window.medanCCTVMap) {
           window.medanCCTVMap.setCameraHealth(matchedCam.id, true, 95);
         }
+      });
+
+      hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
+        detectStreamAudio();
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
@@ -639,13 +649,52 @@ document.addEventListener('DOMContentLoaded', async () => {
           window.medanCCTVMap.setCameraHealth(matchedCam.id, true, 95);
         }
       });
+      detectStreamAudio();
     } else {
       video.src = finalUrl;
       video.play();
+      detectStreamAudio();
     }
   }
 
   window.loadStreamGlobal = loadStream;
+
+  // 3a-2. Live CCTV Audio Track Detection & Mute Controls
+  function detectStreamAudio() {
+    let hasAudio = false;
+    if (hls && hls.audioTracks && hls.audioTracks.length > 0) {
+      hasAudio = true;
+    } else if (video.mozHasAudio || Boolean(video.webkitAudioDecodedByteCount) || (video.audioTracks && video.audioTracks.length > 0)) {
+      hasAudio = true;
+    }
+
+    if (osdAudioBadge) {
+      if (hasAudio) {
+        osdAudioBadge.className = 'hud-badge audio-badge audio-live';
+        osdAudioBadge.innerHTML = '🔊 Audio Live';
+        osdAudioBadge.title = 'Kamera CCTV ini memiliki stream audio / mikrofon aktif';
+      } else {
+        osdAudioBadge.className = 'hud-badge audio-badge audio-none';
+        osdAudioBadge.innerHTML = '🔇 Video Only (No Mic)';
+        osdAudioBadge.title = 'Kamera CCTV ini adalah siaran video murni tanpa mikrofon audio';
+      }
+    }
+  }
+
+  if (btnToggleAudio) {
+    btnToggleAudio.addEventListener('click', () => {
+      video.muted = !video.muted;
+      const isMuted = video.muted;
+      if (iconAudioMuted && iconAudioUnmuted) {
+        iconAudioMuted.classList.toggle('hidden', !isMuted);
+        iconAudioUnmuted.classList.toggle('hidden', isMuted);
+      }
+      if (audioBtnText) {
+        audioBtnText.textContent = isMuted ? 'Mute' : 'Unmute';
+      }
+      showToast(isMuted ? '🔇 Audio CCTV Dibisukan (Muted)' : '🔊 Audio CCTV Diaktifkan (Unmuted)');
+    });
+  }
 
   // 3b. Reset Active Camera Monitoring (Back to Standby Idle)
   function resetActiveCameraMonitoring() {
