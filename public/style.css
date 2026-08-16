@@ -2211,15 +2211,15 @@ body.light-theme .combobox-search-input {
    ========================================================================== */
 /* Hidden by default; revealed by JS adding war-room-active */
 .war-room-panel {
-  flex: 1;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
   display: none;
   flex-direction: column;
-  background: var(--surface-layer-1);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  gap: 12px;
-  min-height: 0;
+  background: #080a0f;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
 }
 
 .war-room-panel.war-room-active {
@@ -2234,8 +2234,12 @@ body.light-theme .combobox-search-input {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  background: rgba(8, 10, 15, 0.97);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .war-room-title {
@@ -2261,27 +2265,73 @@ body.light-theme .combobox-search-input {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Grid Layout Switcher Pills */
+.wr-layout-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.wr-layout-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.wr-layout-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.wr-layout-btn:hover {
+  background: rgba(56,189,248,0.1);
+  color: #38bdf8;
+}
+.wr-layout-btn.active {
+  background: rgba(56,189,248,0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(56,189,248,0.3);
 }
 
 .live-pulse-badge {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   font-weight: 700;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
   padding: 3px 8px;
   border-radius: 20px;
+  white-space: nowrap;
 }
 
+/* War Room Grid — fills remaining space */
 .war-room-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 10px;
-  min-height: calc(100vh - 160px);
-  height: calc(100vh - 160px);
+  gap: 4px;
+  min-height: 0;
+  padding: 4px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .war-slot {
@@ -2295,12 +2345,18 @@ body.light-theme .combobox-search-input {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
-.war-slot.slot-fullscreen {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 9999 !important;
-  border-radius: 0 !important;
-  border: none !important;
+/* Click ⛶ to make one slot span 2 cols in the grid (focused mode) */
+.war-slot.slot-focused {
+  grid-column: span 2;
+  grid-row: span 2;
+  z-index: 10;
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25), 0 8px 32px rgba(0,0,0,0.6);
+}
+
+/* True browser fullscreen mode for the whole panel */
+.war-room-panel:fullscreen {
+  background: #080a0f;
 }
 
 .slot-header {
