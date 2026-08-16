@@ -828,12 +828,22 @@
 
           <!-- Advanced AI Analytics Toggles -->
           <div class="control-row">
-            <label class="control-label">Fitur Analitik Cerdas Tambahan:</label>
+            <label class="control-label">Fitur Analitik Cerdas & Penegakan ETLE:</label>
             <div class="config-toggle-group">
+              <label class="toggle-control-item">
+                <input type="checkbox" id="toggleHelmetDetection" checked />
+                <span class="toggle-slider"></span>
+                <span class="toggle-text">🪖 Deteksi Pengendara Tanpa Helm (ETLE Helmet Safety)</span>
+              </label>
               <label class="toggle-control-item">
                 <input type="checkbox" id="toggleAnomalyDetection" checked />
                 <span class="toggle-slider"></span>
-                <span class="toggle-text">🚨 Deteksi Anomali Lalu Lintas (Lawan Arah & Kendaraan Mogok)</span>
+                <span class="toggle-text">🚨 Deteksi Anomali Lalu Lintas (Lawan Arah & Mogok)</span>
+              </label>
+              <label class="toggle-control-item">
+                <input type="checkbox" id="toggleOvercapacity" checked />
+                <span class="toggle-slider"></span>
+                <span class="toggle-text">👥 Deteksi Boncengan Berlebih (3-in-1 Overcapacity)</span>
               </label>
               <label class="toggle-control-item">
                 <input type="checkbox" id="toggleByteTrack" checked />
@@ -1345,9 +1355,9 @@
     </div>
   </div>
 
-  <script src="cctv_medan_data.js?v=2.6.0"></script>
-  <script src="analytics.js?v=2.6.0"></script>
-  <script src="map.js?v=2.6.0"></script>
-  <script src="app.js?v=2.6.0"></script>
+  <script src="cctv_medan_data.js?v=2.6.1"></script>
+  <script src="analytics.js?v=2.6.1"></script>
+  <script src="map.js?v=2.6.1"></script>
+  <script src="app.js?v=2.6.1"></script>
 </body>
 </html>

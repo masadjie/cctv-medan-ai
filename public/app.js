@@ -201,6 +201,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let inferenceScale = 'sahi_multi';
   let isAnomalyDetectionEnabled = true;
   let isByteTrackEnabled = true;
+  let isHelmetDetectionEnabled = true;
+  let isOvercapacityEnabled = true;
 
   const ENGINE_LABELS = {
     rtdetr: 'RT-DETR Transformer',
@@ -1052,11 +1054,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         t.bbox[2] = t.bbox[2] * (1 - alpha) + det.bbox[2] * alpha;
         t.bbox[3] = t.bbox[3] * (1 - alpha) + det.bbox[3] * alpha;
 
+        // ETLE Helmet Safety Analysis for Motorcycles:
+        if (isHelmetDetectionEnabled && t.category === 'motor' && t.seenFrames >= 4 && !t.isStaticScenery) {
+          const headH = Math.max(4, Math.round(t.bbox[3] * 0.22));
+          const headW = Math.max(4, Math.round(t.bbox[2] * 0.50));
+          const headX = Math.round(t.bbox[0] + (t.bbox[2] - headW) / 2);
+          const headY = Math.round(t.bbox[1]);
+          
+          try {
+            const clW = Math.min(headW, canvasW - Math.max(0, headX));
+            const clH = Math.min(headH, canvasH - Math.max(0, headY));
+            if (clW > 2 && clH > 2) {
+              const headData = fullCropCtx.getImageData(Math.max(0, headX), Math.max(0, headY), clW, clH);
+              let darkHairPixels = 0;
+              const totalPx = headData.data.length / 4;
+              for (let i = 0; i < headData.data.length; i += 4) {
+                const lum = 0.299 * headData.data[i] + 0.587 * headData.data[i+1] + 0.114 * headData.data[i+2];
+                if (lum < 52) darkHairPixels++;
+              }
+              const hairRatio = totalPx > 0 ? darkHairPixels / totalPx : 0;
+              t.noHelmet = (hairRatio > 0.45 && t.seenFrames >= 5);
+            }
+          } catch (e) {
+            t.noHelmet = false;
+          }
+        } else {
+          t.noHelmet = false;
+        }
+
+        // Overcapacity analysis: multiple rider silhouette elongation
+        if (isOvercapacityEnabled && t.category === 'motor') {
+          const bikeAspect = t.bbox[2] / Math.max(1, t.bbox[3]);
+          t.isOvercapacity = (bikeAspect > 1.25 && t.bbox[2] > canvasW * 0.16);
+        } else {
+          t.isOvercapacity = false;
+        }
+
         // STRICT 1-TIME COUNTING: must be confirmed across 4 consecutive frames and NOT static scenery
         if (!t.counted && t.seenFrames >= 4 && !t.isStaticScenery) {
           t.counted = true;
           window.trafficAnalytics.incrementCumulative(t.category);
           window.trafficAnalytics.logEvent(`Kendaraan terhitung: ${t.labelText} #${t.id}`);
+          if (t.noHelmet) {
+            window.trafficAnalytics.logEvent(`🚨 Pelanggaran ETLE: Pengendara Tanpa Helm #${t.id}`);
+          }
         }
       }
     });
@@ -1074,6 +1115,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           startY: det.bbox[1],
           totalDisplacement: 0,
           isStaticScenery: false,
+          noHelmet: false,
+          isOvercapacity: false,
           vx: 0,
           vy: 0,
           seenFrames: 1,
@@ -1229,6 +1272,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         ]
       });
     });
+
+    // Pass 5: If Dense Attention Transformer Profile is selected, run 3rd micro-focus slice
+    if (inferenceScale === 'transformer_dense') {
+      const tile3W = Math.round(vWidth * 0.70);
+      const tile3H = Math.round(vHeight * 0.60);
+      const tile3X = Math.round(vWidth * 0.25);
+      const tile3Y = Math.round(vHeight * 0.35);
+
+      tileCanvas1.width = 512;
+      tileCanvas1.height = 512;
+      tileCtx1.drawImage(fullCropCanvas, tile3X, tile3Y, tile3W, tile3H, 0, 0, 512, 512);
+
+      const tile3Detections = await model.detect(tileCanvas1, 24, effectiveConf * 0.85);
+      tile3Detections.forEach(d => {
+        const scaleX = tile3W / 512;
+        const scaleY = tile3H / 512;
+        rawResults.push({
+          class: d.class,
+          score: d.score,
+          bbox: [
+            tile3X + d.bbox[0] * scaleX,
+            tile3Y + d.bbox[1] * scaleY,
+            d.bbox[2] * scaleX,
+            d.bbox[3] * scaleY
+          ]
+        });
+      });
+    }
 
     return rawResults;
   }
@@ -1390,6 +1461,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         strokeColor = '#f43f5e'; // Crimson Red for Contraflow
       } else if (obj.isStalled) {
         strokeColor = '#fbbf24'; // Amber Yellow for Stalled Vehicle
+      } else if (obj.noHelmet) {
+        strokeColor = '#e11d48'; // Rose Red for No Helmet
+      } else if (obj.isOvercapacity) {
+        strokeColor = '#ea580c'; // Orange for Overcapacity
       }
 
       if (obj.category === 'car') liveCar++;
@@ -1401,9 +1476,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       ctx.save();
       ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = obj.isContraflow ? 3.5 : 2.5;
+      ctx.lineWidth = (obj.isContraflow || obj.noHelmet) ? 3.5 : 2.5;
       ctx.shadowColor = strokeColor;
-      ctx.shadowBlur = obj.isContraflow ? 16 : 8;
+      ctx.shadowBlur = (obj.isContraflow || obj.noHelmet) ? 14 : 8;
 
       // Draw Main Bounding Box
       if (obj.isStalled) {
@@ -1414,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Draw Corner Accents
       const corner = Math.min(14, w / 4, h / 4);
-      ctx.lineWidth = obj.isContraflow ? 4.0 : 3.5;
+      ctx.lineWidth = (obj.isContraflow || obj.noHelmet) ? 4.0 : 3.5;
       ctx.beginPath();
       // Top Left
       ctx.moveTo(x, y + corner); ctx.lineTo(x, y); ctx.lineTo(x + corner, y);
@@ -1467,6 +1542,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           badgeText = `⚠️ KENDARAAN MOGOK / BERHENTI`;
           badgeBg = '#fbbf24';
           badgeFg = '#0b0f17';
+        } else if (obj.noHelmet) {
+          badgeText = `🪖 TANPA HELM #${obj.id}`;
+          badgeBg = '#e11d48';
+          badgeFg = '#ffffff';
+        } else if (obj.isOvercapacity) {
+          badgeText = `👥 BONCENG 3+ #${obj.id}`;
+          badgeBg = '#ea580c';
+          badgeFg = '#ffffff';
         } else {
           const scorePercent = Math.round(obj.score * 100);
           const speedLabel = kmh > 2 ? ` · ${Math.round(kmh)} km/j` : ' · Berhenti';
@@ -1816,13 +1899,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  const toggleHelmetDetection = document.getElementById('toggleHelmetDetection');
   const toggleAnomalyDetection = document.getElementById('toggleAnomalyDetection');
+  const toggleOvercapacity = document.getElementById('toggleOvercapacity');
   const toggleByteTrack = document.getElementById('toggleByteTrack');
+
+  if (toggleHelmetDetection) {
+    toggleHelmetDetection.addEventListener('change', () => {
+      isHelmetDetectionEnabled = toggleHelmetDetection.checked;
+      showToast(isHelmetDetectionEnabled ? '🪖 Deteksi Pengendara Tanpa Helm Aktif' : 'Deteksi Helm Dinonaktifkan');
+    });
+  }
 
   if (toggleAnomalyDetection) {
     toggleAnomalyDetection.addEventListener('change', () => {
       isAnomalyDetectionEnabled = toggleAnomalyDetection.checked;
       showToast(isAnomalyDetectionEnabled ? '🚨 Deteksi Anomali Lawan Arah & Mogok Aktif' : 'Deteksi Anomali Dinonaktifkan');
+    });
+  }
+
+  if (toggleOvercapacity) {
+    toggleOvercapacity.addEventListener('change', () => {
+      isOvercapacityEnabled = toggleOvercapacity.checked;
+      showToast(isOvercapacityEnabled ? '👥 Deteksi Boncengan Berlebih Aktif' : 'Deteksi Boncengan Dinonaktifkan');
     });
   }
 
