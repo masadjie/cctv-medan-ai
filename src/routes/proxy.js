@@ -121,21 +121,33 @@ function handleProxyRoute(req, res, parsedUrl) {
     });
 
     proxyReq.on('error', (err) => {
-      res.writeHead(502, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Proxy request failed', message: err.message, code: err.code }));
+      if (!res.headersSent) {
+        try {
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Proxy request failed', message: err.message, code: err.code }));
+        } catch (e) {}
+      }
     });
 
     proxyReq.on('timeout', () => {
       proxyReq.destroy();
-      res.writeHead(504, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Proxy request timed out' }));
+      if (!res.headersSent) {
+        try {
+          res.writeHead(504, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Proxy request timed out' }));
+        } catch (e) {}
+      }
     });
 
     proxyReq.end();
   } catch (err) {
     console.error('Invalid Proxy URL:', err);
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to process URL', message: err.message }));
+    if (!res.headersSent) {
+      try {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to process URL', message: err.message }));
+      } catch (e) {}
+    }
   }
 }
 

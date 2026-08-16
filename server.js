@@ -82,6 +82,14 @@ const server = http.createServer((req, res) => {
   });
 });
 
+process.on('uncaughtException', (err) => {
+  console.error('Unhandled Exception Guard:', err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection Guard:', reason);
+});
+
 server.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(` NUSANTARA TRAFFIC VISION — SURVEILLANCE PRO`);
