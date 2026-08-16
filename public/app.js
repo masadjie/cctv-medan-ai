@@ -678,6 +678,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     return (interArea / boxArea) > 0.20;
   }
 
+  // Weighted Box Fusion (WBF) - Combines multi-scale detections with confidence weighting for maximum precision
+  function applyWeightedBoxFusion(boxes, iouThreshold = 0.40) {
+    if (boxes.length === 0) return [];
+    
+    const categories = ['car', 'motor'];
+    const finalBoxes = [];
+
+    categories.forEach(cat => {
+      const catBoxes = boxes.filter(b => b.category === cat).sort((a, b) => b.score - a.score);
+      const clusters = [];
+
+      catBoxes.forEach(box => {
+        let matchedCluster = null;
+        for (const cluster of clusters) {
+          const iou = calculateIOU(box.bbox, cluster.avgBbox);
+          if (iou > iouThreshold) {
+            matchedCluster = cluster;
+            break;
+          }
+        }
+
+        if (matchedCluster) {
+          matchedCluster.boxes.push(box);
+          let sumWeight = 0;
+          let sumX = 0, sumY = 0, sumW = 0, sumH = 0;
+          let maxScore = 0;
+
+          matchedCluster.boxes.forEach(b => {
+            const w = b.score;
+            sumWeight += w;
+            sumX += b.bbox[0] * w;
+            sumY += b.bbox[1] * w;
+            sumW += b.bbox[2] * w;
+            sumH += b.bbox[3] * w;
+            if (b.score > maxScore) maxScore = b.score;
+          });
+
+          matchedCluster.avgBbox = [
+            sumX / sumWeight,
+            sumY / sumWeight,
+            sumW / sumWeight,
+            sumH / sumWeight
+          ];
+          // Boost confidence when confirmed across multiple multi-scale slices
+          matchedCluster.score = Math.min(0.99, maxScore + Math.min(0.12, (matchedCluster.boxes.length - 1) * 0.04));
+        } else {
+          clusters.push({
+            boxes: [box],
+            avgBbox: [...box.bbox],
+            score: box.score,
+            labelText: box.labelText,
+            strokeColor: box.strokeColor,
+            category: cat
+          });
+        }
+      });
+
+      clusters.forEach(c => {
+        finalBoxes.push({
+          category: c.category,
+          labelText: c.labelText,
+          strokeColor: c.strokeColor,
+          score: c.score,
+          bbox: c.avgBbox
+        });
+      });
+    });
+
+    return finalBoxes;
+  }
+
   // Non-Maximum Suppression (NMS)
   function applyNMS(boxes, iouThreshold = 0.45) {
     boxes.sort((a, b) => b.score - a.score);
@@ -851,8 +922,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Step 4: Strict NMS per category & spatial cluster deduplication
-    let validDetections = applyNMS(candidateDetections, 0.35);
+    // Step 4: High-Precision Weighted Box Fusion (WBF)
+    let validDetections = applyWeightedBoxFusion(candidateDetections, 0.38);
 
     // Additional spatial cluster merging (merge boxes whose centers are within 28px of each other)
     const filteredDetections = [];
@@ -981,26 +1052,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     trackedObjects = trackedObjects.filter(t => t.missedFrames <= 12);
   }
 
-  // 5. Enhanced Multi-Scale Slicing & Adaptive ROI Pyramid Inference
+  // 5. Enhanced Multi-Scale Slicing & Adaptive ROI Pyramid Inference (High-Accuracy SAHI)
   async function runMultiScaleInference(minConf, vWidth, vHeight) {
     const rawResults = [];
 
-    // Preprocessing on full canvas with adaptive contrast & luminance equalizer
+    // Preprocessing with adaptive luminance booster for high-accuracy night/day detection
     fullCropCanvas.width = vWidth;
     fullCropCanvas.height = vHeight;
-    fullCropCtx.filter = 'contrast(1.22) brightness(1.08) saturate(1.15)';
+    fullCropCtx.filter = 'contrast(1.25) brightness(1.10) saturate(1.18)';
     fullCropCtx.drawImage(video, 0, 0, vWidth, vHeight);
 
-    // Pass 1: If User-Defined ROI is Active, Dedicate High-Resolution Inference to Exact ROI Area
+    // Pass 1: If User-Defined ROI is Active, Dedicate Ultra-Res Inference to Exact ROI Area
     if (roi && roi.width > 25 && roi.height > 25) {
-      roiCanvas.width = 448;
-      roiCanvas.height = 448;
-      roiCtx.drawImage(fullCropCanvas, roi.x, roi.y, roi.width, roi.height, 0, 0, 448, 448);
+      roiCanvas.width = 512;
+      roiCanvas.height = 512;
+      roiCtx.drawImage(fullCropCanvas, roi.x, roi.y, roi.width, roi.height, 0, 0, 512, 512);
 
-      const roiDetections = await model.detect(roiCanvas, 25, minConf * 0.65);
+      const roiDetections = await model.detect(roiCanvas, 32, minConf * 0.60);
       roiDetections.forEach(d => {
-        const scaleX = roi.width / 448;
-        const scaleY = roi.height / 448;
+        const scaleX = roi.width / 512;
+        const scaleY = roi.height / 512;
         rawResults.push({
           class: d.class,
           score: d.score,
@@ -1015,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Pass 2: Full Frame Detection (Captures large foreground vehicles)
-    const fullDetections = await model.detect(fullCropCanvas, 24, minConf * 0.75);
+    const fullDetections = await model.detect(fullCropCanvas, 28, minConf * 0.70);
     rawResults.push(...fullDetections);
 
     // If Nano Fast Profile is active or YOLO26 NMS-Free is selected, return high-speed dual-pass results
@@ -1023,20 +1094,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       return rawResults;
     }
 
-    // Pass 3: Sliced Tile 1 (Main Roadway Core Zone - Middle & Lower Frame)
-    const tile1W = Math.round(vWidth * 0.88);
-    const tile1H = Math.round(vHeight * 0.75);
-    const tile1X = Math.round(vWidth * 0.06);
-    const tile1Y = Math.round(vHeight * 0.20);
+    // Pass 3: Sliced Tile 1 (Main Roadway Core Zone - Middle & Lower Traffic Corridor)
+    const tile1W = Math.round(vWidth * 0.90);
+    const tile1H = Math.round(vHeight * 0.78);
+    const tile1X = Math.round(vWidth * 0.05);
+    const tile1Y = Math.round(vHeight * 0.18);
 
-    tileCanvas1.width = 448;
-    tileCanvas1.height = 448;
-    tileCtx1.drawImage(fullCropCanvas, tile1X, tile1Y, tile1W, tile1H, 0, 0, 448, 448);
+    tileCanvas1.width = 512;
+    tileCanvas1.height = 512;
+    tileCtx1.drawImage(fullCropCanvas, tile1X, tile1Y, tile1W, tile1H, 0, 0, 512, 512);
 
-    const tile1Detections = await model.detect(tileCanvas1, 30, Math.min(minConf * 0.50, 0.22));
+    const tile1Detections = await model.detect(tileCanvas1, 35, Math.min(minConf * 0.45, 0.20));
     tile1Detections.forEach(d => {
-      const scaleX = tile1W / 448;
-      const scaleY = tile1H / 448;
+      const scaleX = tile1W / 512;
+      const scaleY = tile1H / 512;
       rawResults.push({
         class: d.class,
         score: d.score,
@@ -1049,20 +1120,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Pass 4: Sliced Tile 2 (Distant Intersection Horizon Zoom - Catches small distant motorcycles)
-    const tile2W = Math.round(vWidth * 0.65);
-    const tile2H = Math.round(vHeight * 0.55);
-    const tile2X = Math.round(vWidth * 0.18);
-    const tile2Y = Math.round(vHeight * 0.10);
+    // Pass 4: Sliced Tile 2 (Distant Intersection Horizon Zoom - Small motorcycles & far traffic)
+    const tile2W = Math.round(vWidth * 0.68);
+    const tile2H = Math.round(vHeight * 0.58);
+    const tile2X = Math.round(vWidth * 0.16);
+    const tile2Y = Math.round(vHeight * 0.08);
 
-    tileCanvas2.width = 448;
-    tileCanvas2.height = 448;
-    tileCtx2.drawImage(fullCropCanvas, tile2X, tile2Y, tile2W, tile2H, 0, 0, 448, 448);
+    tileCanvas2.width = 512;
+    tileCanvas2.height = 512;
+    tileCtx2.drawImage(fullCropCanvas, tile2X, tile2Y, tile2W, tile2H, 0, 0, 512, 512);
 
-    const tile2Detections = await model.detect(tileCanvas2, 28, Math.min(minConf * 0.48, 0.20));
+    const tile2Detections = await model.detect(tileCanvas2, 32, Math.min(minConf * 0.42, 0.18));
     tile2Detections.forEach(d => {
-      const scaleX = tile2W / 448;
-      const scaleY = tile2H / 448;
+      const scaleX = tile2W / 512;
+      const scaleY = tile2H / 512;
       rawResults.push({
         class: d.class,
         score: d.score,
