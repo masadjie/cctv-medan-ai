@@ -1485,20 +1485,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Zero CPU/GPU AI load when on Map View
-    if (!isAiRunning || (mainLayout && mainLayout.classList.contains('mode-map'))) {
-      trackedObjects = [];
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      animationFrameId = requestAnimationFrame(detectLoop);
-      return;
-    }
-
     const vWidth = video.videoWidth || 640;
     const vHeight = video.videoHeight || 360;
 
     if (canvas.width !== vWidth || canvas.height !== vHeight) {
       canvas.width = vWidth;
       canvas.height = vHeight;
+    }
+
+    // Zero CPU/GPU AI load when on Map View
+    if (mainLayout && mainLayout.classList.contains('mode-map')) {
+      trackedObjects = [];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      animationFrameId = requestAnimationFrame(detectLoop);
+      return;
+    }
+
+    // When AI is OFF or video is not playing, keep vehicle tracks clear but ALWAYS render active ROI zone & live selection!
+    if (!isAiRunning || video.paused || video.ended || video.readyState < 2) {
+      trackedObjects = [];
+      renderScene();
+      animationFrameId = requestAnimationFrame(detectLoop);
+      return;
     }
 
     // FPS Update safely
@@ -1809,6 +1817,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     canvas.classList.add('drawing-roi');
     if (videoContainer) videoContainer.classList.add('roi-drawing-mode');
     if (roiFloatingHud) roiFloatingHud.classList.add('hidden');
+    renderScene();
     showToast('Klik/Sentuh dan tarik kursor pada video untuk memilih zona fokus');
   }
 
@@ -1822,6 +1831,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     canvas.classList.remove('drawing-roi');
     if (videoContainer) videoContainer.classList.remove('roi-drawing-mode');
     if (roiFloatingHud) roiFloatingHud.classList.add('hidden');
+    renderScene();
     showToast('Zona deteksi dinonaktifkan (kembali ke seluruh layar)');
   }
 
