@@ -2358,15 +2358,29 @@ body.light-theme .combobox-search-input {
 }
 
 .btn-icon-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
+  color: var(--text-heading);
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
+  transition: all 0.15s ease;
 }
 
 .btn-icon-close:hover {
-  color: var(--text-pure);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.btn-icon-close svg {
+  width: 14px;
+  height: 14px;
 }
 
 .modal-body {

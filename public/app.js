@@ -1310,8 +1310,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     snapshotModal.style.display = 'flex';
   });
 
-  btnCloseModal.addEventListener('click', () => {
-    snapshotModal.style.display = 'none';
+  const btnCloseSnapshotFooter = document.getElementById('btnCloseSnapshotFooter');
+
+  function closeSnapshotModal() {
+    if (snapshotModal) snapshotModal.style.display = 'none';
+  }
+
+  if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', closeSnapshotModal);
+  }
+
+  if (btnCloseSnapshotFooter) {
+    btnCloseSnapshotFooter.addEventListener('click', closeSnapshotModal);
+  }
+
+  if (snapshotModal) {
+    snapshotModal.addEventListener('click', (e) => {
+      if (e.target === snapshotModal) closeSnapshotModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeSnapshotModal();
+      closeCustomConfirmDialog();
+      closeConfigModal();
+    }
   });
 
   // Custom Confirmation Dialog Manager
