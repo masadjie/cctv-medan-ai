@@ -221,15 +221,21 @@
           <div class="scanner-hud-header">
             <div class="scanner-hud-title">
               <span class="scan-radar-dot"></span>
-              <span id="scanStatusTitle">Memindai Status Live Stream CCTV...</span>
+              <span id="scanStatusTitle">Status CCTV Terverifikasi</span>
             </div>
-            <span class="scanner-percent-pill" id="scanPercentPill">0%</span>
+            <div class="scanner-header-right">
+              <button type="button" class="btn-rescan-streams" id="btnRescanStreams" title="Pindai Ulang Status Kamera">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <span>Pindai Ulang</span>
+              </button>
+              <span class="scanner-percent-pill" id="scanPercentPill">100%</span>
+            </div>
           </div>
           <div class="scanner-progress-track">
-            <div class="scanner-progress-fill" id="scanProgressFill" style="width: 0%;"></div>
+            <div class="scanner-progress-fill" id="scanProgressFill" style="width: 100%;"></div>
           </div>
           <div class="scanner-stats-row">
-            <span class="scan-stat-item" id="scanProcessedText">Node: 0 / 60</span>
+            <span class="scan-stat-item" id="scanProcessedText">Node: 60/60</span>
             <div class="scan-stat-badges">
               <span class="scan-badge-online" id="scanOnlineCount">🟢 0 Online</span>
               <span class="scan-badge-offline" id="scanOfflineCount">🔴 0 Offline</span>

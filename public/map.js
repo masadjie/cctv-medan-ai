@@ -1,6 +1,6 @@
 /**
  * Nusantara Traffic Vision - High-Performance Interactive CCTV Map (Leaflet.js)
- * Clean, butter-smooth map module with dynamic Offline -> Online Stream Verification
+ * Clean, butter-smooth map module with persistent stream health caching and responsive scanner HUD
  */
 
 class MedanCCTVMap {
@@ -14,6 +14,7 @@ class MedanCCTVMap {
     this.healthStatus = {};
     this.isCheckingHls = false;
     this.isMapMoving = false;
+    this.cacheKey = 'cctv_health_cache_medan_v1';
   }
 
   init() {
@@ -56,19 +57,14 @@ class MedanCCTVMap {
     this.currentTileLayer = this.tileLayers.darkNight;
     this.currentTileLayer.addTo(this.map);
 
-    // 1. Initial State: Set ALL cameras to OFFLINE by default
-    this.cameras.forEach(cam => {
-      this.healthStatus[cam.id] = {
-        online: false,
-        latencyMs: 0,
-        checkedAt: new Date().toISOString()
-      };
-    });
+    // 1. Check LocalStorage Cache for Instant Device Health
+    const hasCachedStatus = this.loadCachedHealth();
 
-    // Render Markers with initial offline state (🔴 Red Pins)
+    // Render Markers with cached or initial state
     this.renderMarkers();
     this.setupSearch();
     this.setupPopupListener();
+    this.setupRescanButton();
     this.isInitialized = true;
 
     // Pause checks during user drag / zoom to guarantee 60 FPS
@@ -79,8 +75,66 @@ class MedanCCTVMap {
       this.isMapMoving = false;
     });
 
-    // 2. Start Live Verification: checks streams and turns verified cameras into 🟢 ONLINE
-    setTimeout(() => this.startHlsBackgroundChecker(), 300);
+    // If no previous cache, run automatic sequential check
+    if (!hasCachedStatus) {
+      setTimeout(() => this.startHlsBackgroundChecker(), 300);
+    }
+  }
+
+  /**
+   * Load and apply persisted online/offline camera status from localStorage
+   */
+  loadCachedHealth() {
+    try {
+      const raw = localStorage.getItem(this.cacheKey);
+      if (!raw) return false;
+
+      const cache = JSON.parse(raw);
+      if (!cache || !cache.cameras) return false;
+
+      this.healthStatus = cache.cameras;
+
+      // Update HUD UI with cached statistics
+      const scanStatusTitle = document.getElementById('scanStatusTitle');
+      const scanPercentPill = document.getElementById('scanPercentPill');
+      const scanProgressFill = document.getElementById('scanProgressFill');
+      const scanProcessedText = document.getElementById('scanProcessedText');
+      const scanOnlineCount = document.getElementById('scanOnlineCount');
+      const scanOfflineCount = document.getElementById('scanOfflineCount');
+      const scanTextEl = document.getElementById('mapStreamScanText');
+      const totalCount = this.cameras.length;
+
+      const online = cache.onlineCount || 0;
+      const offline = cache.offlineCount || (totalCount - online);
+
+      if (scanStatusTitle) scanStatusTitle.textContent = 'Status CCTV Terverifikasi';
+      if (scanPercentPill) scanPercentPill.textContent = '100%';
+      if (scanProgressFill) scanProgressFill.style.width = '100%';
+      if (scanProcessedText) scanProcessedText.textContent = `Node: ${totalCount}/${totalCount}`;
+      if (scanOnlineCount) scanOnlineCount.textContent = `🟢 ${online} Online`;
+      if (scanOfflineCount) scanOfflineCount.textContent = `🔴 ${offline} Offline`;
+
+      if (scanTextEl) {
+        scanTextEl.innerHTML = `Node Terpindai &bull; <span style="color:#10b981">🟢 ${online}</span> <span style="color:#ef4444">🔴 ${offline}</span>`;
+      }
+
+      window.dispatchEvent(new CustomEvent('cctv-health-updated', { detail: { cameras: this.healthStatus } }));
+      return true;
+    } catch (e) {
+      console.warn('Failed to load cached CCTV health:', e);
+      return false;
+    }
+  }
+
+  saveHealthToCache(onlineCount, offlineCount) {
+    try {
+      localStorage.setItem(this.cacheKey, JSON.stringify({
+        timestamp: Date.now(),
+        onlineCount,
+        offlineCount,
+        cameras: this.healthStatus
+      }));
+    } catch (e) {}
   }
 
   /**
@@ -152,7 +206,7 @@ class MedanCCTVMap {
    * Sequential background verification loop: flips cameras from 🔴 OFFLINE -> 🟢 ONLINE
    * and reports real-time scan progress in the prominent UI Scanner HUD
    */
-  async startHlsBackgroundChecker() {
+  async startHlsBackgroundChecker(forceFresh = false) {
     if (this.isCheckingHls) return;
     this.isCheckingHls = true;
 
@@ -170,7 +224,7 @@ class MedanCCTVMap {
     let offlineCount = 0;
 
     if (mapScannerHud) mapScannerHud.style.display = 'block';
-    if (scanStatusTitle) scanStatusTitle.textContent = 'Memindai Status Live Stream CCTV...';
+    if (scanStatusTitle) scanStatusTitle.textContent = 'Memindai Status Live Stream...';
 
     for (let i = 0; i < totalCount; i++) {
       // Pause if map is actively moving
@@ -202,7 +256,7 @@ class MedanCCTVMap {
         // Update Prominent Scanner HUD
         if (scanPercentPill) scanPercentPill.textContent = `${percent}%`;
         if (scanProgressFill) scanProgressFill.style.width = `${percent}%`;
-        if (scanProcessedText) scanProcessedText.textContent = `Node: ${scanned} / ${totalCount}`;
+        if (scanProcessedText) scanProcessedText.textContent = `Node: ${scanned}/${totalCount}`;
         if (scanOnlineCount) scanOnlineCount.textContent = `🟢 ${onlineCount} Online`;
         if (scanOfflineCount) scanOfflineCount.textContent = `🔴 ${offlineCount} Offline`;
 
@@ -213,15 +267,29 @@ class MedanCCTVMap {
       }
 
       // Smooth spacing between probes
-      await new Promise(r => setTimeout(r, 120));
+      await new Promise(r => setTimeout(r, 110));
     }
 
     this.isCheckingHls = false;
-    if (scanStatusTitle) scanStatusTitle.textContent = '✅ Pemindaian CCTV Selesai';
+    if (scanStatusTitle) scanStatusTitle.textContent = '✅ Pemindaian Selesai (Tersimpan)';
     if (scanTextEl) {
       scanTextEl.innerHTML = `Node Selesai: <span style="color:#10b981">🟢 ${onlineCount} Online</span> &bull; <span style="color:#ef4444">🔴 ${offlineCount} Offline</span>`;
     }
+
+    // Save to persistent localStorage cache
+    this.saveHealthToCache(onlineCount, offlineCount);
     window.dispatchEvent(new CustomEvent('cctv-health-updated', { detail: { cameras: this.healthStatus } }));
+  }
+
+  setupRescanButton() {
+    const btnRescan = document.getElementById('btnRescanStreams');
+    if (btnRescan) {
+      btnRescan.addEventListener('click', () => {
+        if (!this.isCheckingHls) {
+          this.startHlsBackgroundChecker(true);
+        }
+      });
+    }
   }
 
   // Fast direct DOM mutation with smooth radar activation
@@ -261,7 +329,7 @@ class MedanCCTVMap {
   createCustomIcon(camera, isSelected = false) {
     const activeClass = isSelected ? 'marker-active' : '';
     const status = this.healthStatus[camera.id];
-    const isOnline = status ? status.online : false; // Default false (starts as offline)
+    const isOnline = status ? status.online : false;
     const statusClass = isOnline ? 'pin-online' : 'pin-offline';
 
     return L.divIcon({
