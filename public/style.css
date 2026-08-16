@@ -4108,19 +4108,29 @@ body.light-theme .combobox-search-input {
   outline: 2px dashed #00e5ff !important;
   outline-offset: -2px;
   cursor: crosshair !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
   box-shadow: 0 0 25px rgba(0, 229, 255, 0.3) inset !important;
+}
+
+.viewport-frame.roi-drawing-mode video {
+  pointer-events: none !important;
+  user-select: none !important;
 }
 
 .viewport-frame.roi-drawing-mode canvas {
   pointer-events: auto !important;
   cursor: crosshair !important;
-  z-index: 40 !important;
+  z-index: 100 !important;
   touch-action: none !important;
+  user-select: none !important;
 }
 
 .viewport-frame.roi-drawing-mode .hud-top-bar,
 .viewport-frame.roi-drawing-mode .hud-bottom-bar,
-.viewport-frame.roi-drawing-mode .viewport-alert-overlay {
+.viewport-frame.roi-drawing-mode .viewport-alert-overlay,
+.viewport-frame.roi-drawing-mode .video-loading-overlay,
+.viewport-frame.roi-drawing-mode .viewport-idle-screen {
   pointer-events: none !important;
 }
 

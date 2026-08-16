@@ -1878,26 +1878,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  canvas.addEventListener('pointerdown', (e) => {
+  function handleRoiPointerDown(e) {
     if (!isDrawingRoi) return;
     e.preventDefault();
-    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    e.stopPropagation();
     roiStartPoint = getCanvasCoords(e.clientX, e.clientY);
     roiCurrentPoint = { ...roiStartPoint };
     renderScene();
-  });
+  }
 
-  canvas.addEventListener('pointermove', (e) => {
+  function handleRoiPointerMove(e) {
     if (!isDrawingRoi || !roiStartPoint) return;
     e.preventDefault();
     roiCurrentPoint = getCanvasCoords(e.clientX, e.clientY);
     renderScene();
-  });
+  }
 
-  canvas.addEventListener('pointerup', (e) => {
+  function handleRoiPointerUp(e) {
     if (!isDrawingRoi || !roiStartPoint) return;
     e.preventDefault();
-    try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
 
     const endPoint = getCanvasCoords(e.clientX, e.clientY);
     const x = Math.min(roiStartPoint.x, endPoint.x);
@@ -1905,14 +1904,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const w = Math.abs(endPoint.x - roiStartPoint.x);
     const h = Math.abs(endPoint.y - roiStartPoint.y);
 
-    if (w > 25 && h > 25) {
+    if (w > 20 && h > 20) {
       roi = { x, y, width: w, height: h };
       updateRoiHud();
-      showToast('Zona deteksi terkunci! Neural zoom presisi tinggi aktif pada area terpilih.');
+      showToast('🎯 Zona deteksi terkunci! Area fokus siap dipantau.');
     } else {
       roi = null;
       updateRoiHud();
-      showToast('Seleksi terlalu kecil, dibatalkan');
+      showToast('⚠️ Seleksi terlalu kecil, dibatalkan');
     }
 
     isDrawingRoi = false;
@@ -1921,9 +1920,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     canvas.classList.remove('drawing-roi');
     if (videoContainer) videoContainer.classList.remove('roi-drawing-mode');
     renderScene();
-  });
+  }
 
-  canvas.addEventListener('pointercancel', (e) => {
+  function handleRoiPointerCancel(e) {
     if (!isDrawingRoi) return;
     isDrawingRoi = false;
     roiStartPoint = null;
@@ -1931,7 +1930,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     canvas.classList.remove('drawing-roi');
     if (videoContainer) videoContainer.classList.remove('roi-drawing-mode');
     renderScene();
-  });
+  }
+
+  canvas.addEventListener('pointerdown', handleRoiPointerDown, { passive: false });
+  canvas.addEventListener('mousedown', handleRoiPointerDown, { passive: false });
+  if (videoContainer) {
+    videoContainer.addEventListener('pointerdown', (e) => {
+      if (isDrawingRoi && e.target !== btnDrawRoi) handleRoiPointerDown(e);
+    }, { passive: false });
+    videoContainer.addEventListener('mousedown', (e) => {
+      if (isDrawingRoi && e.target !== btnDrawRoi) handleRoiPointerDown(e);
+    }, { passive: false });
+  }
+
+  window.addEventListener('pointermove', handleRoiPointerMove, { passive: false });
+  window.addEventListener('mousemove', handleRoiPointerMove, { passive: false });
+  window.addEventListener('pointerup', handleRoiPointerUp, { passive: false });
+  window.addEventListener('mouseup', handleRoiPointerUp, { passive: false });
+  window.addEventListener('pointercancel', handleRoiPointerCancel, { passive: false });
 
   // 9. Snapshot
   btnSnapshot.addEventListener('click', () => {
