@@ -583,6 +583,50 @@ body.light-theme .combobox-search-input {
   border: 1px solid var(--border-medium);
 }
 
+/* Map Watermark Badge (Development by Adjie Kurniawan) */
+.map-watermark-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 60px;
+  z-index: 390;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(10, 11, 16, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  pointer-events: auto;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.map-watermark-badge:hover {
+  background: rgba(10, 11, 16, 0.92);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--text-pure);
+}
+
+.map-watermark-badge svg {
+  width: 11px;
+  height: 11px;
+  color: #10b981;
+}
+
+.map-watermark-badge b {
+  color: #ffffff;
+}
+
+.map-watermark-badge a {
+  color: #f59e0b;
+  text-decoration: none;
+  font-weight: 600;
+}
+
 /* Floating Live Mini-HUD Card on Map (Polished & Refined) */
 .map-live-preview-card {
   position: absolute;
