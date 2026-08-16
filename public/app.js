@@ -520,8 +520,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       video.srcObject = null;
     }
 
-    // Pure direct stream playback without proxy
-    const finalUrl = url;
+    // Hosted Remote Proxy Server
+    const REMOTE_PROXY_BASE = 'https://renewed-georgeanne-nekonode-1aa70c0c.koyeb.app/fetch/?url=';
+    const finalUrl = (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('koyeb.app')
+      ? `${REMOTE_PROXY_BASE}${encodeURIComponent(url)}`
+      : url;
 
     // Dynamic OSD matching & Button State
     const currentCams = getCurrentCityCameras();
@@ -584,6 +587,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR && finalUrl !== url) {
+            console.warn('Proxy retry -> Direct stream failover');
+            hls.destroy();
+            hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              videoLoadingOverlay.classList.add('hidden');
+              video.play().catch(() => {});
+            });
+            return;
+          }
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               videoStateText.textContent = 'Gagal memuat feed kamera (Offline / Gangguan).';
@@ -3064,8 +3079,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     video.onplaying = hideLoader;
     video.onloadeddata = hideLoader;
 
-    // Pure direct stream playback without proxy
-    const finalUrl = url;
+    // Hosted Remote Proxy Server
+    const REMOTE_PROXY_BASE = 'https://renewed-georgeanne-nekonode-1aa70c0c.koyeb.app/fetch/?url=';
+    const finalUrl = (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('koyeb.app')
+      ? `${REMOTE_PROXY_BASE}${encodeURIComponent(url)}`
+      : url;
 
     if (window.Hls && window.Hls.isSupported()) {
       const hls = new window.Hls({
