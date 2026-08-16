@@ -851,25 +851,26 @@ body.light-theme .combobox-search-input {
   border: 1px solid var(--border-medium);
 }
 
-/* Map Watermark Badge (Development by Adjie Kurniawan) */
+/* Map Watermark Badge (Development by Adjie Kurniawan - Always Visible) */
 .map-watermark-badge {
   position: absolute;
-  bottom: 8px;
-  right: 60px;
-  z-index: 390;
+  bottom: 12px;
+  right: 64px;
+  z-index: 500;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(10, 11, 16, 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 3px 8px;
+  gap: 6px;
+  background: rgba(10, 11, 16, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 10px;
   border-radius: var(--radius-xs);
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
   pointer-events: auto;
   user-select: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
   transition: all 0.2s ease;
 }
 
