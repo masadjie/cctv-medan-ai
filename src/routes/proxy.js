@@ -36,16 +36,27 @@ function handleProxyRoute(req, res, parsedUrl) {
     const isHttps = targetObj.protocol === 'https:';
     const httpModule = isHttps ? https : http;
 
+    const isPelindung = targetObj.hostname.includes('pelindung.bandung.go.id');
     const isBandung = targetObj.hostname.includes('bandung.go.id');
     const isJogja = targetObj.hostname.includes('jogjakota.go.id');
     const isMedan = targetObj.hostname.includes('medan.go.id');
 
-    const referer = isBandung
-      ? 'https://atcs-dishub.bandung.go.id/'
-      : (isJogja ? 'https://cctv.jogjakota.go.id/' : (isMedan ? 'https://atcsdishub.medan.go.id/' : `${targetObj.protocol}//${targetObj.host}/`));
-    const origin = isBandung
-      ? 'https://atcs-dishub.bandung.go.id'
-      : (isJogja ? 'https://cctv.jogjakota.go.id' : (isMedan ? 'https://atcsdishub.medan.go.id' : `${targetObj.protocol}//${targetObj.host}`));
+    let referer = `${targetObj.protocol}//${targetObj.host}/`;
+    let origin = `${targetObj.protocol}//${targetObj.host}`;
+
+    if (isPelindung) {
+      referer = 'https://pelindung.bandung.go.id/';
+      origin = 'https://pelindung.bandung.go.id';
+    } else if (isBandung) {
+      referer = 'https://atcs-dishub.bandung.go.id/';
+      origin = 'https://atcs-dishub.bandung.go.id';
+    } else if (isJogja) {
+      referer = 'https://cctv.jogjakota.go.id/';
+      origin = 'https://cctv.jogjakota.go.id';
+    } else if (isMedan) {
+      referer = 'https://atcsdishub.medan.go.id/';
+      origin = 'https://atcsdishub.medan.go.id';
+    }
 
     const options = {
       hostname: targetObj.hostname,
