@@ -1054,28 +1054,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         t.bbox[2] = t.bbox[2] * (1 - alpha) + det.bbox[2] * alpha;
         t.bbox[3] = t.bbox[3] * (1 - alpha) + det.bbox[3] * alpha;
 
-        // ETLE Helmet Safety Analysis for Motorcycles:
+        // ETLE Helmet Safety Multi-Feature Analysis for Motorcycles:
         if (isHelmetDetectionEnabled && t.category === 'motor' && t.seenFrames >= 4 && !t.isStaticScenery) {
-          const headH = Math.max(4, Math.round(t.bbox[3] * 0.22));
-          const headW = Math.max(4, Math.round(t.bbox[2] * 0.50));
-          const headX = Math.round(t.bbox[0] + (t.bbox[2] - headW) / 2);
-          const headY = Math.round(t.bbox[1]);
-          
-          try {
-            const clW = Math.min(headW, canvasW - Math.max(0, headX));
-            const clH = Math.min(headH, canvasH - Math.max(0, headY));
-            if (clW > 2 && clH > 2) {
-              const headData = fullCropCtx.getImageData(Math.max(0, headX), Math.max(0, headY), clW, clH);
-              let darkHairPixels = 0;
-              const totalPx = headData.data.length / 4;
-              for (let i = 0; i < headData.data.length; i += 4) {
-                const lum = 0.299 * headData.data[i] + 0.587 * headData.data[i+1] + 0.114 * headData.data[i+2];
-                if (lum < 52) darkHairPixels++;
+          // Gate by resolution: only evaluate foreground & midground motorcycles (head must be >= 10px)
+          if (t.bbox[3] >= 42 && t.bbox[2] >= 24) {
+            const headH = Math.max(8, Math.round(t.bbox[3] * 0.24));
+            const headW = Math.max(8, Math.round(t.bbox[2] * 0.46));
+            const headX = Math.round(t.bbox[0] + (t.bbox[2] - headW) / 2);
+            const headY = Math.round(t.bbox[1]);
+            
+            try {
+              const clW = Math.min(headW, canvasW - Math.max(0, headX));
+              const clH = Math.min(headH, canvasH - Math.max(0, headY));
+              if (clW >= 6 && clH >= 6) {
+                const headData = fullCropCtx.getImageData(Math.max(0, headX), Math.max(0, headY), clW, clH);
+                let skinPixels = 0;
+                let darkHairPixels = 0;
+                const totalPx = headData.data.length / 4;
+
+                for (let i = 0; i < headData.data.length; i += 4) {
+                  const r = headData.data[i];
+                  const g = headData.data[i+1];
+                  const b = headData.data[i+2];
+                  
+                  // Indonesian skin-tone chromatic range (face/forehead exposed without helmet)
+                  const isSkinTone = (r > 75 && g > 45 && b > 30 && r > g && r > b && (r - g) > 10 && (r - b) > 12);
+                  if (isSkinTone) skinPixels++;
+
+                  // Dark unshielded hair contrast
+                  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                  if (lum < 40 && !isSkinTone) darkHairPixels++;
+                }
+
+                const skinRatio = totalPx > 0 ? skinPixels / totalPx : 0;
+                const hairRatio = totalPx > 0 ? darkHairPixels / totalPx : 0;
+
+                // Bare head signature: exposed face/skin combined with bare hair without helmet dome
+                const isBareHeadDetected = (skinRatio > 0.28) || (skinRatio > 0.15 && hairRatio > 0.35);
+
+                // Multi-frame exponential moving average filter (prevents false alarms on dark helmets)
+                t.noHelmetScore = ((t.noHelmetScore || 0) * 0.72) + (isBareHeadDetected ? 0.28 : 0);
+                t.noHelmet = (t.noHelmetScore > 0.55 && t.seenFrames >= 7);
+              } else {
+                t.noHelmet = false;
               }
-              const hairRatio = totalPx > 0 ? darkHairPixels / totalPx : 0;
-              t.noHelmet = (hairRatio > 0.45 && t.seenFrames >= 5);
+            } catch (e) {
+              t.noHelmet = false;
             }
-          } catch (e) {
+          } else {
+            // Distant blur: do not flag false violations
             t.noHelmet = false;
           }
         } else {
