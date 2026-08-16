@@ -203,14 +203,21 @@ class MedanCCTVMap {
   }
 
   /**
-   * Fast & Direct Native Stream Health Verifier (Direct browser connection, no proxy blocking)
+   * Adaptive Stream Health Verifier (Bandung uses Koyeb proxy, Medan & Yogya scan direct)
    */
-  checkHlsStreamHealth(url, timeoutMs = 3000) {
+  checkHlsStreamHealth(url, timeoutMs = 3500) {
     return new Promise((resolve) => {
       if (!url) {
         resolve({ online: false, latencyMs: 0 });
         return;
       }
+
+      // Bandung uses Koyeb proxy for health scanning, Medan/Yogya scan direct
+      const REMOTE_PROXY_BASE = 'https://renewed-georgeanne-nekonode-1aa70c0c.koyeb.app/fetch/?url=';
+      const isBandung = url.includes('bandung.go.id') || url.includes('pelindung');
+      const probeUrl = isBandung && !url.includes('koyeb.app')
+        ? `${REMOTE_PROXY_BASE}${encodeURIComponent(url)}`
+        : url;
 
       const startTime = performance.now();
       const controller = new AbortController();
@@ -229,8 +236,8 @@ class MedanCCTVMap {
         finalize(false, 0);
       }, timeoutMs);
 
-      // 1. Direct browser fetch probe (atcsdishub has open CORS)
-      fetch(url, { method: 'GET', mode: 'cors', signal: controller.signal, headers: { 'Range': 'bytes=0-512' } })
+      // 1. Browser fetch probe
+      fetch(probeUrl, { method: 'GET', mode: 'cors', signal: controller.signal, headers: { 'Range': 'bytes=0-512' } })
         .then(res => {
           if (res.ok || res.status === 200 || res.status === 206 || res.status === 304) {
             finalize(true);
@@ -239,12 +246,12 @@ class MedanCCTVMap {
           }
         })
         .catch(() => {
-          // 2. Direct Headless HLS probe if supported
-          if (window.Hls && window.Hls.isSupported() && url.includes('.m3u8')) {
+          // 2. Headless HLS probe if supported
+          if (window.Hls && window.Hls.isSupported() && probeUrl.includes('.m3u8')) {
             let hlsTest;
             try {
               hlsTest = new window.Hls({
-                manifestLoadingTimeOut: 2000,
+                manifestLoadingTimeOut: 2500,
                 manifestLoadingMaxRetry: 0,
                 enableWorker: false
               });
@@ -256,7 +263,7 @@ class MedanCCTVMap {
                 try { hlsTest.destroy(); } catch (e) {}
                 finalize(false, 0);
               });
-              hlsTest.loadSource(url);
+              hlsTest.loadSource(probeUrl);
             } catch (e) {
               finalize(false, 0);
             }

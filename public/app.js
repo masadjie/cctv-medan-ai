@@ -520,9 +520,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       video.srcObject = null;
     }
 
-    // Hosted Remote Proxy Server
+    // Bandung uses the Koyeb remote proxy, Medan & Yogya are 100% direct native
     const REMOTE_PROXY_BASE = 'https://renewed-georgeanne-nekonode-1aa70c0c.koyeb.app/fetch/?url=';
-    const finalUrl = (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('koyeb.app')
+    const isBandung = url.includes('bandung.go.id') || url.includes('pelindung');
+    const finalUrl = isBandung && !url.includes('koyeb.app')
       ? `${REMOTE_PROXY_BASE}${encodeURIComponent(url)}`
       : url;
 
@@ -3079,9 +3080,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     video.onplaying = hideLoader;
     video.onloadeddata = hideLoader;
 
-    // Hosted Remote Proxy Server
+    // Bandung uses the Koyeb remote proxy, Medan & Yogya are 100% direct native
     const REMOTE_PROXY_BASE = 'https://renewed-georgeanne-nekonode-1aa70c0c.koyeb.app/fetch/?url=';
-    const finalUrl = (url.startsWith('http://') || url.startsWith('https://')) && !url.includes('koyeb.app')
+    const isBandung = url.includes('bandung.go.id') || url.includes('pelindung');
+    const finalUrl = isBandung && !url.includes('koyeb.app')
       ? `${REMOTE_PROXY_BASE}${encodeURIComponent(url)}`
       : url;
 
