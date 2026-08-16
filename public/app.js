@@ -1827,10 +1827,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const wrPanel = document.getElementById('warRoomView');
     if (wrPanel) {
       if (mode === 'warroom') {
+        wrPanel.classList.remove('hidden');   // must remove BEFORE adding active
         wrPanel.classList.add('war-room-active');
         initWarRoom();
       } else {
         wrPanel.classList.remove('war-room-active');
+        wrPanel.classList.add('hidden');
       }
     }
 

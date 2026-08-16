@@ -2226,9 +2226,8 @@ body.light-theme .combobox-search-input {
   display: flex;
 }
 
-.war-room-panel.hidden {
-  display: none;
-}
+/* war-room-active overrides base display:none — do NOT add a .hidden rule here */
+
 
 .war-room-top-header {
   display: flex;
