@@ -782,30 +782,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rawBikes = [];
     const rawPersons = [];
 
-    // Step 1: Categorize raw detections
+    // Step 1: Categorize and rigorously validate raw detections
     rawDetections.forEach(pred => {
       const [x, y, w, h] = pred.bbox;
       const classId = pred.class.toLowerCase();
 
-      // Filter out invalid bounding boxes
-      if (w > canvasW * 0.70 || h > canvasH * 0.75) return;
-      if (w < 8 || h < 8) return;
+      // Filter out invalid bounding boxes (Billboards, background structures, extreme sizes)
+      if (w > canvasW * 0.52 || h > canvasH * 0.58) return; // Billboards/signs are giant; real vehicles don't span > 52% width
+      if (w < 14 || h < 14) return; // Noise specs
+      if (pred.score < 0.38) return; // Strict confidence floor to prevent billboard text from being recognized as cars
       if (roi && !isBoxInRoi([x, y, w, h], roi)) return;
 
       const aspectRatio = w / Math.max(1, h);
-      const isSmallOrVertical = (w < 85 && h < 115 && aspectRatio <= 1.20);
-      const isRoadArea = (y > canvasH * 0.10);
 
-      // Classes identified in journal literature (car, truck, bus, motorbike/motorcycle, bicycle, person/rider)
+      // Classes identified in traffic surveillance
       if (classId === 'motorcycle' || classId === 'bicycle' || classId === 'motorbike') {
-        rawBikes.push({
-          bbox: [x, y, w, h],
-          score: Math.max(pred.score, 0.40),
-          classId: 'motorcycle'
-        });
+        // Motorcycle aspect ratio is vertical or compact: width/height between 0.35 and 1.65
+        if (aspectRatio >= 0.35 && aspectRatio <= 1.65 && w <= canvasW * 0.35 && h <= canvasH * 0.45) {
+          rawBikes.push({
+            bbox: [x, y, w, h],
+            score: pred.score,
+            classId: 'motorcycle'
+          });
+        }
       } else if (classId === 'person') {
-        // In traffic camera POV, persons on the roadway are motorcycle riders
-        if (isRoadArea && (aspectRatio <= 1.15 || h >= 14)) {
+        // Only keep person if they look like a rider (reasonable size, vertical aspect ratio)
+        if (aspectRatio >= 0.25 && aspectRatio <= 1.05 && h >= 16 && h <= canvasH * 0.38 && w <= canvasW * 0.25) {
           rawPersons.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -813,15 +815,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
       } else if (CAR_CLASSES.includes(classId)) {
-        // Address small object classification challenge noted in YOLO research:
-        // Small/narrow vehicles with lower confidence are motorcycles/scooters
-        if (isSmallOrVertical && pred.score < 0.58 && classId === 'car' && (w < 65 || aspectRatio <= 0.95)) {
-          rawBikes.push({
-            bbox: [x, y, w, h],
-            score: pred.score,
-            classId: 'motorcycle'
-          });
-        } else {
+        // Car / Truck / Bus aspect ratio: vehicles are generally horizontal or square: aspect between 0.55 and 3.2
+        if (aspectRatio >= 0.55 && aspectRatio <= 3.2 && w >= 22 && h >= 18) {
           rawCars.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -855,7 +850,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const yDist = Math.abs(pcy - bcy);
 
           // Rider sits directly on or slightly above the motorcycle
-          const isOverlapping = iou > 0.05 || (xDist < Math.max(pw, bw) * 0.95 && yDist < Math.max(ph, bh) * 1.4);
+          const isOverlapping = iou > 0.08 || (xDist < Math.max(pw, bw) * 0.80 && yDist < Math.max(ph, bh) * 1.2);
 
           if (isOverlapping) {
             usedPersonIndices.add(pIdx);
@@ -870,55 +865,42 @@ document.addEventListener('DOMContentLoaded', async () => {
               category: 'motor',
               labelText: 'Sepeda Motor',
               strokeColor: COLOR_MOTOR,
-              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.15),
+              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.10),
               bbox: [minX, minY, maxX - minX, maxY - minY]
             });
           }
         });
       });
 
-      // 2b. Standalone Motorcycles/Bicycles (Actual vehicle bodies detected)
+      // 2b. Standalone Motorcycles/Bicycles (Actual vehicle bodies detected with confidence >= 0.40)
       rawBikes.forEach((bike, bIdx) => {
-        if (!usedBikeIndices.has(bIdx)) {
+        if (!usedBikeIndices.has(bIdx) && bike.score >= 0.40) {
           candidateDetections.push({
             category: 'motor',
             labelText: 'Sepeda Motor',
             strokeColor: COLOR_MOTOR,
-            score: Math.max(bike.score, 0.35),
+            score: bike.score,
             bbox: [...bike.bbox]
           });
         }
       });
 
-      // 2c. Standalone Riders on Roadway (Rider silhouettes whose bike chassis was merged in low light)
-      rawPersons.forEach((person, pIdx) => {
-        if (!usedPersonIndices.has(pIdx)) {
-          const [px, py, pw, ph] = person.bbox;
-          const pAspect = pw / Math.max(1, ph);
-          if (pAspect <= 1.15 && ph >= 12 && py > canvasH * 0.10) {
-            candidateDetections.push({
-              category: 'motor',
-              labelText: 'Sepeda Motor',
-              strokeColor: COLOR_MOTOR,
-              score: Math.max(person.score, 0.30),
-              bbox: [px, py, pw, ph]
-            });
-          }
-        }
-      });
+      // NOTE: Standalone persons (posters, billboards, sidewalk pedestrians) are NEVER turned into motorcycles!
     }
 
     // Step 3: Mobil, Truk & Bus Fusion
     if (detectCars.checked) {
       rawCars.forEach(car => {
-        const label = car.classId === 'car' ? 'Mobil' : (car.classId === 'truck' ? 'Truk' : 'Bus');
-        candidateDetections.push({
-          category: 'car',
-          labelText: label,
-          strokeColor: COLOR_CAR,
-          score: car.score,
-          bbox: [...car.bbox]
-        });
+        if (car.score >= 0.40) {
+          const label = car.classId === 'car' ? 'Mobil' : (car.classId === 'truck' ? 'Truk' : 'Bus');
+          candidateDetections.push({
+            category: 'car',
+            labelText: label,
+            strokeColor: COLOR_CAR,
+            score: car.score,
+            bbox: [...car.bbox]
+          });
+        }
       });
     }
 
@@ -1063,19 +1045,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function runMultiScaleInference(minConf, vWidth, vHeight) {
     const rawResults = [];
 
-    // Preprocessing with adaptive luminance booster for high-accuracy night/day detection
+    // Preprocessing with balanced contrast/brightness for traffic visibility
     fullCropCanvas.width = vWidth;
     fullCropCanvas.height = vHeight;
-    fullCropCtx.filter = 'contrast(1.25) brightness(1.10) saturate(1.18)';
+    fullCropCtx.filter = 'contrast(1.12) brightness(1.04) saturate(1.08)';
     fullCropCtx.drawImage(video, 0, 0, vWidth, vHeight);
 
-    // Pass 1: If User-Defined ROI is Active, Dedicate Ultra-Res Inference to Exact ROI Area
+    // Effective confidence floor: enforce at least 0.38
+    const effectiveConf = Math.max(0.38, minConf);
+
+    // Pass 1: If User-Defined ROI is Active, Dedicate High-Res Inference to Exact ROI Area
     if (roi && roi.width > 25 && roi.height > 25) {
       roiCanvas.width = 512;
       roiCanvas.height = 512;
       roiCtx.drawImage(fullCropCanvas, roi.x, roi.y, roi.width, roi.height, 0, 0, 512, 512);
 
-      const roiDetections = await model.detect(roiCanvas, 32, minConf * 0.60);
+      const roiDetections = await model.detect(roiCanvas, 24, effectiveConf * 0.85);
       roiDetections.forEach(d => {
         const scaleX = roi.width / 512;
         const scaleY = roi.height / 512;
@@ -1093,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Pass 2: Full Frame Detection (Captures large foreground vehicles)
-    const fullDetections = await model.detect(fullCropCanvas, 28, minConf * 0.70);
+    const fullDetections = await model.detect(fullCropCanvas, 24, effectiveConf);
     rawResults.push(...fullDetections);
 
     // If Nano Fast Profile is active or YOLO26 NMS-Free is selected, return high-speed dual-pass results
@@ -1103,15 +1088,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Pass 3: Sliced Tile 1 (Main Roadway Core Zone - Middle & Lower Traffic Corridor)
     const tile1W = Math.round(vWidth * 0.90);
-    const tile1H = Math.round(vHeight * 0.78);
+    const tile1H = Math.round(vHeight * 0.75);
     const tile1X = Math.round(vWidth * 0.05);
-    const tile1Y = Math.round(vHeight * 0.18);
+    const tile1Y = Math.round(vHeight * 0.20);
 
     tileCanvas1.width = 512;
     tileCanvas1.height = 512;
     tileCtx1.drawImage(fullCropCanvas, tile1X, tile1Y, tile1W, tile1H, 0, 0, 512, 512);
 
-    const tile1Detections = await model.detect(tileCanvas1, 35, Math.min(minConf * 0.45, 0.20));
+    const tile1Detections = await model.detect(tileCanvas1, 24, effectiveConf * 0.90);
     tile1Detections.forEach(d => {
       const scaleX = tile1W / 512;
       const scaleY = tile1H / 512;
@@ -1128,16 +1113,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Pass 4: Sliced Tile 2 (Distant Intersection Horizon Zoom - Small motorcycles & far traffic)
-    const tile2W = Math.round(vWidth * 0.68);
-    const tile2H = Math.round(vHeight * 0.58);
-    const tile2X = Math.round(vWidth * 0.16);
-    const tile2Y = Math.round(vHeight * 0.08);
+    const tile2W = Math.round(vWidth * 0.65);
+    const tile2H = Math.round(vHeight * 0.55);
+    const tile2X = Math.round(vWidth * 0.18);
+    const tile2Y = Math.round(vHeight * 0.12);
 
     tileCanvas2.width = 512;
     tileCanvas2.height = 512;
     tileCtx2.drawImage(fullCropCanvas, tile2X, tile2Y, tile2W, tile2H, 0, 0, 512, 512);
 
-    const tile2Detections = await model.detect(tileCanvas2, 32, Math.min(minConf * 0.42, 0.18));
+    const tile2Detections = await model.detect(tileCanvas2, 20, effectiveConf * 0.88);
     tile2Detections.forEach(d => {
       const scaleX = tile2W / 512;
       const scaleY = tile2H / 512;
