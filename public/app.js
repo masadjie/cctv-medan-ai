@@ -826,16 +826,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Classes identified in traffic surveillance
       if (classId === 'motorcycle' || classId === 'bicycle' || classId === 'motorbike') {
-        if (aspectRatio <= 2.2 && w <= canvasW * 0.40 && h <= canvasH * 0.50) {
+        if (aspectRatio >= 0.35 && aspectRatio <= 2.2 && w <= canvasW * 0.40 && h <= canvasH * 0.50 && pred.score >= Math.max(0.35, minConf * 0.85)) {
           rawBikes.push({
             bbox: [x, y, w, h],
-            score: Math.max(pred.score, minConf),
+            score: pred.score,
             classId: 'motorcycle'
           });
         }
       } else if (classId === 'person') {
-        // Riders on roadway (vertical silhouette on lower 85% road area)
-        if (aspectRatio <= 1.25 && h >= 12 && h <= canvasH * 0.45 && w <= canvasW * 0.30) {
+        // Riders on roadway: only kept to fuse with actual motorcycle chassis
+        if (aspectRatio <= 1.05 && h >= 14 && h <= canvasH * 0.40 && w <= canvasW * 0.25) {
           rawPersons.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -844,7 +844,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } else if (CAR_CLASSES.includes(classId)) {
         // Car / Truck / Bus: filter out vertical billboards mistakenly labeled as cars
-        if (aspectRatio >= 0.45 && aspectRatio <= 3.8 && w >= 16 && h >= 14) {
+        if (aspectRatio >= 0.45 && aspectRatio <= 3.8 && w >= 18 && h >= 16 && pred.score >= Math.max(0.35, minConf * 0.85)) {
           rawCars.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -900,7 +900,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       });
 
-      // 2b. Standalone Motorcycles/Bicycles
+      // 2b. Standalone Motorcycles/Bicycles (Actual motorcycle bodies detected by model)
       rawBikes.forEach((bike, bIdx) => {
         if (!usedBikeIndices.has(bIdx)) {
           candidateDetections.push({
@@ -913,18 +913,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
-      // 2c. Standalone Riders on Asphalt Roadway (Riders whose motorcycle chassis is blurred/dark)
-      rawPersons.forEach((person, pIdx) => {
-        if (!usedPersonIndices.has(pIdx) && person.score >= minConf && person.bbox[1] > canvasH * 0.18) {
-          candidateDetections.push({
-            category: 'motor',
-            labelText: 'Sepeda Motor',
-            strokeColor: COLOR_MOTOR,
-            score: person.score,
-            bbox: [...person.bbox]
-          });
-        }
-      });
+      // NOTE: Standalone persons (posters, billboards, pedestrians) are strictly EXCLUDED from being marked as motorcycles!
     }
 
     // Step 3: Mobil, Truk & Bus Fusion
