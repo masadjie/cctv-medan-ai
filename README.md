@@ -11,7 +11,8 @@ Platform pemantauan dan analisis lalu lintas kamera CCTV ATCS multi-wilayah Indo
 
 - **Kota Medan**: 60+ titik kamera ATCS Dishub Kota Medan (Simpang Lapangan Merdeka, Jl. Jamin Ginting, Jl. SM Raja, Jl. Gatot Subroto, dll).
 - **Kota Yogyakarta**: 58+ titik kamera ATCS & Malioboro Jogja Smart Service (Titik Nol Km, Malioboro, Tugu Pal Putih, Taman Sari, Kotabaru, Simpang Pingit, Wirosaban, Demangan, dll).
-- **Kota Lainnya (Dalam Pengembangan)**: DKI Jakarta, Bandung, Surabaya, Semarang, Solo, Denpasar, dan kota lainnya di Indonesia.
+- **Kota Bandung**: 80+ titik kamera ATCS Dishub Kota Bandung (Gerbang Tol Pasteur, Cihampelas, Djuanda/Dago, Merdeka, Riau, Soekarno-Hatta, Asia-Afrika, Alun-Alun, Samsat, dll).
+- **Kota Lainnya (Dalam Pengembangan)**: DKI Jakarta, Surabaya, Semarang, Solo, Denpasar, dan kota lainnya di Indonesia.
 
 ---
 

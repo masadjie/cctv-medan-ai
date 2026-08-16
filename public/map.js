@@ -61,12 +61,22 @@ class MedanCCTVMap {
     this.currentTileLayer = this.tileLayers.darkNight;
     this.currentTileLayer.addTo(this.map);
 
-    // 1. Render boundary layer if Yogyakarta is active
+    // 1. Render boundary layer if Yogyakarta or Bandung is active
     if ((this.cityId === 'jogja' || (this.cameras && this.cameras[0] && this.cameras[0].city === 'jogja')) && window.JOGJA_MAPS_GEOJSON) {
       this.boundaryLayer = L.geoJSON(window.JOGJA_MAPS_GEOJSON, {
         style: {
           fillColor: 'rgba(255, 105, 105, 0.12)',
           color: '#FF6969',
+          weight: 2,
+          opacity: 0.95,
+          dashArray: '5, 5'
+        }
+      }).addTo(this.map);
+    } else if ((this.cityId === 'bandung' || (this.cameras && this.cameras[0] && this.cameras[0].city === 'bandung')) && window.BANDUNG_MAPS_GEOJSON) {
+      this.boundaryLayer = L.geoJSON(window.BANDUNG_MAPS_GEOJSON, {
+        style: {
+          fillColor: 'rgba(6, 182, 212, 0.12)',
+          color: '#06b6d4',
           weight: 2,
           opacity: 0.95,
           dashArray: '5, 5'
@@ -801,12 +811,22 @@ class MedanCCTVMap {
         this.boundaryLayer = null;
       }
 
-      // 2. Render Yogyakarta Administrative Boundary Polygon Layer if Jogja is active
+      // 2. Render Administrative Boundary Polygon Layer if Jogja or Bandung is active
       if (cityId === 'jogja' && window.JOGJA_MAPS_GEOJSON) {
         this.boundaryLayer = L.geoJSON(window.JOGJA_MAPS_GEOJSON, {
           style: {
             fillColor: 'rgba(255, 105, 105, 0.12)',
             color: '#FF6969',
+            weight: 2,
+            opacity: 0.95,
+            dashArray: '5, 5'
+          }
+        }).addTo(this.map);
+      } else if (cityId === 'bandung' && window.BANDUNG_MAPS_GEOJSON) {
+        this.boundaryLayer = L.geoJSON(window.BANDUNG_MAPS_GEOJSON, {
+          style: {
+            fillColor: 'rgba(6, 182, 212, 0.12)',
+            color: '#06b6d4',
             weight: 2,
             opacity: 0.95,
             dashArray: '5, 5'

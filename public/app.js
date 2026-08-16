@@ -236,6 +236,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   function getCurrentCityCameras() {
     if (currentCityId === 'jogja') {
       return window.ATCS_JOGJA_CAMERAS || [];
+    } else if (currentCityId === 'bandung') {
+      return window.CCTV_BANDUNG_DATA || [];
     }
     return window.ATCS_MEDAN_CAMERAS || [];
   }
@@ -244,7 +246,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   function initCameraDirectory() {
     if (!presetSelect) return;
     const currentCams = getCurrentCityCameras();
-    const isJogja = currentCityId === 'jogja';
+    let cityLabel = 'Medan';
+    let atcsGroupLabel = `🚦 ATCS Dishub Kota Medan (${currentCams.length} Titik CCTV Aktif)`;
+    
+    if (currentCityId === 'jogja') {
+      cityLabel = 'Yogyakarta';
+      atcsGroupLabel = `🚦 ATCS & Malioboro Kota Yogyakarta (${currentCams.length} Titik CCTV Aktif)`;
+    } else if (currentCityId === 'bandung') {
+      cityLabel = 'Bandung';
+      atcsGroupLabel = `🚦 ATCS Dishub Kota Bandung (${currentCams.length} Titik CCTV Aktif)`;
+    }
     
     presetSelect.innerHTML = '';
 
@@ -254,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const optSim = document.createElement('option');
     optSim.value = 'simulation_traffic';
-    optSim.textContent = `🎬 LIVE TRAFFIC FEED (Simulasi Realistis ${isJogja ? 'Yogyakarta' : 'Medan'})`;
+    optSim.textContent = `🎬 LIVE TRAFFIC FEED (Simulasi Realistis ${cityLabel})`;
     optGroupSim.appendChild(optSim);
 
     const optWebcam = document.createElement('option');
@@ -271,14 +282,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Active City CCTV Group
     const optGroupAtcs = document.createElement('optgroup');
-    optGroupAtcs.label = isJogja
-      ? `🚦 ATCS & Malioboro Kota Yogyakarta (${currentCams.length} Titik CCTV Aktif)`
-      : `🚦 ATCS Dishub Kota Medan (${currentCams.length} Titik CCTV Aktif)`;
+    optGroupAtcs.label = atcsGroupLabel;
 
     currentCams.forEach((cam, idx) => {
       const opt = document.createElement('option');
       opt.value = cam.url;
-      opt.textContent = `[No. ${cam.id}] ${cam.name} (${cam.alias || cam.name})`;
+      const camName = cam.name || cam.title || `Kamera #${cam.id}`;
+      const camAlias = cam.alias || cam.category || camName;
+      opt.textContent = `[No. ${cam.id}] ${camName} (${camAlias})`;
       if (idx === 0) {
         opt.selected = true;
       }
@@ -2638,7 +2649,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function activateCity(cityId, cityName, lat, lon) {
-    if (cityId === 'medan' || cityId === 'jogja') {
+    if (cityId === 'medan' || cityId === 'jogja' || cityId === 'bandung') {
       currentCityId = cityId;
       localStorage.setItem('cctv_selected_city', cityId);
       if (currentCityLabel) currentCityLabel.textContent = cityName;
@@ -3211,7 +3222,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     warRecCtx.fillText(`WAR ROOM MASTER MULTI-GRID REC [${formatTime(warRecSeconds)}]`, 36, totalH - 15);
 
     warRecCtx.fillStyle = '#38bdf8';
-    const cityTitle = currentCityId === 'jogja' ? 'KOTA YOGYAKARTA' : 'KOTA MEDAN';
+    let cityTitle = 'KOTA MEDAN';
+    if (currentCityId === 'jogja') cityTitle = 'KOTA YOGYAKARTA';
+    else if (currentCityId === 'bandung') cityTitle = 'KOTA BANDUNG';
     warRecCtx.fillText(`| NUSANTARA TRAFFIC VISION • ${cityTitle} (${warTotalSlots} KAMERA) | ${new Date().toLocaleString('id-ID')}`, 460, totalH - 15);
 
     warRecAnimId = requestAnimationFrame(drawWarRecordingFrame);
@@ -3305,7 +3318,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       recordingPreviewVideo.src = videoUrl;
     }
 
-    const cityPrefix = currentCityId === 'jogja' ? 'Jogja' : 'Medan';
+    let cityPrefix = 'Medan';
+    if (currentCityId === 'jogja') cityPrefix = 'Jogja';
+    else if (currentCityId === 'bandung') cityPrefix = 'Bandung';
     const timestampStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const filename = `CCTV_WarRoom_Matrix_${cityPrefix}_${warTotalSlots}Cam_${timestampStr}.webm`;
 
@@ -3456,7 +3471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Restore saved city on boot if available
   const savedCity = localStorage.getItem('cctv_selected_city');
-  if (savedCity === 'jogja' || savedCity === 'medan') {
+  if (savedCity === 'jogja' || savedCity === 'medan' || savedCity === 'bandung') {
     const card = document.querySelector(`.city-card[data-city-id="${savedCity}"]`);
     if (card) {
       const cityName = card.getAttribute('data-city-name');
