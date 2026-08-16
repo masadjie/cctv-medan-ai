@@ -1107,28 +1107,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Draw Active Locked ROI Zone
     if (roi) {
       ctx.save();
+      // Dim exterior background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(0, 0, canvas.width, roi.y);
+      ctx.fillRect(0, roi.y + roi.height, canvas.width, canvas.height - (roi.y + roi.height));
+      ctx.fillRect(0, roi.y, roi.x, roi.height);
+      ctx.fillRect(roi.x + roi.width, roi.y, canvas.width - (roi.x + roi.width), roi.height);
+
       ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([8, 6]);
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
       ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
       ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 10;
       ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
       
-      // ROI Label Badge
+      // Corner Brackets
       ctx.setLineDash([]);
-      ctx.font = 'bold 12px Plus Jakarta Sans, sans-serif';
-      const roiLabel = '📍 ZONA DETEKSI AKTIF (ZOOM INFERENCE)';
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = '#38bdf8';
+      const cSize = Math.min(18, roi.width / 4, roi.height / 4);
+      ctx.beginPath();
+      // Top-Left
+      ctx.moveTo(roi.x, roi.y + cSize); ctx.lineTo(roi.x, roi.y); ctx.lineTo(roi.x + cSize, roi.y);
+      // Top-Right
+      ctx.moveTo(roi.x + roi.width - cSize, roi.y); ctx.lineTo(roi.x + roi.width, roi.y); ctx.lineTo(roi.x + roi.width, roi.y + cSize);
+      // Bottom-Left
+      ctx.moveTo(roi.x, roi.y + roi.height - cSize); ctx.lineTo(roi.x, roi.y + roi.height); ctx.lineTo(roi.x + cSize, roi.y + roi.height);
+      // Bottom-Right
+      ctx.moveTo(roi.x + roi.width - cSize, roi.y + roi.height); ctx.lineTo(roi.x + roi.width, roi.y + roi.height); ctx.lineTo(roi.x + roi.width, roi.y + roi.height - cSize);
+      ctx.stroke();
+
+      // ROI Label Badge
+      ctx.font = 'bold 11px Plus Jakarta Sans, sans-serif';
+      const roiLabel = `📍 ZONA FOKUS (${Math.round(roi.width)}×${Math.round(roi.height)} px)`;
       const roiTextW = ctx.measureText(roiLabel).width;
       ctx.fillStyle = '#0284c7';
-      ctx.fillRect(roi.x, Math.max(0, roi.y - 24), roiTextW + 16, 22);
+      ctx.fillRect(roi.x, Math.max(0, roi.y - 22), roiTextW + 14, 20);
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(roiLabel, roi.x + 8, Math.max(16, roi.y - 8));
+      ctx.fillText(roiLabel, roi.x + 7, Math.max(14, roi.y - 8));
       ctx.restore();
     }
 
-    // 2. Draw Live Interactive Selection while Dragging Mouse
+    // 2. Draw Live Interactive Selection while Dragging Mouse/Touch
     if (isDrawingRoi && roiStartPoint && roiCurrentPoint) {
       const selX = Math.min(roiStartPoint.x, roiCurrentPoint.x);
       const selY = Math.min(roiStartPoint.y, roiCurrentPoint.y);
@@ -1136,11 +1158,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const selH = Math.abs(roiCurrentPoint.y - roiStartPoint.y);
 
       ctx.save();
-      // Translucent cyan selection fill
       ctx.fillStyle = 'rgba(6, 182, 212, 0.22)';
       ctx.fillRect(selX, selY, selW, selH);
 
-      // Glowing animated dashed outline
       ctx.strokeStyle = '#00e5ff';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]);
@@ -1158,13 +1178,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.fillRect(selX + selW - handleSize/2, selY + selH - handleSize/2, handleSize, handleSize);
 
       // Dimension and release guide
-      const dimLabel = `📐 ${Math.round(selW)} × ${Math.round(selH)} px (Lepaskan klik untuk mengunci zona)`;
-      ctx.font = 'bold 12px Plus Jakarta Sans, sans-serif';
+      const dimLabel = `📐 ${Math.round(selW)} × ${Math.round(selH)} px (Lepaskan untuk mengunci)`;
+      ctx.font = 'bold 11px Plus Jakarta Sans, sans-serif';
       const dimW = ctx.measureText(dimLabel).width;
       ctx.fillStyle = '#00e5ff';
-      ctx.fillRect(selX, Math.max(0, selY - 24), dimW + 14, 22);
+      ctx.fillRect(selX, Math.max(0, selY - 22), dimW + 14, 20);
       ctx.fillStyle = '#0b0f17';
-      ctx.fillText(dimLabel, selX + 7, Math.max(16, selY - 8));
+      ctx.fillText(dimLabel, selX + 7, Math.max(14, selY - 8));
       ctx.restore();
     }
 
@@ -1254,75 +1274,109 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 8. ROI Interactive Drawing Listeners (mousedown, mousemove, mouseup)
-  // 8. ROI Interactive Drawing Listeners (mousedown, mousemove, mouseup on window)
-  btnDrawRoi.addEventListener('click', () => {
-    if (roi) {
-      roi = null;
-      roiStartPoint = null;
-      roiCurrentPoint = null;
-      isDrawingRoi = false;
-      btnDrawRoi.classList.remove('active');
-      btnDrawRoi.querySelector('span').textContent = 'Set Zona Deteksi';
-      canvas.classList.remove('drawing-roi');
-      if (videoContainer) videoContainer.classList.remove('roi-drawing-mode');
-      showToast('Zona deteksi direset ke seluruh layar');
-      return;
-    }
+  // 8. ROI Interactive Drawing Listeners (Pointer & Touch Supported)
+  const roiFloatingHud = document.getElementById('roiFloatingHud');
+  const roiSizePill = document.getElementById('roiSizePill');
+  const btnRoiRedraw = document.getElementById('btnRoiRedraw');
+  const btnRoiClear = document.getElementById('btnRoiClear');
 
+  function startDrawingRoi() {
     isDrawingRoi = true;
     roiStartPoint = null;
     roiCurrentPoint = null;
+    btnDrawRoi.classList.add('active');
+    btnDrawRoi.querySelector('span').textContent = 'Menggambar Zona...';
     canvas.classList.add('drawing-roi');
     if (videoContainer) videoContainer.classList.add('roi-drawing-mode');
-    showToast('Klik dan tarik kursor pada video untuk memilih zona deteksi spesifik');
+    if (roiFloatingHud) roiFloatingHud.classList.add('hidden');
+    showToast('Klik/Sentuh dan tarik kursor pada video untuk memilih zona fokus');
+  }
+
+  function clearRoiZone() {
+    roi = null;
+    roiStartPoint = null;
+    roiCurrentPoint = null;
+    isDrawingRoi = false;
+    btnDrawRoi.classList.remove('active');
+    btnDrawRoi.querySelector('span').textContent = 'Set Zona Deteksi';
+    canvas.classList.remove('drawing-roi');
+    if (videoContainer) videoContainer.classList.remove('roi-drawing-mode');
+    if (roiFloatingHud) roiFloatingHud.classList.add('hidden');
+    showToast('Zona deteksi dinonaktifkan (kembali ke seluruh layar)');
+  }
+
+  function updateRoiHud() {
+    if (!roi) {
+      if (roiFloatingHud) roiFloatingHud.classList.add('hidden');
+      btnDrawRoi.classList.remove('active');
+      btnDrawRoi.querySelector('span').textContent = 'Set Zona Deteksi';
+      return;
+    }
+
+    if (roiFloatingHud) {
+      roiFloatingHud.classList.remove('hidden');
+      if (roiSizePill) {
+        roiSizePill.textContent = `${Math.round(roi.width)} × ${Math.round(roi.height)} px`;
+      }
+    }
+    btnDrawRoi.classList.add('active');
+    btnDrawRoi.querySelector('span').textContent = 'Zona Fokus (Aktif)';
+  }
+
+  btnDrawRoi.addEventListener('click', () => {
+    if (roi) {
+      clearRoiZone();
+    } else {
+      startDrawingRoi();
+    }
   });
 
-  canvas.addEventListener('mousedown', (e) => {
-    if (!isDrawingRoi) return;
-    e.preventDefault();
+  if (btnRoiRedraw) btnRoiRedraw.addEventListener('click', startDrawingRoi);
+  if (btnRoiClear) btnRoiClear.addEventListener('click', clearRoiZone);
+
+  // Unified Pointer (Mouse + Touch) Event Handlers
+  function getCanvasCoords(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    roiStartPoint = {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+    return {
+      x: Math.max(0, Math.min(canvas.width, (clientX - rect.left) * scaleX)),
+      y: Math.max(0, Math.min(canvas.height, (clientY - rect.top) * scaleY))
     };
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!isDrawingRoi) return;
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    roiStartPoint = getCanvasCoords(e.clientX, e.clientY);
     roiCurrentPoint = { ...roiStartPoint };
   });
 
-  window.addEventListener('mousemove', (e) => {
+  canvas.addEventListener('pointermove', (e) => {
     if (!isDrawingRoi || !roiStartPoint) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const curX = Math.max(0, Math.min(canvas.width, (e.clientX - rect.left) * scaleX));
-    const curY = Math.max(0, Math.min(canvas.height, (e.clientY - rect.top) * scaleY));
-    roiCurrentPoint = { x: curX, y: curY };
+    e.preventDefault();
+    roiCurrentPoint = getCanvasCoords(e.clientX, e.clientY);
   });
 
-  window.addEventListener('mouseup', (e) => {
+  canvas.addEventListener('pointerup', (e) => {
     if (!isDrawingRoi || !roiStartPoint) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const endX = Math.max(0, Math.min(canvas.width, (e.clientX - rect.left) * scaleX));
-    const endY = Math.max(0, Math.min(canvas.height, (e.clientY - rect.top) * scaleY));
+    e.preventDefault();
+    try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
 
-    const x = Math.min(roiStartPoint.x, endX);
-    const y = Math.min(roiStartPoint.y, endY);
-    const w = Math.abs(endX - roiStartPoint.x);
-    const h = Math.abs(endY - roiStartPoint.y);
+    const endPoint = getCanvasCoords(e.clientX, e.clientY);
+    const x = Math.min(roiStartPoint.x, endPoint.x);
+    const y = Math.min(roiStartPoint.y, endPoint.y);
+    const w = Math.abs(endPoint.x - roiStartPoint.x);
+    const h = Math.abs(endPoint.y - roiStartPoint.y);
 
-    if (w > 30 && h > 30) {
+    if (w > 25 && h > 25) {
       roi = { x, y, width: w, height: h };
-      btnDrawRoi.classList.add('active');
-      btnDrawRoi.querySelector('span').textContent = 'Reset Zona Deteksi';
+      updateRoiHud();
       showToast('Zona deteksi terkunci! Neural zoom presisi tinggi aktif pada area terpilih.');
     } else {
       roi = null;
-      btnDrawRoi.classList.remove('active');
-      btnDrawRoi.querySelector('span').textContent = 'Set Zona Deteksi';
+      updateRoiHud();
       showToast('Seleksi terlalu kecil, dibatalkan');
     }
 

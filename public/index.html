@@ -410,6 +410,25 @@
           <div class="hud-timestamp" id="osdTimestamp">--:--:--</div>
         </div>
 
+        <!-- Interactive ROI Floating HUD -->
+        <div class="roi-floating-hud hidden" id="roiFloatingHud">
+          <div class="roi-hud-info">
+            <span class="roi-radar-dot"></span>
+            <span id="roiHudTitle">Zona Deteksi Fokus</span>
+            <span class="roi-size-pill" id="roiSizePill">0 × 0 px</span>
+          </div>
+          <div class="roi-hud-actions">
+            <button type="button" class="btn-roi-act" id="btnRoiRedraw" title="Gambar ulang area zona fokus">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span>Ubah Zona</span>
+            </button>
+            <button type="button" class="btn-roi-act btn-roi-danger" id="btnRoiClear" title="Hapus zona dan kembali ke seluruh layar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span>Hapus</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Congestion Alert Toast -->
         <div class="viewport-alert-overlay" id="videoAlertBanner" style="display: none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
