@@ -549,6 +549,37 @@ body.light-theme .combobox-search-input {
   gap: 8px;
 }
 
+.map-stream-scan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-glass-solid);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-medium);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+}
+
+.scan-radar-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: scanBlink 1s infinite alternate;
+}
+
+@keyframes scanBlink {
+  from { opacity: 0.4; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.2); }
+}
+
 .map-layer-toggles {
   display: flex;
   background: var(--surface-glass-solid);
@@ -3453,4 +3484,67 @@ body.light-theme .combobox-search-input {
 
 .footer-right-stats b {
   color: #10b981;
+}
+
+/* ==========================================================================
+   16. FULL-WIDTH EXECUTIVE BOTTOM APPLICATION FOOTER
+   ========================================================================== */
+
+.app-fullwidth-footer {
+  width: 100%;
+  background: var(--surface-layer-1);
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px 1.5rem;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-inner-content {
+  width: 100%;
+  max-width: 1600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-inner-content .footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-inner-content b {
+  color: var(--text-pure);
+}
+
+.footer-divider {
+  opacity: 0.4;
+}
+
+.footer-ig-link {
+  color: #f59e0b;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.15s ease;
+}
+
+.footer-ig-link:hover {
+  color: #fbbf24;
+  text-decoration: underline;
+}
+
+.footer-tech-tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
 }

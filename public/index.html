@@ -179,6 +179,12 @@
           </div>
 
           <div class="map-toolbar-actions">
+            <!-- Dynamic CCTV Stream Scanning Counter Badge -->
+            <div class="map-stream-scan-badge" id="mapStreamScanBadge">
+              <span class="scan-radar-dot"></span>
+              <span id="mapStreamScanText">Memindai Node: 0/60</span>
+            </div>
+
             <div class="map-layer-toggles">
               <button type="button" class="layer-pill-btn active" data-theme="darkNight">Dark</button>
               <button type="button" class="layer-pill-btn" data-theme="dark">Voyager</button>
@@ -497,18 +503,23 @@
         </div>
 
         <!-- Footer Copyright & Instagram Attribution -->
-        <div class="sidebar-copyright-footer">
-          <p class="copyright-main">
-            &copy; 2026 <b>Medan Traffic Vision Pro</b>
-          </p>
-          <p class="copyright-sub">
-            Engineered by <b>Adjie Kurniawan</b> &bull; 
-            <a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer" class="footer-ig-link">@adjie.apk</a>
-          </p>
-        </div>
       </div>
     </aside>
   </main>
+
+  <!-- Full-Width Executive Bottom Application Footer -->
+  <footer class="app-fullwidth-footer">
+    <div class="footer-inner-content">
+      <div class="footer-left">
+        <span>&copy; 2026 <b>Nusantara Traffic Vision Pro</b></span>
+        <span class="footer-divider">&bull;</span>
+        <span>Engineered by <b>Adjie Kurniawan</b> &bull; <a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer" class="footer-ig-link">@adjie.apk</a></span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-tech-tag">YOLOv8 Edge Vision &bull; Multi-Node HLS Streamer</span>
+      </div>
+    </div>
+  </footer>
 
   <!-- Notification Toast Container -->
   <div class="toast-host" id="toastContainer"></div>

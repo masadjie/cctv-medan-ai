@@ -152,12 +152,22 @@ class MedanCCTVMap {
 
   /**
    * Sequential background verification loop: flips cameras from 🔴 OFFLINE -> 🟢 ONLINE
+   * and reports real-time scan progress in the UI
    */
   async startHlsBackgroundChecker() {
     if (this.isCheckingHls) return;
     this.isCheckingHls = true;
 
-    for (let i = 0; i < this.cameras.length; i++) {
+    const scanTextEl = document.getElementById('mapStreamScanText');
+    const totalCount = this.cameras.length;
+    let onlineCount = 0;
+    let offlineCount = 0;
+
+    if (scanTextEl) {
+      scanTextEl.textContent = `Memindai: 0/${totalCount}`;
+    }
+
+    for (let i = 0; i < totalCount; i++) {
       // Pause if map is actively moving
       while (this.isMapMoving) {
         await new Promise(r => setTimeout(r, 150));
@@ -171,9 +181,21 @@ class MedanCCTVMap {
           latencyMs: res.latencyMs,
           checkedAt: new Date().toISOString()
         };
+
+        if (res.online) {
+          onlineCount++;
+        } else {
+          offlineCount++;
+        }
         
         // Dynamically transition marker from OFFLINE to ONLINE
         this.updateSingleMarkerDom(cam.id, res.online);
+
+        // Update Scan Counter Badge live
+        if (scanTextEl) {
+          const scanned = i + 1;
+          scanTextEl.innerHTML = `Pindai ${scanned}/${totalCount} &bull; <span style="color:#10b981">🟢 ${onlineCount}</span> <span style="color:#ef4444">🔴 ${offlineCount}</span>`;
+        }
       }
 
       // Smooth spacing between probes
@@ -181,6 +203,9 @@ class MedanCCTVMap {
     }
 
     this.isCheckingHls = false;
+    if (scanTextEl) {
+      scanTextEl.innerHTML = `Node Selesai: <span style="color:#10b981">🟢 ${onlineCount} Online</span> &bull; <span style="color:#ef4444">🔴 ${offlineCount} Offline</span>`;
+    }
     window.dispatchEvent(new CustomEvent('cctv-health-updated', { detail: { cameras: this.healthStatus } }));
   }
 
