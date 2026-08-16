@@ -1724,6 +1724,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         mapStandbyOverlay.classList.add('hidden');
       }
 
+      // Reveal scanner HUD and stream scan badge
+      const mapScannerHud = document.getElementById('mapScannerHud');
+      const mapStreamScanBadge = document.getElementById('mapStreamScanBadge');
+      if (mapScannerHud) mapScannerHud.classList.remove('hidden');
+      if (mapStreamScanBadge) mapStreamScanBadge.classList.remove('hidden');
+
       showToast(`🏙️ ${cityName} Terpilih — Memuat Data CCTV & Neural Engine...`);
 
       // 1. Initialize Map on-demand
