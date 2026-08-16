@@ -288,7 +288,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       cityLabel = 'Bandung';
       atcsGroupLabel = `🚦 ATCS Dishub Kota Bandung (${currentCams.length} Titik CCTV Aktif)`;
     }
-    
+
+    const comboboxCityHeaderTitle = document.getElementById('comboboxCityHeaderTitle');
+    if (comboboxCityHeaderTitle) {
+      comboboxCityHeaderTitle.textContent = `PILIH & CARI TITIK CCTV (${currentCams.length}+ LOKASI KOTA ${cityLabel.toUpperCase()}):`;
+    }
+
     presetSelect.innerHTML = '';
 
     // Standard options
@@ -2044,6 +2049,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return 'video/webm';
   }
 
+  let recAnimationFrameId = null;
+
+  function runRecordingLoop() {
+    if (!isRecording) return;
+    drawRecordingFrame();
+    recAnimationFrameId = requestAnimationFrame(runRecordingLoop);
+  }
+
   function drawRecordingFrame() {
     if (!isRecording) return;
 
@@ -2057,7 +2070,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 1. Draw raw video frame (Hardware Video Surface)
     try {
-      if (video.readyState >= 2) {
+      if (video.readyState >= 2 && !video.paused) {
         recCompositeCtx.drawImage(video, 0, 0, w, h);
       }
     } catch (e) {}
@@ -2105,16 +2118,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       drawRecordingFrame();
 
-      // Dedicated 30 FPS Frame Pump (Decoupled from AI inference thread for silky-smooth motion)
-      if (recFrameInterval) clearInterval(recFrameInterval);
-      recFrameInterval = setInterval(drawRecordingFrame, 1000 / 30);
+      // Launch vsync-synchronized 60 FPS recording loop for silky-smooth motion
+      if (recAnimationFrameId) cancelAnimationFrame(recAnimationFrameId);
+      recAnimationFrameId = requestAnimationFrame(runRecordingLoop);
 
-      const stream = recCompositeCanvas.captureStream(30);
+      const stream = recCompositeCanvas.captureStream(60);
       const mimeType = getOptimalRecordingMimeType();
 
       mediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        videoBitsPerSecond: Math.min(recordingBitrate, 2500000) // Optimal smooth bitrate
+        videoBitsPerSecond: Math.min(recordingBitrate, 3500000) // 3.5 Mbps high-fidelity bitrate
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -2144,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 1000);
 
       const targetLabel = storageDestination === 'drive' ? 'Target: Google Drive' : 'Target: Local Disk Laptop';
-      showToast(`🔴 Perekaman Dimulai (${targetLabel})...`);
+      showToast(`🔴 Perekaman Dimulai 60 FPS (${targetLabel})...`);
     } catch (err) {
       console.error('Recording initialization failed:', err);
       showToast('❌ Browser tidak mendukung perekaman canvas stream.');
@@ -2156,11 +2169,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isRecording || !mediaRecorder) return;
 
     clearInterval(recordingTimerInterval);
-    if (recFrameInterval) {
-      clearInterval(recFrameInterval);
-      recFrameInterval = null;
+    if (recAnimationFrameId) {
+      cancelAnimationFrame(recAnimationFrameId);
+      recAnimationFrameId = null;
     }
-    cancelAnimationFrame(recAnimationId);
 
     if (btnRecord) {
       btnRecord.classList.remove('recording');
