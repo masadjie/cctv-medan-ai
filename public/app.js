@@ -1771,26 +1771,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Unified Pointer (Mouse + Touch) Event Handlers
   function getCanvasCoords(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    if (rect.width === 0 || rect.height === 0) return { x: 0, y: 0 };
+    const curW = canvas.width || video.videoWidth || 640;
+    const curH = canvas.height || video.videoHeight || 360;
+    const scaleX = curW / rect.width;
+    const scaleY = curH / rect.height;
     return {
-      x: Math.max(0, Math.min(canvas.width, (clientX - rect.left) * scaleX)),
-      y: Math.max(0, Math.min(canvas.height, (clientY - rect.top) * scaleY))
+      x: Math.max(0, Math.min(curW, (clientX - rect.left) * scaleX)),
+      y: Math.max(0, Math.min(curH, (clientY - rect.top) * scaleY))
     };
   }
 
   canvas.addEventListener('pointerdown', (e) => {
     if (!isDrawingRoi) return;
     e.preventDefault();
-    canvas.setPointerCapture(e.pointerId);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     roiStartPoint = getCanvasCoords(e.clientX, e.clientY);
     roiCurrentPoint = { ...roiStartPoint };
+    renderScene();
   });
 
   canvas.addEventListener('pointermove', (e) => {
     if (!isDrawingRoi || !roiStartPoint) return;
     e.preventDefault();
     roiCurrentPoint = getCanvasCoords(e.clientX, e.clientY);
+    renderScene();
   });
 
   canvas.addEventListener('pointerup', (e) => {
@@ -1819,6 +1824,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     roiCurrentPoint = null;
     canvas.classList.remove('drawing-roi');
     if (videoContainer) videoContainer.classList.remove('roi-drawing-mode');
+    renderScene();
+  });
+
+  canvas.addEventListener('pointercancel', (e) => {
+    if (!isDrawingRoi) return;
+    isDrawingRoi = false;
+    roiStartPoint = null;
+    roiCurrentPoint = null;
+    canvas.classList.remove('drawing-roi');
+    if (videoContainer) videoContainer.classList.remove('roi-drawing-mode');
+    renderScene();
   });
 
   // 9. Snapshot

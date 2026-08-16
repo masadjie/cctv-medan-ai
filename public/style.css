@@ -4085,6 +4085,14 @@ body.light-theme .combobox-search-input {
 .viewport-frame.roi-drawing-mode canvas {
   pointer-events: auto !important;
   cursor: crosshair !important;
+  z-index: 40 !important;
+  touch-action: none !important;
+}
+
+.viewport-frame.roi-drawing-mode .hud-top-bar,
+.viewport-frame.roi-drawing-mode .hud-bottom-bar,
+.viewport-frame.roi-drawing-mode .viewport-alert-overlay {
+  pointer-events: none !important;
 }
 
 /* Floating ROI HUD on Video Container */
