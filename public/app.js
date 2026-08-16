@@ -803,32 +803,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rawBikes = [];
     const rawPersons = [];
 
-    // Step 1: Categorize and rigorously validate raw detections
+    const minConf = confSlider ? parseInt(confSlider.value, 10) / 100 : 0.30;
+
+    // Step 1: Categorize and validate raw detections
     rawDetections.forEach(pred => {
       const [x, y, w, h] = pred.bbox;
       const classId = pred.class.toLowerCase();
 
-      // Filter out invalid bounding boxes (Billboards, background structures, extreme sizes)
-      if (w > canvasW * 0.52 || h > canvasH * 0.58) return; // Billboards/signs are giant; real vehicles don't span > 52% width
-      if (w < 14 || h < 14) return; // Noise specs
-      if (pred.score < 0.38) return; // Strict confidence floor to prevent billboard text from being recognized as cars
+      // Filter out invalid bounding boxes (Sky/billboard header zones, extreme sizes)
+      if (w > canvasW * 0.65 || h > canvasH * 0.65) return; // Billboards/sky spans
+      if (w < 8 || h < 8) return; // Tiny pixel noise
+      if (pred.score < minConf * 0.75) return; // Dynamic confidence from slider
       if (roi && !isBoxInRoi([x, y, w, h], roi)) return;
 
       const aspectRatio = w / Math.max(1, h);
+      const isRoadArea = (y + h > canvasH * 0.12); // Must be within/below horizon
+
+      if (!isRoadArea) return; // Ignore sky/top billboard zone
 
       // Classes identified in traffic surveillance
       if (classId === 'motorcycle' || classId === 'bicycle' || classId === 'motorbike') {
-        // Motorcycle aspect ratio is vertical or compact: width/height between 0.35 and 1.65
-        if (aspectRatio >= 0.35 && aspectRatio <= 1.65 && w <= canvasW * 0.35 && h <= canvasH * 0.45) {
+        if (aspectRatio <= 2.2 && w <= canvasW * 0.40 && h <= canvasH * 0.50) {
           rawBikes.push({
             bbox: [x, y, w, h],
-            score: pred.score,
+            score: Math.max(pred.score, minConf),
             classId: 'motorcycle'
           });
         }
       } else if (classId === 'person') {
-        // Only keep person if they look like a rider (reasonable size, vertical aspect ratio)
-        if (aspectRatio >= 0.25 && aspectRatio <= 1.05 && h >= 16 && h <= canvasH * 0.38 && w <= canvasW * 0.25) {
+        // Riders on roadway (vertical silhouette on lower 85% road area)
+        if (aspectRatio <= 1.25 && h >= 12 && h <= canvasH * 0.45 && w <= canvasW * 0.30) {
           rawPersons.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -836,8 +840,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
       } else if (CAR_CLASSES.includes(classId)) {
-        // Car / Truck / Bus aspect ratio: vehicles are generally horizontal or square: aspect between 0.55 and 3.2
-        if (aspectRatio >= 0.55 && aspectRatio <= 3.2 && w >= 22 && h >= 18) {
+        // Car / Truck / Bus: filter out vertical billboards mistakenly labeled as cars
+        if (aspectRatio >= 0.45 && aspectRatio <= 3.8 && w >= 16 && h >= 14) {
           rawCars.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -853,7 +857,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Step 2: Intelligent Rider + Motorcycle Geometric Fusion
     if (detectMotor.checked) {
-      // 2a. Check for Person + Bike overlapping combinations
+      // 2a. Rider + Motorcycle overlapping combination
       rawPersons.forEach((person, pIdx) => {
         const [px, py, pw, ph] = person.bbox;
         const pcx = px + pw / 2;
@@ -871,7 +875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const yDist = Math.abs(pcy - bcy);
 
           // Rider sits directly on or slightly above the motorcycle
-          const isOverlapping = iou > 0.08 || (xDist < Math.max(pw, bw) * 0.80 && yDist < Math.max(ph, bh) * 1.2);
+          const isOverlapping = iou > 0.05 || (xDist < Math.max(pw, bw) * 0.90 && yDist < Math.max(ph, bh) * 1.3);
 
           if (isOverlapping) {
             usedPersonIndices.add(pIdx);
@@ -886,16 +890,16 @@ document.addEventListener('DOMContentLoaded', async () => {
               category: 'motor',
               labelText: 'Sepeda Motor',
               strokeColor: COLOR_MOTOR,
-              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.10),
+              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.12),
               bbox: [minX, minY, maxX - minX, maxY - minY]
             });
           }
         });
       });
 
-      // 2b. Standalone Motorcycles/Bicycles (Actual vehicle bodies detected with confidence >= 0.40)
+      // 2b. Standalone Motorcycles/Bicycles
       rawBikes.forEach((bike, bIdx) => {
-        if (!usedBikeIndices.has(bIdx) && bike.score >= 0.40) {
+        if (!usedBikeIndices.has(bIdx)) {
           candidateDetections.push({
             category: 'motor',
             labelText: 'Sepeda Motor',
@@ -906,29 +910,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
-      // NOTE: Standalone persons (posters, billboards, sidewalk pedestrians) are NEVER turned into motorcycles!
+      // 2c. Standalone Riders on Asphalt Roadway (Riders whose motorcycle chassis is blurred/dark)
+      rawPersons.forEach((person, pIdx) => {
+        if (!usedPersonIndices.has(pIdx) && person.score >= minConf && person.bbox[1] > canvasH * 0.18) {
+          candidateDetections.push({
+            category: 'motor',
+            labelText: 'Sepeda Motor',
+            strokeColor: COLOR_MOTOR,
+            score: person.score,
+            bbox: [...person.bbox]
+          });
+        }
+      });
     }
 
     // Step 3: Mobil, Truk & Bus Fusion
     if (detectCars.checked) {
       rawCars.forEach(car => {
-        if (car.score >= 0.40) {
-          const label = car.classId === 'car' ? 'Mobil' : (car.classId === 'truck' ? 'Truk' : 'Bus');
-          candidateDetections.push({
-            category: 'car',
-            labelText: label,
-            strokeColor: COLOR_CAR,
-            score: car.score,
-            bbox: [...car.bbox]
-          });
-        }
+        const label = car.classId === 'car' ? 'Mobil' : (car.classId === 'truck' ? 'Truk' : 'Bus');
+        candidateDetections.push({
+          category: 'car',
+          labelText: label,
+          strokeColor: COLOR_CAR,
+          score: car.score,
+          bbox: [...car.bbox]
+        });
       });
     }
 
     // Step 4: High-Precision Weighted Box Fusion (WBF)
     let validDetections = applyWeightedBoxFusion(candidateDetections, 0.38);
 
-    // Additional spatial cluster merging (merge boxes whose centers are within 28px of each other)
+    // Additional spatial cluster merging (merge duplicate boxes)
     const filteredDetections = [];
     validDetections.forEach(det => {
       const cx = det.bbox[0] + det.bbox[2] / 2;
@@ -1072,8 +1085,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     fullCropCtx.filter = 'contrast(1.12) brightness(1.04) saturate(1.08)';
     fullCropCtx.drawImage(video, 0, 0, vWidth, vHeight);
 
-    // Effective confidence floor: enforce at least 0.38
-    const effectiveConf = Math.max(0.38, minConf);
+    // Dynamic confidence from slider
+    const effectiveConf = Math.max(0.20, minConf);
 
     // Pass 1: If User-Defined ROI is Active, Dedicate High-Res Inference to Exact ROI Area
     if (roi && roi.width > 25 && roi.height > 25) {
