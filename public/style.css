@@ -3048,6 +3048,146 @@ body.light-theme .combobox-search-input {
   }
 }
 
+/* Dedicated About & Open Source Initiative Card in Settings */
+.about-app-card {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.04) 0%, rgba(18, 20, 29, 0.75) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.about-app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.about-app-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+}
+
+.about-app-badge svg {
+  width: 12px;
+  height: 12px;
+  color: #10b981;
+}
+
+.about-version-tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+}
+
+.about-app-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.about-app-desc {
+  font-size: 0.80rem;
+  color: var(--text-body);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.about-goals-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.goal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+}
+
+.goal-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.goal-content b {
+  display: block;
+  font-size: 0.78rem;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.goal-content p {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.about-author-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.about-author-footer b {
+  color: #ffffff;
+}
+
+.about-ig-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+  font-family: var(--font-mono);
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.about-ig-pill:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+}
+
+.about-ig-pill svg {
+  width: 12px;
+  height: 12px;
+}
+
 /* ==========================================================================
    14. COMPREHENSIVE MOBILE RESPONSIVE DESIGN SYSTEM
    ========================================================================== */
