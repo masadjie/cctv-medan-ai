@@ -91,6 +91,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnToggleAi = document.getElementById('btnToggleAi');
   const btnDrawRoi = document.getElementById('btnDrawRoi');
   const btnSnapshot = document.getElementById('btnSnapshot');
+  const btnRecord = document.getElementById('btnRecord');
+  const recordBtnText = document.getElementById('recordBtnText');
+  const osdRecBadge = document.getElementById('osdRecBadge');
+  const osdRecTimer = document.getElementById('osdRecTimer');
   const btnFullscreen = document.getElementById('btnFullscreen');
   const btnResetCounters = document.getElementById('btnResetCounters');
 
@@ -1807,6 +1811,241 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (snapshotModal) {
     snapshotModal.addEventListener('click', (e) => {
       if (e.target === snapshotModal) closeSnapshotModal();
+    });
+  }
+
+  // 10. Live CCTV Stream Video Recording Suite
+  let isRecording = false;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recordingTimerInterval = null;
+  let recordingSeconds = 0;
+  let recCompositeCanvas = document.createElement('canvas');
+  let recCompositeCtx = recCompositeCanvas.getContext('2d');
+  let recAnimationId = null;
+
+  const recordingModal = document.getElementById('recordingModal');
+  const recordingPreviewVideo = document.getElementById('recordingPreviewVideo');
+  const btnCloseRecordingModalX = document.getElementById('btnCloseRecordingModalX');
+  const btnCloseRecordingModalFooter = document.getElementById('btnCloseRecordingModalFooter');
+  const btnDownloadRecording = document.getElementById('btnDownloadRecording');
+  const btnOpenGDriveUpload = document.getElementById('btnOpenGDriveUpload');
+  const recMetaCamName = document.getElementById('recMetaCamName');
+  const recMetaDuration = document.getElementById('recMetaDuration');
+  const recMetaFileSize = document.getElementById('recMetaFileSize');
+  const recMetaFormat = document.getElementById('recMetaFormat');
+
+  function formatTime(totalSec) {
+    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function drawRecordingFrame() {
+    if (!isRecording) return;
+
+    const w = canvas.width || video.videoWidth || 640;
+    const h = canvas.height || video.videoHeight || 360;
+
+    if (recCompositeCanvas.width !== w || recCompositeCanvas.height !== h) {
+      recCompositeCanvas.width = w;
+      recCompositeCanvas.height = h;
+    }
+
+    // 1. Draw raw video frame
+    try {
+      recCompositeCtx.drawImage(video, 0, 0, w, h);
+    } catch (e) {}
+
+    // 2. Overlay live AI Detection Bounding Boxes & HUD
+    try {
+      recCompositeCtx.drawImage(canvas, 0, 0, w, h);
+    } catch (e) {}
+
+    // 3. Render High-Tech Watermark & Timestamp banner
+    recCompositeCtx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    recCompositeCtx.fillRect(0, h - 34, w, 34);
+
+    recCompositeCtx.fillStyle = '#ef4444';
+    recCompositeCtx.beginPath();
+    recCompositeCtx.arc(16, h - 17, 5, 0, Math.PI * 2);
+    recCompositeCtx.fill();
+
+    recCompositeCtx.fillStyle = '#ffffff';
+    recCompositeCtx.font = 'bold 12px monospace';
+    recCompositeCtx.fillText(`REC ${formatTime(recordingSeconds)}`, 28, h - 13);
+
+    recCompositeCtx.fillStyle = '#38bdf8';
+    const camLabel = osdCamName ? osdCamName.textContent : 'CCTV Live';
+    recCompositeCtx.fillText(`| ${camLabel} | ${new Date().toLocaleString('id-ID')}`, 110, h - 13);
+
+    recAnimationId = requestAnimationFrame(drawRecordingFrame);
+  }
+
+  function startLiveRecording() {
+    if (video.readyState < 2) {
+      showToast('⚠️ Video belum siap diputar untuk direkam.');
+      return;
+    }
+
+    try {
+      recordedChunks = [];
+      recordingSeconds = 0;
+      isRecording = true;
+
+      const w = canvas.width || video.videoWidth || 640;
+      const h = canvas.height || video.videoHeight || 360;
+      recCompositeCanvas.width = w;
+      recCompositeCanvas.height = h;
+
+      drawRecordingFrame();
+
+      const stream = recCompositeCanvas.captureStream(30);
+
+      // Select best supported MIME type
+      let mimeType = 'video/webm;codecs=vp9';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp8';
+      }
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm';
+      }
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/mp4';
+      }
+
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: 2500000 // 2.5 Mbps crisp traffic quality
+      });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = handleRecordingComplete;
+
+      mediaRecorder.start(1000); // 1s slice chunks
+
+      // Update UI to active recording state
+      if (btnRecord) {
+        btnRecord.classList.add('recording');
+        if (recordBtnText) recordBtnText.textContent = 'Stop (00:00)';
+      }
+      if (osdRecBadge) {
+        osdRecBadge.classList.remove('hidden');
+        if (osdRecTimer) osdRecTimer.textContent = '00:00';
+      }
+
+      recordingTimerInterval = setInterval(() => {
+        recordingSeconds++;
+        const timeStr = formatTime(recordingSeconds);
+        if (osdRecTimer) osdRecTimer.textContent = timeStr;
+        if (recordBtnText) recordBtnText.textContent = `Stop (${timeStr})`;
+      }, 1000);
+
+      showToast('🔴 Perekaman CCTV Dimulai...');
+    } catch (err) {
+      console.error('Recording initialization failed:', err);
+      showToast('❌ Browser tidak mendukung perekaman canvas stream.');
+      isRecording = false;
+    }
+  }
+
+  function stopLiveRecording() {
+    if (!isRecording || !mediaRecorder) return;
+
+    clearInterval(recordingTimerInterval);
+    cancelAnimationFrame(recAnimationId);
+
+    if (btnRecord) {
+      btnRecord.classList.remove('recording');
+      if (recordBtnText) recordBtnText.textContent = 'Rekam';
+    }
+    if (osdRecBadge) {
+      osdRecBadge.classList.add('hidden');
+    }
+
+    isRecording = false;
+    mediaRecorder.stop();
+    showToast('⏹️ Perekaman Selesai — Memproses Video...');
+  }
+
+  function handleRecordingComplete() {
+    const mimeType = mediaRecorder.mimeType || 'video/webm';
+    const blob = new Blob(recordedChunks, { type: mimeType });
+    const videoUrl = URL.createObjectURL(blob);
+
+    if (recordingPreviewVideo) {
+      recordingPreviewVideo.src = videoUrl;
+    }
+
+    const camTitle = (osdCamName ? osdCamName.textContent : 'CCTV').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const timestampStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `CCTV_Rekaman_${camTitle}_${timestampStr}.webm`;
+
+    if (btnDownloadRecording) {
+      btnDownloadRecording.href = videoUrl;
+      btnDownloadRecording.download = filename;
+    }
+
+    // Populate metadata
+    if (recMetaCamName) recMetaCamName.textContent = osdCamName ? osdCamName.textContent : 'CCTV Live';
+    if (recMetaDuration) recMetaDuration.textContent = formatTime(recordingSeconds);
+    if (recMetaFileSize) {
+      const sizeMb = (blob.size / (1024 * 1024)).toFixed(2);
+      recMetaFileSize.textContent = `${sizeMb} MB`;
+    }
+    if (recMetaFormat) {
+      recMetaFormat.textContent = mimeType.includes('mp4') ? 'MP4 Video' : 'WebM (VP9/VP8 HD)';
+    }
+
+    // Direct Google Drive Upload Action
+    if (btnOpenGDriveUpload) {
+      btnOpenGDriveUpload.onclick = () => {
+        // Automatically trigger file download first so user has the local file
+        btnDownloadRecording.click();
+        // Open Google Drive in new tab
+        window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+        showToast('📂 Mengunduh video & membuka Google Drive...');
+      };
+    }
+
+    if (recordingModal) {
+      recordingModal.style.display = 'flex';
+    }
+  }
+
+  function closeRecordingModal() {
+    if (recordingModal) recordingModal.style.display = 'none';
+    if (recordingPreviewVideo) {
+      recordingPreviewVideo.pause();
+      recordingPreviewVideo.removeAttribute('src');
+      recordingPreviewVideo.load();
+    }
+  }
+
+  if (btnRecord) {
+    btnRecord.addEventListener('click', () => {
+      if (!isRecording) {
+        startLiveRecording();
+      } else {
+        stopLiveRecording();
+      }
+    });
+  }
+
+  if (btnCloseRecordingModalX) {
+    btnCloseRecordingModalX.addEventListener('click', closeRecordingModal);
+  }
+  if (btnCloseRecordingModalFooter) {
+    btnCloseRecordingModalFooter.addEventListener('click', closeRecordingModal);
+  }
+  if (recordingModal) {
+    recordingModal.addEventListener('click', (e) => {
+      if (e.target === recordingModal) closeRecordingModal();
     });
   }
 

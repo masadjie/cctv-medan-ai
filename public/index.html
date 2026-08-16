@@ -377,6 +377,11 @@
         </div>
 
         <div class="controls-group-right">
+          <button id="btnRecord" class="btn btn-record" title="Mulai Rekam Stream CCTV (Dengan Anotasi AI & Metrik)">
+            <svg class="icon-rec" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="6" fill="#ef4444" stroke="#ef4444"/><circle cx="12" cy="12" r="10"/></svg>
+            <span id="recordBtnText">Rekam</span>
+          </button>
+
           <button id="btnSnapshot" class="btn btn-secondary" title="Ambil Foto Snapshot dengan Anotasi AI">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span>Snapshot</span>
@@ -401,6 +406,7 @@
             <span id="osdCamName">Belum Ada Kamera Dipilih</span>
           </div>
           <div class="hud-metrics">
+            <span class="hud-badge rec-badge hidden" id="osdRecBadge">🔴 REC <b id="osdRecTimer">00:00</b></span>
             <span class="hud-badge hd-badge" id="osdHdBadge" title="Super-Resolution HD Upscaler Aktif">HD 1080p AI</span>
             <span class="hud-badge speed-badge" id="osdSpeedBadge" title="Estimasi Kecepatan Rata-rata Arus">⚡ Arus: <b>0</b> km/jam</span>
             <span class="hud-badge" id="osdFps">AI: <b>0</b> FPS</span>
@@ -1004,6 +1010,72 @@
         <a id="btnDownloadSnapshot" download="cctv_ai_snapshot.jpg" class="btn btn-primary">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Unduh Gambar (.jpg)</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Recording Preview & Cloud Export Modal -->
+  <div class="modal-backdrop" id="recordingModal">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="6" fill="#ef4444"/><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span>Hasil Rekaman Video CCTV (Live Stream AI)</span>
+        </div>
+        <button id="btnCloseRecordingModalX" class="btn-icon-close" title="Tutup Modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <video id="recordingPreviewVideo" class="recording-preview-video" controls playsinline autoplay muted></video>
+        
+        <div class="recording-meta-grid">
+          <div class="rec-meta-item">
+            <span class="rec-label">Kamera</span>
+            <span class="rec-val" id="recMetaCamName">-</span>
+          </div>
+          <div class="rec-meta-item">
+            <span class="rec-label">Durasi</span>
+            <span class="rec-val" id="recMetaDuration">00:00</span>
+          </div>
+          <div class="rec-meta-item">
+            <span class="rec-label">Ukuran File</span>
+            <span class="rec-val" id="recMetaFileSize">0 MB</span>
+          </div>
+          <div class="rec-meta-item">
+            <span class="rec-label">Format</span>
+            <span class="rec-val" id="recMetaFormat">WebM / MP4</span>
+          </div>
+        </div>
+
+        <div class="gdrive-upload-card">
+          <div class="gdrive-upload-info">
+            <svg class="gdrive-icon" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+              <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+              <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+              <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+              <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+              <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+              <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+            </svg>
+            <div>
+              <div class="gdrive-upload-title">Simpan & Backup ke Google Drive</div>
+              <div class="gdrive-upload-desc">Buka Google Drive untuk mengunggah dan membagikan rekaman CCTV ini</div>
+            </div>
+          </div>
+          <button type="button" id="btnOpenGDriveUpload" class="btn btn-secondary" style="white-space: nowrap;">
+            <span>Buka Drive ↗</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer gap-actions">
+        <button type="button" id="btnCloseRecordingModalFooter" class="btn btn-secondary">
+          <span>Tutup</span>
+        </button>
+        <a id="btnDownloadRecording" download="cctv_recording.webm" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Unduh Video (.webm / .mp4)</span>
         </a>
       </div>
     </div>

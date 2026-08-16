@@ -5580,3 +5580,131 @@ body.light-theme .combobox-search-input {
   color: #fbbf24;
   text-decoration: underline;
 }
+
+/* ========================================================
+   CCTV LIVE STREAM RECORDING SUITE & GOOGLE DRIVE EXPORT
+   ======================================================== */
+.btn-record {
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-medium);
+  color: var(--text-pure);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-record:hover {
+  background: var(--surface-layer-3);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.btn-record.recording {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+  color: #ef4444;
+  animation: pulseRecBorder 1.5s infinite;
+}
+
+@keyframes pulseRecBorder {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+}
+
+.rec-badge {
+  background: rgba(239, 68, 68, 0.22) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  font-weight: 700 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: blinkRec 1s ease-in-out infinite alternate;
+}
+
+@keyframes blinkRec {
+  from { opacity: 1; }
+  to { opacity: 0.6; }
+}
+
+.recording-preview-video {
+  width: 100%;
+  max-height: 380px;
+  border-radius: var(--radius-sm);
+  background: #000000;
+  object-fit: contain;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.recording-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+  padding: 12px;
+  background: var(--surface-layer-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.rec-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rec-meta-item .rec-label {
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rec-meta-item .rec-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-pure);
+  font-family: var(--font-mono, monospace);
+}
+
+.gdrive-upload-card {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px dashed rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gdrive-upload-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gdrive-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.gdrive-upload-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-pure);
+}
+
+.gdrive-upload-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
