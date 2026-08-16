@@ -84,7 +84,7 @@ class MedanCCTVMap {
   }
 
   /**
-   * Fast & Reliable Stream Health Verifier via Local Anti-SSRF Proxy & Hls.js fallback
+   * Fast & Direct Native Stream Health Verifier (Direct browser connection, no proxy blocking)
    */
   checkHlsStreamHealth(url, timeoutMs = 3000) {
     return new Promise((resolve) => {
@@ -94,8 +94,6 @@ class MedanCCTVMap {
       }
 
       const startTime = performance.now();
-      const testUrl = url.startsWith('http') ? `/proxy?url=${encodeURIComponent(url)}` : url;
-      
       const controller = new AbortController();
       let isSettled = false;
 
@@ -112,8 +110,8 @@ class MedanCCTVMap {
         finalize(false, 0);
       }, timeoutMs);
 
-      // Fast HTTP probe through local proxy (CORS safe)
-      fetch(testUrl, { method: 'GET', signal: controller.signal, headers: { 'Range': 'bytes=0-1024' } })
+      // 1. Direct browser fetch probe (atcsdishub has open CORS)
+      fetch(url, { method: 'GET', mode: 'cors', signal: controller.signal, headers: { 'Range': 'bytes=0-512' } })
         .then(res => {
           if (res.ok || res.status === 200 || res.status === 206 || res.status === 304) {
             finalize(true);
@@ -122,7 +120,7 @@ class MedanCCTVMap {
           }
         })
         .catch(() => {
-          // Fallback to Headless HLS probe if supported
+          // 2. Direct Headless HLS probe if supported
           if (window.Hls && window.Hls.isSupported() && url.includes('.m3u8')) {
             let hlsTest;
             try {
