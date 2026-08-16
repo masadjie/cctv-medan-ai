@@ -3183,6 +3183,229 @@ body.light-theme .combobox-search-input {
   gap: 6px;
 }
 
+/* Dedicated Scanner Network Detail Modal */
+.modal-card-scanner {
+  max-width: 740px;
+  width: 95%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-layer-1);
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85);
+}
+
+.scanner-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.scanner-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.scanner-kpi-card {
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scanner-kpi-card.kpi-online {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.scanner-kpi-card.kpi-offline {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.scanner-kpi-card .kpi-val {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-pure);
+  display: block;
+}
+
+.scanner-kpi-card.kpi-online .kpi-val { color: #10b981; }
+.scanner-kpi-card.kpi-offline .kpi-val { color: #ef4444; }
+
+.scanner-kpi-card .kpi-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.scanner-filter-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.scanner-search-box {
+  flex: 1 1 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.scanner-search-box svg {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.scanner-search-box input {
+  width: 100%;
+  padding: 8px 12px 8px 32px;
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-pure);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.scanner-search-box input:focus {
+  border-color: var(--border-focus);
+}
+
+.scanner-tab-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.scanner-tab {
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scanner-tab:hover {
+  background: var(--surface-layer-3);
+  color: var(--text-heading);
+}
+
+.scanner-tab.active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.scanner-camera-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+  max-height: 48vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.scanner-cam-card {
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.scanner-cam-card:hover {
+  background: var(--surface-layer-3);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+
+.scanner-cam-card.is-active-cam {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.scanner-cam-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scanner-cam-meta .cam-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scanner-cam-meta .cam-alias {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scanner-cam-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cam-status-pill {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.cam-status-pill.pill-online {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.cam-status-pill.pill-offline {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-sm-action {
+  font-size: 0.7rem !important;
+  padding: 4px 10px !important;
+}
+
 /* Dedicated Config Modal Styling (Spacious & Multi-Tab Support) */
 .modal-card-config {
   max-width: 600px;

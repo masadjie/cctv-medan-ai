@@ -582,6 +582,77 @@
   <!-- Notification Toast Container -->
   <div class="toast-host" id="toastContainer"></div>
 
+  <!-- DEDICATED SCANNER HEALTH & CCTV DIRECTORY DETAIL MODAL -->
+  <div class="modal-backdrop" id="scannerDetailModal" style="display: none;">
+    <div class="modal-card modal-card-scanner">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          <span>Detail Jaringan & Status CCTV ATCS Medan</span>
+        </div>
+        <div class="modal-header-actions">
+          <button type="button" id="btnRescanModal" class="btn btn-secondary btn-sm-action" title="Pindai Ulang Seluruh Siaran">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span>Pindai Ulang</span>
+          </button>
+          <button type="button" id="btnCloseScannerModalX" class="btn-icon-close" title="Tutup Modal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="scanner-modal-body">
+        <!-- KPI Stats Row -->
+        <div class="scanner-kpi-row">
+          <div class="scanner-kpi-card kpi-online">
+            <div class="kpi-icon">🟢</div>
+            <div class="kpi-meta">
+              <span class="kpi-val" id="modalKpiOnline">61</span>
+              <span class="kpi-label">Node Online</span>
+            </div>
+          </div>
+          <div class="scanner-kpi-card kpi-offline">
+            <div class="kpi-icon">🔴</div>
+            <div class="kpi-meta">
+              <span class="kpi-val" id="modalKpiOffline">50</span>
+              <span class="kpi-label">Node Offline</span>
+            </div>
+          </div>
+          <div class="scanner-kpi-card">
+            <div class="kpi-icon">📹</div>
+            <div class="kpi-meta">
+              <span class="kpi-val" id="modalKpiTotal">111</span>
+              <span class="kpi-label">Total Kamera</span>
+            </div>
+          </div>
+          <div class="scanner-kpi-card">
+            <div class="kpi-icon">⚡</div>
+            <div class="kpi-meta">
+              <span class="kpi-val" id="modalKpiRate">55%</span>
+              <span class="kpi-label">Kesiapan Siaran</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter and Search Toolbar -->
+        <div class="scanner-filter-bar">
+          <div class="scanner-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="scannerSearchInput" placeholder="Cari nama jalan, simpang, atau nomor kamera...">
+          </div>
+          <div class="scanner-tab-chips">
+            <button type="button" class="scanner-tab active" data-filter="all" id="tabFilterAll">Semua (111)</button>
+            <button type="button" class="scanner-tab" data-filter="online" id="tabFilterOnline">🟢 Online (61)</button>
+            <button type="button" class="scanner-tab" data-filter="offline" id="tabFilterOffline">🔴 Offline (50)</button>
+          </div>
+        </div>
+
+        <!-- Camera List Container -->
+        <div class="scanner-camera-list" id="scannerCameraList"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- DEDICATED AI & VIDEO CONFIGURATION MODAL DIALOG (MULTI-TAB MODERN WORKSPACE) -->
   <div class="modal-backdrop" id="configModal">
     <div class="modal-card modal-card-config">

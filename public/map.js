@@ -366,13 +366,129 @@ class MedanCCTVMap {
     }
   }
 
+  openScannerDetailModal() {
+    const modal = document.getElementById('scannerDetailModal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+
+    // Populate KPI
+    const modalKpiOnline = document.getElementById('modalKpiOnline');
+    const modalKpiOffline = document.getElementById('modalKpiOffline');
+    const modalKpiTotal = document.getElementById('modalKpiTotal');
+    const modalKpiRate = document.getElementById('modalKpiRate');
+
+    if (modalKpiOnline) modalKpiOnline.textContent = this.onlineCount;
+    if (modalKpiOffline) modalKpiOffline.textContent = this.offlineCount;
+    if (modalKpiTotal) modalKpiTotal.textContent = this.cameras.length;
+    if (modalKpiRate) {
+      const rate = this.cameras.length > 0 ? Math.round((this.onlineCount / this.cameras.length) * 100) : 0;
+      modalKpiRate.textContent = `${rate}%`;
+    }
+
+    // Populate Tab Chip Labels
+    const tabFilterAll = document.getElementById('tabFilterAll');
+    const tabFilterOnline = document.getElementById('tabFilterOnline');
+    const tabFilterOffline = document.getElementById('tabFilterOffline');
+
+    if (tabFilterAll) tabFilterAll.textContent = `Semua (${this.cameras.length})`;
+    if (tabFilterOnline) tabFilterOnline.textContent = `🟢 Online (${this.onlineCount})`;
+    if (tabFilterOffline) tabFilterOffline.textContent = `🔴 Offline (${this.offlineCount})`;
+
+    this.renderScannerModalList();
+  }
+
+  closeScannerDetailModal() {
+    const modal = document.getElementById('scannerDetailModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  renderScannerModalList() {
+    const listContainer = document.getElementById('scannerCameraList');
+    const searchInput = document.getElementById('scannerSearchInput');
+    if (!listContainer) return;
+
+    const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+    const activeTab = document.querySelector('.scanner-tab.active');
+    const filterType = activeTab ? activeTab.getAttribute('data-filter') : 'all';
+
+    listContainer.innerHTML = '';
+
+    const results = this.cameras.filter(cam => {
+      const isOnline = this.streamStatusCache[cam.id] !== false;
+      const matchesFilter = filterType === 'all' || 
+        (filterType === 'online' && isOnline) || 
+        (filterType === 'offline' && !isOnline);
+
+      const text = `${cam.id} ${cam.name} ${cam.alias}`.toLowerCase();
+      const matchesQuery = !query || text.includes(query);
+
+      return matchesFilter && matchesQuery;
+    });
+
+    if (results.length === 0) {
+      listContainer.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align:center; padding: 24px; color: var(--text-muted);">
+          Tidak ada kamera yang cocok dengan kriteria pencarian atau filter.
+        </div>
+      `;
+      return;
+    }
+
+    results.forEach(cam => {
+      const isOnline = this.streamStatusCache[cam.id] !== false;
+      const card = document.createElement('div');
+      card.className = `scanner-cam-card ${this.activeCamId === cam.id ? 'is-active-cam' : ''}`;
+      card.innerHTML = `
+        <div class="scanner-cam-meta">
+          <span class="cam-title">CAM #${cam.id}: ${cam.name}</span>
+          <span class="cam-alias">${cam.alias}</span>
+        </div>
+        <div class="scanner-cam-right">
+          <span class="cam-status-pill ${isOnline ? 'pill-online' : 'pill-offline'}">
+            ${isOnline ? '🟢 Live' : '🔴 Offline'}
+          </span>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        if (typeof window.loadStream === 'function') {
+          window.loadStream(cam.url);
+        }
+        if (this.map) {
+          this.map.setView([cam.lat, cam.lon], 16, { animate: true });
+          this.highlightCamera(cam.id);
+        }
+        this.closeScannerDetailModal();
+      });
+
+      listContainer.appendChild(card);
+    });
+  }
+
   setupRescanButton() {
     const btnRescan = document.getElementById('btnRescanStreams');
+    const btnRescanModal = document.getElementById('btnRescanModal');
     const btnMinimize = document.getElementById('btnMinimizeScannerHud');
     const mapScannerMiniBadge = document.getElementById('mapScannerMiniBadge');
+    const btnCloseScannerModalX = document.getElementById('btnCloseScannerModalX');
+    const scannerDetailModal = document.getElementById('scannerDetailModal');
+    const scannerSearchInput = document.getElementById('scannerSearchInput');
+    const scannerTabs = document.querySelectorAll('.scanner-tab');
 
     if (btnRescan) {
       btnRescan.addEventListener('click', () => {
+        if (!this.isCheckingHls) {
+          localStorage.removeItem(this.cacheKey);
+          this.expandScannerHud();
+          this.startHlsBackgroundChecker(0);
+        }
+      });
+    }
+
+    if (btnRescanModal) {
+      btnRescanModal.addEventListener('click', () => {
+        this.closeScannerDetailModal();
         if (!this.isCheckingHls) {
           localStorage.removeItem(this.cacheKey);
           this.expandScannerHud();
@@ -389,9 +505,37 @@ class MedanCCTVMap {
 
     if (mapScannerMiniBadge) {
       mapScannerMiniBadge.addEventListener('click', () => {
-        this.expandScannerHud();
+        this.openScannerDetailModal();
       });
     }
+
+    if (btnCloseScannerModalX) {
+      btnCloseScannerModalX.addEventListener('click', () => {
+        this.closeScannerDetailModal();
+      });
+    }
+
+    if (scannerDetailModal) {
+      scannerDetailModal.addEventListener('click', (e) => {
+        if (e.target === scannerDetailModal) {
+          this.closeScannerDetailModal();
+        }
+      });
+    }
+
+    if (scannerSearchInput) {
+      scannerSearchInput.addEventListener('input', () => {
+        this.renderScannerModalList();
+      });
+    }
+
+    scannerTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        scannerTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.renderScannerModalList();
+      });
+    });
   }
 
   // Fast direct DOM mutation with smooth radar activation
