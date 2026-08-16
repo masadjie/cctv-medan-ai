@@ -813,20 +813,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       const [x, y, w, h] = pred.bbox;
       const classId = pred.class.toLowerCase();
 
-      // Filter out invalid bounding boxes (Sky/billboard header zones, extreme sizes)
-      if (w > canvasW * 0.65 || h > canvasH * 0.65) return; // Billboards/sky spans
-      if (w < 8 || h < 8) return; // Tiny pixel noise
-      if (pred.score < minConf * 0.75) return; // Dynamic confidence from slider
+      // Filter out invalid bounding boxes (Sky spans & microscopic noise)
+      if (w > canvasW * 0.65 || h > canvasH * 0.65) return;
+      if (w < 8 || h < 8) return;
+      if (pred.score < Math.min(minConf * 0.80, 0.25)) return;
       if (roi && !isBoxInRoi([x, y, w, h], roi)) return;
 
       const aspectRatio = w / Math.max(1, h);
-      const isRoadArea = (y + h > canvasH * 0.12); // Must be within/below horizon
+      const isRoadArea = (y + h > canvasH * 0.12);
 
-      if (!isRoadArea) return; // Ignore sky/top billboard zone
+      if (!isRoadArea) return;
 
-      // Classes identified in traffic surveillance
+      // Motorcycle & Rider Detection
       if (classId === 'motorcycle' || classId === 'bicycle' || classId === 'motorbike') {
-        if (aspectRatio >= 0.35 && aspectRatio <= 2.2 && w <= canvasW * 0.40 && h <= canvasH * 0.50 && pred.score >= Math.max(0.35, minConf * 0.85)) {
+        if (aspectRatio <= 2.4 && w <= canvasW * 0.45 && h <= canvasH * 0.50) {
           rawBikes.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -834,8 +834,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
       } else if (classId === 'person') {
-        // Riders on roadway: only kept to fuse with actual motorcycle chassis
-        if (aspectRatio <= 1.05 && h >= 14 && h <= canvasH * 0.40 && w <= canvasW * 0.25) {
+        // Riders on roadway
+        if (aspectRatio <= 1.25 && h >= 12 && h <= canvasH * 0.45 && w <= canvasW * 0.35) {
           rawPersons.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -843,8 +843,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
       } else if (CAR_CLASSES.includes(classId)) {
-        // Car / Truck / Bus: filter out vertical billboards mistakenly labeled as cars
-        if (aspectRatio >= 0.45 && aspectRatio <= 3.8 && w >= 18 && h >= 16 && pred.score >= Math.max(0.35, minConf * 0.85)) {
+        // Small narrow vehicles misclassified by COCO as car are motorcycles
+        if (w < 70 && aspectRatio <= 1.10 && pred.score < 0.60) {
+          rawBikes.push({
+            bbox: [x, y, w, h],
+            score: pred.score,
+            classId: 'motorcycle'
+          });
+        } else if (aspectRatio >= 0.45 && aspectRatio <= 3.8 && w >= 16 && h >= 14) {
           rawCars.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -900,7 +906,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       });
 
-      // 2b. Standalone Motorcycles/Bicycles (Actual motorcycle bodies detected by model)
+      // 2b. Standalone Motorcycles/Bicycles
       rawBikes.forEach((bike, bIdx) => {
         if (!usedBikeIndices.has(bIdx)) {
           candidateDetections.push({
@@ -913,7 +919,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
-      // NOTE: Standalone persons (posters, billboards, pedestrians) are strictly EXCLUDED from being marked as motorcycles!
+      // 2c. Standalone Riders on Roadway Corridor
+      rawPersons.forEach((person, pIdx) => {
+        if (!usedPersonIndices.has(pIdx) && person.bbox[1] > canvasH * 0.15) {
+          candidateDetections.push({
+            category: 'motor',
+            labelText: 'Sepeda Motor',
+            strokeColor: COLOR_MOTOR,
+            score: person.score,
+            bbox: [...person.bbox]
+          });
+        }
+      });
     }
 
     // Step 3: Mobil, Truk & Bus Fusion
@@ -997,6 +1014,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const newVx = det.bbox[0] - t.bbox[0];
         const newVy = det.bbox[1] - t.bbox[1];
         
+        // Track displacement from initial appearance to filter out stationary billboards
+        t.totalDisplacement = Math.hypot(det.bbox[0] - t.startX, det.bbox[1] - t.startY);
+
         // ByteTrack Velocity Kalman Filter smoothing
         const speed = Math.hypot(newVx, newVy);
         if (speed < 4) {
@@ -1019,6 +1039,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         t.seenFrames++;
         t.missedFrames = 0;
 
+        // Static Scenery / Billboard Artifact Detection:
+        // If an object is motionless from the moment it was seen for >= 8 frames and displacement < 8px
+        if (t.seenFrames >= 8 && t.totalDisplacement < 8 && (t.speedKmh || 0) < 2) {
+          t.isStaticScenery = true;
+        }
+
         // Smooth Exponential Moving Average for Bounding Box
         const alpha = isByteTrackEnabled ? 0.70 : 0.55;
         t.bbox[0] = t.bbox[0] * (1 - alpha) + det.bbox[0] * alpha;
@@ -1026,8 +1052,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         t.bbox[2] = t.bbox[2] * (1 - alpha) + det.bbox[2] * alpha;
         t.bbox[3] = t.bbox[3] * (1 - alpha) + det.bbox[3] * alpha;
 
-        // STRICT 1-TIME COUNTING: must be confirmed across 4 consecutive frames
-        if (!t.counted && t.seenFrames >= 4) {
+        // STRICT 1-TIME COUNTING: must be confirmed across 4 consecutive frames and NOT static scenery
+        if (!t.counted && t.seenFrames >= 4 && !t.isStaticScenery) {
           t.counted = true;
           window.trafficAnalytics.incrementCumulative(t.category);
           window.trafficAnalytics.logEvent(`Kendaraan terhitung: ${t.labelText} #${t.id}`);
@@ -1044,6 +1070,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           strokeColor: det.strokeColor,
           score: det.score,
           bbox: [...det.bbox],
+          startX: det.bbox[0],
+          startY: det.bbox[1],
+          totalDisplacement: 0,
+          isStaticScenery: false,
           vx: 0,
           vy: 0,
           seenFrames: 1,
@@ -1349,6 +1379,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let movingCount = 0;
 
     trackedObjects.forEach(obj => {
+      // Suppress static scenery artifacts (e.g. painted billboards and signs)
+      if (obj.isStaticScenery) return;
+
       const [x, y, w, h] = obj.bbox;
       let strokeColor = obj.strokeColor;
 
