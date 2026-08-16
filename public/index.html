@@ -563,13 +563,13 @@
   <!-- Notification Toast Container -->
   <div class="toast-host" id="toastContainer"></div>
 
-  <!-- DEDICATED AI & VIDEO CONFIGURATION MODAL DIALOG -->
+  <!-- DEDICATED AI & VIDEO CONFIGURATION MODAL DIALOG (MULTI-TAB MODERN WORKSPACE) -->
   <div class="modal-backdrop" id="configModal">
     <div class="modal-card modal-card-config">
       <div class="modal-header">
         <div class="modal-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>Pengaturan AI, Video & Info Aplikasi</span>
+          <span>Pusat Konfigurasi & Pengaturan</span>
         </div>
         <div class="modal-header-actions">
           <button type="button" id="btnToggleConfigFullscreen" class="btn-icon-close" title="Layar Penuh Modal Pengaturan">
@@ -581,129 +581,153 @@
         </div>
       </div>
 
+      <!-- Navigation Tabs inside Modal -->
+      <div class="config-modal-tabs">
+        <button type="button" class="config-tab-btn active" data-tab="ai">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Parameter AI</span>
+        </button>
+        <button type="button" class="config-tab-btn" data-tab="display">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Tampilan & Video</span>
+        </button>
+        <button type="button" class="config-tab-btn" data-tab="about">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Tentang & Open Source</span>
+        </button>
+      </div>
+
       <div class="modal-body">
-        <!-- Theme Switcher Row -->
-        <div class="control-row">
-          <label class="control-label">Tema Tampilan Aplikasi:</label>
-          <div class="theme-selector-pills">
-            <button type="button" class="theme-pill-btn active" id="btnThemeDark" data-set-theme="dark">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-              <span>Mode Gelap (Dark Surveillance)</span>
-            </button>
-            <button type="button" class="theme-pill-btn" id="btnThemeLight" data-set-theme="light">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-              <span>Mode Terang (Light Mode)</span>
-            </button>
+        <!-- TAB 1: Neural AI Parameters -->
+        <div class="config-tab-pane active" id="tabPaneAi">
+          <!-- Engine Selector -->
+          <div class="control-row">
+            <label class="control-label" for="modelEngineSelect">Arsitektur Model Neural AI:</label>
+            <div class="select-wrapper">
+              <select id="modelEngineSelect" class="clean-select">
+                <option value="yolo">⚡ YOLO Multi-Scale Slicing SAHI (Presisi Maksimal)</option>
+                <option value="cocossd">🎯 COCO-SSD MobileNet (Ringan & Cepat)</option>
+              </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          <!-- Confidence Slider -->
+          <div class="control-row">
+            <div class="slider-header">
+              <label class="control-label" for="confSlider">Ambang Sensitivitas Deteksi (Confidence):</label>
+              <span class="slider-value-pill" id="confVal">35%</span>
+            </div>
+            <input type="range" id="confSlider" min="15" max="85" value="35" class="custom-range" />
+          </div>
+
+          <!-- Target Classes -->
+          <div class="control-row">
+            <label class="control-label">Target Klasifikasi Kendaraan Aktif:</label>
+            <div class="class-filter-pills">
+              <label class="filter-pill car-pill active">
+                <input type="checkbox" id="detectCars" checked />
+                <span class="pill-color-indicator"></span>
+                <span>Mobil, Truk & Bus</span>
+              </label>
+              <label class="filter-pill motor-pill active">
+                <input type="checkbox" id="detectMotor" checked />
+                <span class="pill-color-indicator"></span>
+                <span>Sepeda Motor</span>
+              </label>
+            </div>
           </div>
         </div>
 
-        <!-- Engine Selector -->
-        <div class="control-row">
-          <label class="control-label" for="modelEngineSelect">Arsitektur Model Neural AI:</label>
-          <div class="select-wrapper">
-            <select id="modelEngineSelect" class="clean-select">
-              <option value="yolo">⚡ YOLO Multi-Scale Slicing SAHI (Presisi Maksimal)</option>
-              <option value="cocossd">🎯 COCO-SSD MobileNet (Ringan & Cepat)</option>
-            </select>
-            <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <!-- TAB 2: Display & Video Features -->
+        <div class="config-tab-pane" id="tabPaneDisplay">
+          <!-- Theme Switcher Row -->
+          <div class="control-row">
+            <label class="control-label">Tema Tampilan Aplikasi:</label>
+            <div class="theme-selector-pills">
+              <button type="button" class="theme-pill-btn active" id="btnThemeDark" data-set-theme="dark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <span>Mode Gelap (Dark Surveillance)</span>
+              </button>
+              <button type="button" class="theme-pill-btn" id="btnThemeLight" data-set-theme="light">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <span>Mode Terang (Light Mode)</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Confidence Slider -->
-        <div class="control-row">
-          <div class="slider-header">
-            <label class="control-label" for="confSlider">Ambang Sensitivitas Deteksi (Confidence):</label>
-            <span class="slider-value-pill" id="confVal">35%</span>
-          </div>
-          <input type="range" id="confSlider" min="15" max="85" value="35" class="custom-range" />
-        </div>
-
-        <!-- Target Classes -->
-        <div class="control-row">
-          <label class="control-label">Target Klasifikasi Kendaraan Aktif:</label>
-          <div class="class-filter-pills">
-            <label class="filter-pill car-pill active">
-              <input type="checkbox" id="detectCars" checked />
-              <span class="pill-color-indicator"></span>
-              <span>Mobil, Truk & Bus</span>
+          <!-- Feature Switches Grid -->
+          <div class="config-toggles-grid">
+            <label class="clean-checkbox" title="Tingkatkan resolusi & ketajaman frame CCTV dengan neural filter super-resolution">
+              <input type="checkbox" id="hdUpscaleToggle" checked />
+              <span class="checkbox-box"></span>
+              <span>HD Super-Resolution Upscaler (1080p Enhanced)</span>
             </label>
-            <label class="filter-pill motor-pill active">
-              <input type="checkbox" id="detectMotor" checked />
-              <span class="pill-color-indicator"></span>
-              <span>Sepeda Motor</span>
+            <label class="clean-checkbox">
+              <input type="checkbox" id="showLabelsToggle" checked />
+              <span class="checkbox-box"></span>
+              <span>Tampilkan Label Kelas & Akurasi Bounding Box</span>
+            </label>
+            <label class="clean-checkbox">
+              <input type="checkbox" id="audioAlertToggle" />
+              <span class="checkbox-box"></span>
+              <span>Alarm Audio Kepadatan Lalu Lintas</span>
+            </label>
+            <label class="clean-checkbox" title="Aktifkan bila browser memblokir koneksi video langsung">
+              <input type="checkbox" id="useProxyToggle" />
+              <span class="checkbox-box"></span>
+              <span>Bypass CORS Proxy Engine</span>
             </label>
           </div>
         </div>
 
-        <!-- Toggles -->
-        <div class="config-toggles-grid">
-          <label class="clean-checkbox" title="Tingkatkan resolusi & ketajaman frame CCTV dengan neural filter super-resolution">
-            <input type="checkbox" id="hdUpscaleToggle" checked />
-            <span class="checkbox-box"></span>
-            <span>HD Super-Resolution Upscaler (1080p Enhanced)</span>
-          </label>
-          <label class="clean-checkbox">
-            <input type="checkbox" id="showLabelsToggle" checked />
-            <span class="checkbox-box"></span>
-            <span>Tampilkan Label Kelas & Akurasi Bounding Box</span>
-          </label>
-          <label class="clean-checkbox">
-            <input type="checkbox" id="audioAlertToggle" />
-            <span class="checkbox-box"></span>
-            <span>Alarm Audio Kepadatan Lalu Lintas</span>
-          </label>
-          <label class="clean-checkbox" title="Aktifkan bila browser memblokir koneksi video langsung">
-            <input type="checkbox" id="useProxyToggle" />
-            <span class="checkbox-box"></span>
-            <span>Bypass CORS Proxy Engine</span>
-          </label>
-        </div>
-
-        <!-- Dedicated Open Source & About Section -->
-        <div class="control-row about-app-card">
-          <div class="about-app-header">
-            <div class="about-app-badge">
-              <svg viewBox="0 0 24 24" width="13" height="13" style="width: 13px; height: 13px; min-width: 13px;" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>INISIATIF OPEN SOURCE INDONESIA</span>
+        <!-- TAB 3: About & Open Source -->
+        <div class="config-tab-pane" id="tabPaneAbout">
+          <div class="about-app-card">
+            <div class="about-app-header">
+              <div class="about-app-badge">
+                <svg viewBox="0 0 24 24" width="13" height="13" style="width: 13px; height: 13px; min-width: 13px;" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>INISIATIF OPEN SOURCE INDONESIA</span>
+              </div>
+              <span class="about-version-tag">v1.0.0 PRO</span>
             </div>
-            <span class="about-version-tag">v1.0.0 PRO</span>
-          </div>
-          
-          <h4 class="about-app-title">Tentang Nusantara Traffic Vision</h4>
-          <p class="about-app-desc">
-            Platform pengawasan dan analisis telemetri lalu lintas multi-wilayah berbasis <b>Edge AI & Computer Vision</b> yang berjalan 100% di browser tanpa perantara server eksternal.
-          </p>
+            
+            <h4 class="about-app-title">Tentang Nusantara Traffic Vision</h4>
+            <p class="about-app-desc">
+              Platform pengawasan dan analisis telemetri lalu lintas multi-wilayah berbasis <b>Edge AI & Computer Vision</b> yang berjalan 100% di browser tanpa perantara server eksternal.
+            </p>
 
-          <div class="about-goals-grid">
-            <div class="goal-item">
-              <span class="goal-icon">🌐</span>
-              <div class="goal-content">
-                <b>Akses Publik Terbuka</b>
-                <p>Memudahkan masyarakat dan institusi memantau titik kamera ATCS Dishub secara real-time, transparan, dan interaktif.</p>
+            <div class="about-goals-grid">
+              <div class="goal-item">
+                <span class="goal-icon">🌐</span>
+                <div class="goal-content">
+                  <b>Akses Publik Terbuka</b>
+                  <p>Memudahkan masyarakat dan institusi memantau titik kamera ATCS Dishub secara real-time, transparan, dan interaktif.</p>
+                </div>
+              </div>
+              <div class="goal-item">
+                <span class="goal-icon">🧠</span>
+                <div class="goal-content">
+                  <b>Riset AI Edge Vision</b>
+                  <p>Edukasi & implementasi model inferensi deep learning (YOLO / MobileNet) langsung di perangkat klien tanpa beban cloud.</p>
+                </div>
+              </div>
+              <div class="goal-item">
+                <span class="goal-icon">📊</span>
+                <div class="goal-content">
+                  <b>Infrastruktur Smart City</b>
+                  <p>Mendukung digitalisasi telemetri lalu lintas, analisis kepadatan volume kendaraan, dan pemetaan geospasial modern.</p>
+                </div>
               </div>
             </div>
-            <div class="goal-item">
-              <span class="goal-icon">🧠</span>
-              <div class="goal-content">
-                <b>Riset AI Edge Vision</b>
-                <p>Edukasi & implementasi model inferensi deep learning (YOLO / MobileNet) langsung di perangkat klien tanpa beban cloud.</p>
-              </div>
-            </div>
-            <div class="goal-item">
-              <span class="goal-icon">📊</span>
-              <div class="goal-content">
-                <b>Infrastruktur Smart City</b>
-                <p>Mendukung digitalisasi telemetri lalu lintas, analisis kepadatan volume kendaraan, dan pemetaan geospasial modern.</p>
-              </div>
-            </div>
-          </div>
 
-          <div class="about-author-footer">
-            <span>Project Architect: <b>Adjie Kurniawan</b></span>
-            <a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer" class="about-ig-pill">
-              <svg viewBox="0 0 24 24" width="12" height="12" style="width: 12px; height: 12px; min-width: 12px;" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-              <span>@adjie.apk</span>
-            </a>
+            <div class="about-author-footer">
+              <span>Project Architect: <b>Adjie Kurniawan</b></span>
+              <a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer" class="about-ig-pill">
+                <svg viewBox="0 0 24 24" width="12" height="12" style="width: 12px; height: 12px; min-width: 12px;" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <span>@adjie.apk</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>

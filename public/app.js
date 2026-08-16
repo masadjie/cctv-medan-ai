@@ -1439,6 +1439,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnToggleConfigFullscreen = document.getElementById('btnToggleConfigFullscreen');
   const modalConfigCard = configModal ? configModal.querySelector('.modal-card-config') : null;
 
+  // Config Modal Tabs (AI / Display / About)
+  const configTabBtns = document.querySelectorAll('.config-tab-btn');
+  const tabPaneAi = document.getElementById('tabPaneAi');
+  const tabPaneDisplay = document.getElementById('tabPaneDisplay');
+  const tabPaneAbout = document.getElementById('tabPaneAbout');
+
+  configTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.getAttribute('data-tab');
+      configTabBtns.forEach(b => b.classList.toggle('active', b === btn));
+      if (tabPaneAi) tabPaneAi.classList.toggle('active', targetTab === 'ai');
+      if (tabPaneDisplay) tabPaneDisplay.classList.toggle('active', targetTab === 'display');
+      if (tabPaneAbout) tabPaneAbout.classList.toggle('active', targetTab === 'about');
+    });
+  });
+
   if (btnOpenConfigModal && configModal) {
     btnOpenConfigModal.addEventListener('click', () => {
       configModal.style.display = 'flex';

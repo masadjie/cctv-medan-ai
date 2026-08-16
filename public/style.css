@@ -3095,20 +3095,75 @@ body.light-theme .combobox-search-input {
   gap: 6px;
 }
 
-/* Dedicated Config Modal Styling (Spacious & Fullscreen Support) */
+/* Dedicated Config Modal Styling (Spacious & Multi-Tab Support) */
 .modal-card-config {
-  max-width: 660px;
+  max-width: 600px;
   width: 95%;
-  max-height: 88vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(16, 185, 129, 0.08);
+}
+
+/* Modal Navigation Tabs */
+.config-modal-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 0;
+  background: rgba(12, 14, 20, 0.95);
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+}
+
+.config-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.config-tab-btn:hover {
+  color: var(--text-pure);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.config-tab-btn.active {
+  color: #10b981;
+  border-bottom-color: #10b981;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.config-tab-btn svg {
+  width: 13px;
+  height: 13px;
 }
 
 .modal-card-config .modal-body {
   overflow-y: auto;
-  max-height: calc(88vh - 130px);
+  max-height: 480px;
   padding: 1.25rem 1.5rem;
+}
+
+/* Tab Panes */
+.config-tab-pane {
+  display: none;
+  animation: modal-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.config-tab-pane.active {
+  display: block;
 }
 
 /* Fullscreen Mode for Config Modal */
@@ -3123,8 +3178,8 @@ body.light-theme .combobox-search-input {
 }
 
 .modal-card-config.is-fullscreen .modal-body {
-  max-height: calc(100vh - 130px) !important;
-  max-width: 860px;
+  max-height: calc(100vh - 170px) !important;
+  max-width: 760px;
   margin: 0 auto;
   width: 100%;
 }
@@ -3132,8 +3187,8 @@ body.light-theme .combobox-search-input {
 .config-toggles-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin-top: 1.2rem;
+  gap: 10px;
+  margin-top: 0.8rem;
   background: var(--surface-layer-2);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -3148,7 +3203,7 @@ body.light-theme .combobox-search-input {
 
 /* Dedicated About & Open Source Initiative Card in Settings */
 .about-app-card {
-  margin-top: 1.5rem;
+  margin-top: 0;
   padding: 1.25rem;
   background: linear-gradient(180deg, rgba(16, 185, 129, 0.04) 0%, rgba(18, 20, 29, 0.75) 100%);
   border: 1px solid rgba(16, 185, 129, 0.2);
