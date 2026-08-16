@@ -520,13 +520,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       video.srcObject = null;
     }
 
-    let finalUrl = url;
-    const isBandungStream = url.includes('bandung.go.id') || url.includes('pelindung');
-    const isProxyEnabled = useProxyToggle ? useProxyToggle.checked : false;
-
-    if (!isBandungStream && isProxyEnabled && (url.startsWith('http://') || url.startsWith('https://'))) {
-      finalUrl = `/proxy?url=${encodeURIComponent(url)}`;
-    }
+    // Pure direct stream playback without proxy
+    const finalUrl = url;
 
     // Dynamic OSD matching & Button State
     const currentCams = getCurrentCityCameras();
@@ -3069,13 +3064,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     video.onplaying = hideLoader;
     video.onloadeddata = hideLoader;
 
-    // Respect the proxy toggle setting — Bandung streams are always loaded direct
-    const useProxyToggle = document.getElementById('useProxyToggle');
-    const isBandungStream = url.includes('bandung.go.id') || url.includes('pelindung');
-    const useProxy = !isBandungStream && useProxyToggle && useProxyToggle.checked;
-    const finalUrl = useProxy && (url.startsWith('http://') || url.startsWith('https://'))
-      ? `/proxy?url=${encodeURIComponent(url)}`
-      : url;
+    // Pure direct stream playback without proxy
+    const finalUrl = url;
 
     if (window.Hls && window.Hls.isSupported()) {
       const hls = new window.Hls({
