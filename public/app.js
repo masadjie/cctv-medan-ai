@@ -1411,7 +1411,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (!isAiRunning) {
+    // Zero CPU/GPU AI load when on Map View
+    if (!isAiRunning || (mainLayout && mainLayout.classList.contains('mode-map'))) {
       trackedObjects = [];
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       animationFrameId = requestAnimationFrame(detectLoop);
@@ -3486,7 +3487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="wr-picker-mode-nav">
               <button type="button" class="wr-nav-btn" data-mode="split">📑 Layar Ganda</button>
               <button type="button" class="wr-nav-btn" data-mode="map">🗺️ Peta</button>
-              <button type="button" class="wr-nav-btn" data-mode="console">🖥️ Konsol AI</button>
+              <button type="button" class="wr-nav-btn" data-mode="console">🖥️ Live View AI</button>
             </div>
           </div>
           <div class="wr-picker-title">
