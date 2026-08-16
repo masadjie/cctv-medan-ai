@@ -821,6 +821,69 @@ body.light-theme .combobox-search-input {
   border-radius: 4px;
 }
 
+.btn-minimize-hud {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-minimize-hud:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.btn-minimize-hud svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* Compact Floating Status Badge on Map (Icon/Pill Mode) */
+.map-scanner-mini-badge {
+  position: absolute;
+  top: 68px;
+  right: 14px;
+  z-index: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(15, 17, 26, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+  animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.map-scanner-mini-badge:hover {
+  background: rgba(15, 17, 26, 0.98);
+  border-color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+
+.map-scanner-mini-badge .chevron-mini {
+  width: 12px;
+  height: 12px;
+  color: #10b981;
+}
+
 .scanner-progress-track {
   width: 100%;
   height: 4px;

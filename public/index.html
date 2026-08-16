@@ -229,19 +229,29 @@
                 <span>Pindai Ulang</span>
               </button>
               <span class="scanner-percent-pill" id="scanPercentPill">100%</span>
+              <button type="button" class="btn-minimize-hud" id="btnMinimizeScannerHud" title="Sembunyikan / Kecilkan Panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
           </div>
           <div class="scanner-progress-track">
             <div class="scanner-progress-fill" id="scanProgressFill" style="width: 100%;"></div>
           </div>
           <div class="scanner-stats-row">
-            <span class="scan-stat-item" id="scanProcessedText">Node: 60/60</span>
+            <span class="scan-stat-item" id="scanProcessedText">Node: 111/111</span>
             <div class="scan-stat-badges">
               <span class="scan-badge-online" id="scanOnlineCount">🟢 0 Online</span>
               <span class="scan-badge-offline" id="scanOfflineCount">🔴 0 Offline</span>
             </div>
           </div>
         </div>
+
+        <!-- Compact Floating Status Badge on Map (Shown when Scan Completes or Minimized) -->
+        <button type="button" class="map-scanner-mini-badge hidden" id="mapScannerMiniBadge" title="Klik untuk membuka detail status scanner">
+          <span class="scan-radar-dot"></span>
+          <span id="miniBadgeText">🟢 0 Online &bull; 🔴 0 Offline</span>
+          <svg class="chevron-mini" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
 
         <!-- Watermark Overlay on Map (Development by Adjie Kurniawan) -->
         <div class="map-watermark-badge">

@@ -130,10 +130,14 @@ class MedanCCTVMap {
           scanTextEl.innerHTML = `Node Terpindai &bull; <span style="color:#10b981">🟢 ${this.onlineCount}</span> <span style="color:#ef4444">🔴 ${this.offlineCount}</span>`;
         }
 
+        // Auto-minimize into compact icon/pill when complete
+        this.minimizeScannerHud();
+
         window.dispatchEvent(new CustomEvent('cctv-health-updated', { detail: { cameras: this.healthStatus } }));
         return true;
       } else {
         // Interrupted / Resumable State
+        this.expandScannerHud();
         const processed = this.currentScanIndex + 1;
         const percent = Math.round((processed / totalCount) * 100);
 
@@ -328,16 +332,64 @@ class MedanCCTVMap {
 
     this.saveHealthProgress(totalCount - 1, true);
     window.dispatchEvent(new CustomEvent('cctv-health-updated', { detail: { cameras: this.healthStatus } }));
+
+    // Automatically minimize to compact icon/badge after 2.5s of completion
+    setTimeout(() => {
+      if (!this.isCheckingHls) {
+        this.minimizeScannerHud();
+      }
+    }, 2500);
+  }
+
+  minimizeScannerHud() {
+    const mapScannerHud = document.getElementById('mapScannerHud');
+    const mapScannerMiniBadge = document.getElementById('mapScannerMiniBadge');
+    const miniBadgeText = document.getElementById('miniBadgeText');
+
+    if (mapScannerHud) mapScannerHud.classList.add('hidden');
+    if (mapScannerMiniBadge) {
+      mapScannerMiniBadge.classList.remove('hidden');
+      if (miniBadgeText) {
+        miniBadgeText.innerHTML = `<span style="color:#10b981">🟢 ${this.onlineCount} Online</span> &bull; <span style="color:#ef4444">🔴 ${this.offlineCount} Offline</span>`;
+      }
+    }
+  }
+
+  expandScannerHud() {
+    const mapScannerHud = document.getElementById('mapScannerHud');
+    const mapScannerMiniBadge = document.getElementById('mapScannerMiniBadge');
+
+    if (mapScannerMiniBadge) mapScannerMiniBadge.classList.add('hidden');
+    if (mapScannerHud) {
+      mapScannerHud.classList.remove('hidden');
+      mapScannerHud.style.display = 'block';
+    }
   }
 
   setupRescanButton() {
     const btnRescan = document.getElementById('btnRescanStreams');
+    const btnMinimize = document.getElementById('btnMinimizeScannerHud');
+    const mapScannerMiniBadge = document.getElementById('mapScannerMiniBadge');
+
     if (btnRescan) {
       btnRescan.addEventListener('click', () => {
         if (!this.isCheckingHls) {
           localStorage.removeItem(this.cacheKey);
+          this.expandScannerHud();
           this.startHlsBackgroundChecker(0);
         }
+      });
+    }
+
+    if (btnMinimize) {
+      btnMinimize.addEventListener('click', () => {
+        this.minimizeScannerHud();
+      });
+    }
+
+    if (mapScannerMiniBadge) {
+      mapScannerMiniBadge.addEventListener('click', () => {
+        this.expandScannerHud();
       });
     }
   }
