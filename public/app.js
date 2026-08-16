@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // State Variables
   let model = null;
   let hls = null;
-  let isAiRunning = true;
+  let isAiRunning = false;
   let animationFrameId = null;
   let fps = 0;
   let frameCount = 0;
