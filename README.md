@@ -1,6 +1,6 @@
-# 🚦 MEDAN TRAFFIC VISION PRO — AI SURVEILLANCE & TELEMETRY
+# 🚦 NUSANTARA TRAFFIC VISION PRO — AI SURVEILLANCE & TELEMETRY
 
-> **Sistem Pemantauan & Analisis Lalu Lintas ATCS Kota Medan Berbasis AI Edge Vision & Peta Interaktif**  
+> **Sistem Pemantauan & Analisis Lalu Lintas ATCS Multi-Kota Indonesia Berbasis AI Edge Vision & Peta Interaktif**  
 > *Engineered & Copyright © 2026 by **Adjie Kurniawan** ([@adjie.apk](https://instagram.com/adjie.apk))*
 
 ---

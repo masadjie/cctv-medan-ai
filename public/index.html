@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Medan Traffic Vision — Sistem Pemantauan & Analisis Lalu Lintas</title>
-  <meta name="description" content="Sistem Pemantauan dan Penghitung Lalu Lintas Cerdas Kota Medan Berbasis Peta Interaktif & AI Edge Vision by Adjie Kurniawan" />
+  <title>Nusantara Traffic Vision — AI Surveillance & Telemetri Lalu Lintas Indonesia</title>
+  <meta name="description" content="Sistem Pemantauan dan Penghitung Lalu Lintas Cerdas Kota di Indonesia Berbasis Peta Interaktif & AI Edge Vision by Adjie Kurniawan" />
   <meta name="author" content="Adjie Kurniawan (instagram.com/adjie.apk)" />
 
   <!-- Favicon & PWA Metadata -->
@@ -15,7 +15,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Medan CCTV AI" />
+  <meta name="apple-mobile-web-app-title" content="Nusantara CCTV AI" />
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -55,8 +55,8 @@
       </div>
 
       <div class="splash-brand-group">
-        <h2 class="splash-title">MEDAN TRAFFIC VISION</h2>
-        <span class="splash-badge">AI SURVEILLANCE & TELEMETRY PRO</span>
+        <h2 class="splash-title">NUSANTARA TRAFFIC VISION</h2>
+        <span class="splash-badge">AI SURVEILLANCE & MULTI-CITY TELEMETRY</span>
       </div>
 
       <div class="splash-author-chip">
@@ -99,10 +99,10 @@
         </div>
         <div class="brand-text">
           <div class="brand-title-row">
-            <h1 class="brand-title">MEDAN TRAFFIC VISION</h1>
+            <h1 class="brand-title">NUSANTARA TRAFFIC VISION</h1>
             <span class="version-tag">SURVEILLANCE PRO</span>
           </div>
-          <p class="brand-subtitle">ATCS Kota Medan &bull; Deteksi Otomatis Mobil & Sepeda Motor</p>
+          <p class="brand-subtitle">Sistem AI Surveillance Lalu Lintas ATCS Indonesia</p>
         </div>
       </div>
     </div>
@@ -112,7 +112,7 @@
       <div class="view-mode-tabs">
         <button type="button" class="tab-btn active" id="tabModeMap" data-mode="map">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-          <span>Peta CCTV Medan</span>
+          <span id="tabMapLabel">Peta CCTV</span>
         </button>
         <button type="button" class="tab-btn" id="tabModeConsole" data-mode="console">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
@@ -126,6 +126,13 @@
     </div>
 
     <div class="header-right">
+      <!-- Active City Selector Button -->
+      <button id="btnOpenCityModal" class="btn btn-secondary btn-city-badge" title="Pilih / Ganti Kota">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="currentCityLabel">Kota Medan</span>
+        <svg class="chevron-mini" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
       <!-- Dedicated AI Configuration Menu Button -->
       <button id="btnOpenConfigModal" class="btn btn-secondary btn-icon" title="Buka Menu Konfigurasi AI & Video">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -639,6 +646,104 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Unduh Gambar (.jpg)</span>
         </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- City Selection Modal Dialog (Pilih Kota Pemantauan) -->
+  <div class="modal-backdrop" id="citySelectorModal">
+    <div class="modal-card modal-card-cities">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Pilih Wilayah / Kota Pemantauan ATCS</span>
+        </div>
+        <button id="btnCloseCityModal" class="btn-icon-close" title="Tutup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="city-selector-intro">Silakan pilih kota yang ingin Anda pantau lalu lintas dan telemetri AI-nya:</p>
+        
+        <div class="cities-grid-selection">
+          <!-- Kota Medan (ACTIVE) -->
+          <div class="city-card active" data-city-id="medan" data-city-name="Kota Medan" data-lat="3.5896" data-lon="98.6738" data-cams="60+">
+            <div class="city-card-header">
+              <span class="city-status-pill online"><span class="pulse-dot green"></span> AKTIF (LIVE)</span>
+              <span class="city-cams-count">60+ Titik CCTV</span>
+            </div>
+            <h3 class="city-card-name">Kota Medan</h3>
+            <p class="city-card-province">Sumatera Utara &bull; ATCS Dishub Medan</p>
+            <div class="city-card-action">
+              <span class="btn-city-select">Pilih Kota Ini &rarr;</span>
+            </div>
+          </div>
+
+          <!-- DKI Jakarta (COMING SOON) -->
+          <div class="city-card coming-soon" data-city-id="jakarta" data-city-name="DKI Jakarta">
+            <div class="city-card-header">
+              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
+              <span class="city-cams-count">120+ Node</span>
+            </div>
+            <h3 class="city-card-name">DKI Jakarta</h3>
+            <p class="city-card-province">Jabodetabek &bull; ATCS & TMC Polda</p>
+            <div class="city-card-action">
+              <span class="btn-city-upcoming">Segera Hadir</span>
+            </div>
+          </div>
+
+          <!-- Kota Bandung (COMING SOON) -->
+          <div class="city-card coming-soon" data-city-id="bandung" data-city-name="Kota Bandung">
+            <div class="city-card-header">
+              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
+              <span class="city-cams-count">80+ Node</span>
+            </div>
+            <h3 class="city-card-name">Kota Bandung</h3>
+            <p class="city-card-province">Jawa Barat &bull; ATCS Dishub Bandung</p>
+            <div class="city-card-action">
+              <span class="btn-city-upcoming">Segera Hadir</span>
+            </div>
+          </div>
+
+          <!-- Kota Surabaya (COMING SOON) -->
+          <div class="city-card coming-soon" data-city-id="surabaya" data-city-name="Kota Surabaya">
+            <div class="city-card-header">
+              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
+              <span class="city-cams-count">90+ Node</span>
+            </div>
+            <h3 class="city-card-name">Kota Surabaya</h3>
+            <p class="city-card-province">Jawa Timur &bull; SITS Surabaya</p>
+            <div class="city-card-action">
+              <span class="btn-city-upcoming">Segera Hadir</span>
+            </div>
+          </div>
+
+          <!-- Kota Semarang (COMING SOON) -->
+          <div class="city-card coming-soon" data-city-id="semarang" data-city-name="Kota Semarang">
+            <div class="city-card-header">
+              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
+              <span class="city-cams-count">50+ Node</span>
+            </div>
+            <h3 class="city-card-name">Kota Semarang</h3>
+            <p class="city-card-province">Jawa Tengah &bull; ATCS Dishub Semarang</p>
+            <div class="city-card-action">
+              <span class="btn-city-upcoming">Segera Hadir</span>
+            </div>
+          </div>
+
+          <!-- Kota Denpasar (COMING SOON) -->
+          <div class="city-card coming-soon" data-city-id="denpasar" data-city-name="Kota Denpasar">
+            <div class="city-card-header">
+              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
+              <span class="city-cams-count">45+ Node</span>
+            </div>
+            <h3 class="city-card-name">Kota Denpasar</h3>
+            <p class="city-card-province">Bali &bull; ATCS Denpasar</p>
+            <div class="city-card-action">
+              <span class="btn-city-upcoming">Segera Hadir</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -31,7 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     splashScreen.classList.add('fade-out');
     setTimeout(() => {
       try { splashScreen.remove(); } catch (e) {}
-    }, 600);
+      // Show City Selector Modal after Splash Screen
+      openCitySelectorModal();
+    }, 550);
   }
 
   // Click on splash screen instantly dismisses
@@ -1586,7 +1588,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 15. PWA Service Worker Registration
+  // 15. City Selector Modal (Nusantara Multi-City Switcher)
+  const citySelectorModal = document.getElementById('citySelectorModal');
+  const btnOpenCityModal = document.getElementById('btnOpenCityModal');
+  const btnCloseCityModal = document.getElementById('btnCloseCityModal');
+  const currentCityLabel = document.getElementById('currentCityLabel');
+  const tabMapLabel = document.getElementById('tabMapLabel');
+  const cityCards = document.querySelectorAll('.city-card');
+
+  function openCitySelectorModal() {
+    if (citySelectorModal) {
+      citySelectorModal.style.display = 'flex';
+    }
+  }
+
+  function closeCitySelectorModal() {
+    if (citySelectorModal) {
+      citySelectorModal.style.display = 'none';
+    }
+  }
+
+  if (btnOpenCityModal) {
+    btnOpenCityModal.addEventListener('click', openCitySelectorModal);
+  }
+
+  if (btnCloseCityModal) {
+    btnCloseCityModal.addEventListener('click', closeCitySelectorModal);
+  }
+
+  if (citySelectorModal) {
+    citySelectorModal.addEventListener('click', (e) => {
+      if (e.target === citySelectorModal) closeCitySelectorModal();
+    });
+  }
+
+  cityCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const cityId = card.getAttribute('data-city-id');
+      const cityName = card.getAttribute('data-city-name');
+      const lat = parseFloat(card.getAttribute('data-lat'));
+      const lon = parseFloat(card.getAttribute('data-lon'));
+
+      if (cityId === 'medan') {
+        if (currentCityLabel) currentCityLabel.textContent = cityName;
+        if (tabMapLabel) tabMapLabel.textContent = `Peta CCTV ${cityName}`;
+        localStorage.setItem('cctv_selected_city', 'medan');
+        closeCitySelectorModal();
+        showToast(`🏙️ ${cityName} Terpilih — 60+ Kamera ATCS & Deteksi AI Aktif`);
+        
+        if (window.medanCCTVMap && window.medanCCTVMap.map) {
+          window.medanCCTVMap.map.setView([lat, lon], 13);
+        }
+      } else {
+        showToast(`⏳ Node CCTV ${cityName} sedang dalam tahap integrasi pipeline stream.`);
+      }
+    });
+  });
+
+  // 16. PWA Service Worker Registration
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')

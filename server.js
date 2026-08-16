@@ -181,7 +181,7 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('X-Powered-By', 'Medan Traffic Vision Pro / Adjie Kurniawan (@adjie.apk)');
+  res.setHeader('X-Powered-By', 'Nusantara Traffic Vision Pro / Adjie Kurniawan (@adjie.apk)');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
   res.setHeader('Access-Control-Allow-Headers', '*');
@@ -351,7 +351,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(` MEDAN TRAFFIC VISION — SURVEILLANCE PRO`);
+  console.log(` NUSANTARA TRAFFIC VISION — SURVEILLANCE PRO`);
   console.log(` Copyright (c) 2026 Adjie Kurniawan (instagram.com/adjie.apk)`);
   console.log(` Server running at: http://localhost:${PORT}`);
   console.log(` Security: Anti-SSRF, Rate-Limiting & Headers ACTIVE`);
