@@ -2083,6 +2083,7 @@ body.light-theme .combobox-search-input {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .controls-group-left, .controls-group-right {

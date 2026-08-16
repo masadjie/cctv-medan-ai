@@ -348,6 +348,43 @@
         </div>
       </div>
 
+      <!-- Action & Interaction Bar (Positioned At Top Above Video) -->
+      <div class="viewport-controls-bar">
+        <div class="controls-group-left">
+          <button id="btnPlayPause" class="btn btn-secondary btn-icon" title="Putar / Jeda">
+            <svg id="iconPlay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg id="iconPause" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+
+          <button id="btnResetMonitoringConsole" class="btn btn-secondary" title="Hentikan siaran kamera dan kembali ke mode standby">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>
+            <span>Reset Kamera</span>
+          </button>
+
+          <button id="btnToggleAi" class="btn btn-toggle-ai active" title="Nyalakan/Matikan Deteksi AI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>AI Deteksi: AKTIF</span>
+          </button>
+
+          <button id="btnDrawRoi" class="btn btn-secondary" title="Klik lalu drag pada video untuk menentukan zona spesifik">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+            <span>Set Zona Deteksi</span>
+          </button>
+        </div>
+
+        <div class="controls-group-right">
+          <button id="btnSnapshot" class="btn btn-secondary" title="Ambil Foto Snapshot dengan Anotasi AI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Snapshot</span>
+          </button>
+
+          <button id="btnFullscreen" class="btn btn-primary" title="Layar Penuh CCTV Video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            <span>Fullscreen</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Main Video Container -->
       <div class="viewport-frame hd-upscaled-active" id="videoContainer">
         <video id="cctvVideo" playsinline muted crossOrigin="anonymous"></video>
@@ -392,43 +429,6 @@
         <div class="viewport-loader-overlay hidden" id="videoLoadingOverlay">
           <div class="sleek-spinner"></div>
           <p id="videoStateText">Menghubungkan ke Feed CCTV...</p>
-        </div>
-      </div>
-
-      <!-- Action & Interaction Bar -->
-      <div class="viewport-controls-bar">
-        <div class="controls-group-left">
-          <button id="btnPlayPause" class="btn btn-secondary btn-icon" title="Putar / Jeda">
-            <svg id="iconPlay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <svg id="iconPause" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-          </button>
-
-          <button id="btnResetMonitoringConsole" class="btn btn-secondary" title="Hentikan siaran kamera dan kembali ke mode standby">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>
-            <span>Reset Kamera</span>
-          </button>
-
-          <button id="btnToggleAi" class="btn btn-toggle-ai active" title="Nyalakan/Matikan Deteksi AI">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>AI Deteksi: AKTIF</span>
-          </button>
-
-          <button id="btnDrawRoi" class="btn btn-secondary" title="Klik lalu drag pada video untuk menentukan zona spesifik">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-            <span>Set Zona Deteksi</span>
-          </button>
-        </div>
-
-        <div class="controls-group-right">
-          <button id="btnSnapshot" class="btn btn-secondary" title="Ambil Foto Snapshot dengan Anotasi AI">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            <span>Snapshot</span>
-          </button>
-
-          <button id="btnFullscreen" class="btn btn-primary" title="Layar Penuh CCTV Video">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-            <span>Fullscreen</span>
-          </button>
         </div>
       </div>
     </section>
