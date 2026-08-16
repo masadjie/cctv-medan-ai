@@ -1,6 +1,6 @@
 /**
- * Nusantara Traffic Vision - High-Performance 60FPS Interactive CCTV Map (Leaflet.js)
- * Clean, butter-smooth map module with Zero Lag and Gentle HLS Stream Health Verification
+ * Nusantara Traffic Vision - High-Performance Interactive CCTV Map (Leaflet.js)
+ * Clean, butter-smooth map module with dynamic Offline -> Online Stream Verification
  */
 
 class MedanCCTVMap {
@@ -56,13 +56,22 @@ class MedanCCTVMap {
     this.currentTileLayer = this.tileLayers.darkNight;
     this.currentTileLayer.addTo(this.map);
 
-    // Render Markers & Listeners
+    // 1. Initial State: Set ALL cameras to OFFLINE by default
+    this.cameras.forEach(cam => {
+      this.healthStatus[cam.id] = {
+        online: false,
+        latencyMs: 0,
+        checkedAt: new Date().toISOString()
+      };
+    });
+
+    // Render Markers with initial offline state (🔴 Red Pins)
     this.renderMarkers();
     this.setupSearch();
     this.setupPopupListener();
     this.isInitialized = true;
 
-    // Pause heavy background checks while user is dragging / zooming to keep 60 FPS
+    // Pause checks during user drag / zoom to guarantee 60 FPS
     this.map.on('movestart zoomstart', () => {
       this.isMapMoving = true;
     });
@@ -70,99 +79,112 @@ class MedanCCTVMap {
       this.isMapMoving = false;
     });
 
-    // Start background HLS verification smoothly
-    setTimeout(() => this.startHlsBackgroundChecker(), 1000);
+    // 2. Start Live Verification: checks streams and turns verified cameras into 🟢 ONLINE
+    setTimeout(() => this.startHlsBackgroundChecker(), 300);
   }
 
   /**
-   * Ultra-Lightweight Headless HLS Stream Health Verifier
+   * Fast & Reliable Stream Health Verifier via Local Anti-SSRF Proxy & Hls.js fallback
    */
-  checkHlsStreamHealth(url, timeoutMs = 3500) {
+  checkHlsStreamHealth(url, timeoutMs = 3000) {
     return new Promise((resolve) => {
-      if (!window.Hls || !window.Hls.isSupported() || !url.includes('.m3u8')) {
-        resolve({ online: true, latencyMs: 85 });
+      if (!url) {
+        resolve({ online: false, latencyMs: 0 });
         return;
       }
 
-      let testHls;
-      let isSettled = false;
       const startTime = performance.now();
+      const testUrl = url.startsWith('http') ? `/proxy?url=${encodeURIComponent(url)}` : url;
+      
+      const controller = new AbortController();
+      let isSettled = false;
 
       const finalize = (isOnline, latency = null) => {
         if (isSettled) return;
         isSettled = true;
         clearTimeout(timer);
         const latencyMs = latency || Math.round(performance.now() - startTime);
-        if (testHls) {
-          try {
-            testHls.destroy();
-          } catch (e) {}
-        }
         resolve({ online: isOnline, latencyMs });
       };
 
       const timer = setTimeout(() => {
+        controller.abort();
         finalize(false, 0);
       }, timeoutMs);
 
-      try {
-        testHls = new window.Hls({
-          manifestLoadingTimeOut: timeoutMs,
-          manifestLoadingMaxRetry: 0,
-          enableWorker: false,
-          autoStartLoad: true
-        });
-
-        testHls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-          finalize(true);
-        });
-
-        testHls.on(window.Hls.Events.ERROR, (evt, data) => {
-          if (data && (data.fatal || data.type === window.Hls.ErrorTypes.NETWORK_ERROR)) {
+      // Fast HTTP probe through local proxy (CORS safe)
+      fetch(testUrl, { method: 'GET', signal: controller.signal, headers: { 'Range': 'bytes=0-1024' } })
+        .then(res => {
+          if (res.ok || res.status === 200 || res.status === 206 || res.status === 304) {
+            finalize(true);
+          } else {
+            finalize(false, 0);
+          }
+        })
+        .catch(() => {
+          // Fallback to Headless HLS probe if supported
+          if (window.Hls && window.Hls.isSupported() && url.includes('.m3u8')) {
+            let hlsTest;
+            try {
+              hlsTest = new window.Hls({
+                manifestLoadingTimeOut: 2000,
+                manifestLoadingMaxRetry: 0,
+                enableWorker: false
+              });
+              hlsTest.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                try { hlsTest.destroy(); } catch (e) {}
+                finalize(true);
+              });
+              hlsTest.on(window.Hls.Events.ERROR, () => {
+                try { hlsTest.destroy(); } catch (e) {}
+                finalize(false, 0);
+              });
+              hlsTest.loadSource(url);
+            } catch (e) {
+              finalize(false, 0);
+            }
+          } else {
             finalize(false, 0);
           }
         });
-
-        testHls.loadSource(url);
-      } catch (err) {
-        finalize(false, 0);
-      }
     });
   }
 
   /**
-   * Gentle, throttled sequential background verification (1 stream at a time)
+   * Sequential background verification loop: flips cameras from 🔴 OFFLINE -> 🟢 ONLINE
    */
   async startHlsBackgroundChecker() {
     if (this.isCheckingHls) return;
     this.isCheckingHls = true;
 
     for (let i = 0; i < this.cameras.length; i++) {
-      // Pause if map is currently being panned/zoomed
+      // Pause if map is actively moving
       while (this.isMapMoving) {
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 150));
       }
 
       const cam = this.cameras[i];
-      if (cam && cam.url && cam.url.includes('.m3u8')) {
+      if (cam && cam.url) {
         const res = await this.checkHlsStreamHealth(cam.url);
         this.healthStatus[cam.id] = {
           online: res.online,
           latencyMs: res.latencyMs,
           checkedAt: new Date().toISOString()
         };
+        
+        // Dynamically transition marker from OFFLINE to ONLINE
         this.updateSingleMarkerDom(cam.id, res.online);
       }
 
-      // Small breathing room between stream probes (prevents CPU spikes)
-      await new Promise(r => setTimeout(r, 250));
+      // Smooth spacing between probes
+      await new Promise(r => setTimeout(r, 120));
     }
 
     this.isCheckingHls = false;
     window.dispatchEvent(new CustomEvent('cctv-health-updated', { detail: { cameras: this.healthStatus } }));
   }
 
-  // Fast direct DOM class update (100x faster than recreating L.divIcon)
+  // Fast direct DOM mutation with smooth radar activation
   updateSingleMarkerDom(camId, isOnline) {
     const el = document.getElementById(`marker-${camId}`);
     if (!el) return;
@@ -185,8 +207,8 @@ class MedanCCTVMap {
     }
   }
 
-  // Update specific camera status on-demand (e.g. from live player event)
-  setCameraHealth(camId, isOnline, latency = 90) {
+  // Update specific camera status on-demand (e.g. from live video player event)
+  setCameraHealth(camId, isOnline, latency = 85) {
     this.healthStatus[camId] = {
       online: isOnline,
       latencyMs: latency,
@@ -199,7 +221,7 @@ class MedanCCTVMap {
   createCustomIcon(camera, isSelected = false) {
     const activeClass = isSelected ? 'marker-active' : '';
     const status = this.healthStatus[camera.id];
-    const isOnline = status ? status.online : false;
+    const isOnline = status ? status.online : false; // Default false (starts as offline)
     const statusClass = isOnline ? 'pin-online' : 'pin-offline';
 
     return L.divIcon({

@@ -2242,31 +2242,36 @@ body.light-theme .combobox-search-input {
 
 .toast-host {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
-  z-index: 1000;
+  z-index: 1000000;
   pointer-events: none;
 }
 
 .toast {
-  background: var(--surface-layer-3);
-  border: 1px solid var(--border-strong);
-  color: var(--text-pure);
-  padding: 8px 14px;
-  border-radius: var(--radius-xs);
+  background: rgba(18, 19, 26, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 20px;
   font-size: 0.78rem;
-  font-weight: 600;
-  box-shadow: var(--shadow-md);
+  font-weight: 700;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(16, 185, 129, 0.15);
   pointer-events: auto;
-  animation: toast-in 0.2s ease-out;
-  transition: opacity 0.25s ease;
+  animation: toast-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  white-space: nowrap;
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(-12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
