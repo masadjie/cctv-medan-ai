@@ -2267,15 +2267,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (warHlsMap[idx]) { try { warHlsMap[idx].destroy(); } catch(e) {} warHlsMap[idx] = null; }
 
+    // Route through proxy just like the main stream player
+    const useProxy = document.getElementById('useProxyToggle');
+    const finalUrl = (useProxy && useProxy.checked) || url.startsWith('http')
+      ? `/proxy?url=${encodeURIComponent(url)}`
+      : url;
+
     if (window.Hls && window.Hls.isSupported()) {
-      const hls = new window.Hls({ liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 4, lowLatencyMode: true, enableWorker: true });
-      hls.loadSource(url);
+      const hls = new window.Hls({
+        liveSyncDurationCount: 2,
+        liveMaxLatencyDurationCount: 4,
+        lowLatencyMode: true,
+        enableWorker: true,
+        xhrSetup: (xhr) => { xhr.withCredentials = false; }
+      });
+      hls.loadSource(finalUrl);
       hls.attachMedia(video);
       hls.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+      hls.on(window.Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          // On fatal error, retry once without proxy
+          if (finalUrl !== url) {
+            hls.destroy();
+            const hlsDirect = new window.Hls({ liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 4, lowLatencyMode: true });
+            hlsDirect.loadSource(url);
+            hlsDirect.attachMedia(video);
+            hlsDirect.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+            warHlsMap[idx] = hlsDirect;
+          }
+        }
+      });
       warHlsMap[idx] = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = url;
-      video.play().catch(() => {});
+      // Safari native HLS — try proxy first
+      video.src = finalUrl;
+      video.play().catch(() => { video.src = url; video.play().catch(() => {}); });
     }
   }
 
