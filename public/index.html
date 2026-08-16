@@ -650,99 +650,208 @@
     </div>
   </div>
 
-  <!-- City Selection Modal Dialog (Pilih Kota Pemantauan) -->
+  <!-- City Selection Modal Dialog (Executive Command Center Gateway) -->
   <div class="modal-backdrop" id="citySelectorModal">
     <div class="modal-card modal-card-cities">
-      <div class="modal-header">
-        <div class="modal-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <span>Pilih Wilayah / Kota Pemantauan ATCS</span>
+      <!-- Modal Executive Top Banner -->
+      <div class="city-modal-hero">
+        <div class="hero-left-content">
+          <div class="city-hero-pill">
+            <span class="pulse-dot green"></span>
+            <span>PUSAT KENDALI SURVEILLANCE ATCS NASIONAL</span>
+          </div>
+          <h2 class="city-hero-title">Pilih Kota Pemantauan Lalu Lintas</h2>
+          <p class="city-hero-sub">Integrasi Multi-Node AI Vision, Peta Topologi Geografis & Penghitung Telemetri Kendaraan Real-Time</p>
         </div>
-        <button id="btnCloseCityModal" class="btn-icon-close" title="Tutup">
+        <button id="btnCloseCityModal" class="btn-icon-close" title="Tutup Modal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="modal-body">
-        <p class="city-selector-intro">Silakan pilih kota yang ingin Anda pantau lalu lintas dan telemetri AI-nya:</p>
-        
+
+      <div class="modal-body-cities">
+        <!-- Region Filter Pills -->
+        <div class="city-region-filter-bar">
+          <span class="region-filter-label">Wilayah:</span>
+          <div class="region-filter-pills">
+            <button type="button" class="region-pill active" data-region="all">Semua Wilayah</button>
+            <button type="button" class="region-pill" data-region="sumatera">Sumatera</button>
+            <button type="button" class="region-pill" data-region="jawa">Jawa & Bali</button>
+            <button type="button" class="region-pill" data-region="lainnya">Kalimantan & Lainnya</button>
+          </div>
+        </div>
+
+        <!-- City Cards Grid -->
         <div class="cities-grid-selection">
-          <!-- Kota Medan (ACTIVE) -->
-          <div class="city-card active" data-city-id="medan" data-city-name="Kota Medan" data-lat="3.5896" data-lon="98.6738" data-cams="60+">
-            <div class="city-card-header">
-              <span class="city-status-pill online"><span class="pulse-dot green"></span> AKTIF (LIVE)</span>
-              <span class="city-cams-count">60+ Titik CCTV</span>
+          <!-- 1. Kota Medan (ACTIVE) -->
+          <div class="city-card active" data-region="sumatera" data-city-id="medan" data-city-name="Kota Medan" data-lat="3.5896" data-lon="98.6738" data-cams="60+">
+            <div class="city-card-glow-bg"></div>
+            <div class="city-card-top-row">
+              <div class="city-icon-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              </div>
+              <span class="city-status-chip active-chip"><span class="pulse-dot green"></span> AKTIF (60+ CCTV)</span>
             </div>
-            <h3 class="city-card-name">Kota Medan</h3>
-            <p class="city-card-province">Sumatera Utara &bull; ATCS Dishub Medan</p>
-            <div class="city-card-action">
-              <span class="btn-city-select">Pilih Kota Ini &rarr;</span>
+            
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Medan</h3>
+              <p class="city-sub-text">Sumatera Utara &bull; Jaringan ATCS Dishub Medan</p>
+            </div>
+
+            <div class="city-specs-row">
+              <div class="spec-col">
+                <span class="spec-label">Latency</span>
+                <span class="spec-val emerald-val">~85ms</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-label">AI Engine</span>
+                <span class="spec-val">YOLOv8 Multi-Scale</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-label">Cakupan</span>
+                <span class="spec-val">60 Simpang Utama</span>
+              </div>
+            </div>
+
+            <div class="city-action-container">
+              <button type="button" class="btn-city-connect-action">
+                <span>Hubungkan ke Kota Medan</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
             </div>
           </div>
 
-          <!-- DKI Jakarta (COMING SOON) -->
-          <div class="city-card coming-soon" data-city-id="jakarta" data-city-name="DKI Jakarta">
-            <div class="city-card-header">
-              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
-              <span class="city-cams-count">120+ Node</span>
+          <!-- 2. DKI Jakarta (COMING SOON) -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="jakarta" data-city-name="DKI Jakarta">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="8" y1="6" x2="8" y2="6.01"/><line x1="16" y1="6" x2="16" y2="6.01"/><line x1="12" y1="6" x2="12" y2="6.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="12" y1="18" x2="12" y2="18.01"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="16" y1="14" x2="16" y2="14.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            <h3 class="city-card-name">DKI Jakarta</h3>
-            <p class="city-card-province">Jabodetabek &bull; ATCS & TMC Polda</p>
-            <div class="city-card-action">
-              <span class="btn-city-upcoming">Segera Hadir</span>
+            
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">DKI Jakarta</h3>
+              <p class="city-sub-text">Jabodetabek &bull; TMC Polda & Dishub Jakarta</p>
+            </div>
+
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">120+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / RTSP</span></div>
+            </div>
+
+            <div class="city-action-container">
+              <span class="btn-city-disabled">Segera Hadir</span>
             </div>
           </div>
 
-          <!-- Kota Bandung (COMING SOON) -->
-          <div class="city-card coming-soon" data-city-id="bandung" data-city-name="Kota Bandung">
-            <div class="city-card-header">
-              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
-              <span class="city-cams-count">80+ Node</span>
+          <!-- 3. Kota Bandung (COMING SOON) -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="bandung" data-city-name="Kota Bandung">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            <h3 class="city-card-name">Kota Bandung</h3>
-            <p class="city-card-province">Jawa Barat &bull; ATCS Dishub Bandung</p>
-            <div class="city-card-action">
-              <span class="btn-city-upcoming">Segera Hadir</span>
+            
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Bandung</h3>
+              <p class="city-sub-text">Jawa Barat &bull; Jaringan ATCS Dishub Bandung</p>
+            </div>
+
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">80+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / WebRTC</span></div>
+            </div>
+
+            <div class="city-action-container">
+              <span class="btn-city-disabled">Segera Hadir</span>
             </div>
           </div>
 
-          <!-- Kota Surabaya (COMING SOON) -->
-          <div class="city-card coming-soon" data-city-id="surabaya" data-city-name="Kota Surabaya">
-            <div class="city-card-header">
-              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
-              <span class="city-cams-count">90+ Node</span>
+          <!-- 4. Kota Surabaya (COMING SOON) -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="surabaya" data-city-name="Kota Surabaya">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            <h3 class="city-card-name">Kota Surabaya</h3>
-            <p class="city-card-province">Jawa Timur &bull; SITS Surabaya</p>
-            <div class="city-card-action">
-              <span class="btn-city-upcoming">Segera Hadir</span>
+            
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Surabaya</h3>
+              <p class="city-sub-text">Jawa Timur &bull; SITS Dishub Surabaya</p>
+            </div>
+
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">90+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+            </div>
+
+            <div class="city-action-container">
+              <span class="btn-city-disabled">Segera Hadir</span>
             </div>
           </div>
 
-          <!-- Kota Semarang (COMING SOON) -->
-          <div class="city-card coming-soon" data-city-id="semarang" data-city-name="Kota Semarang">
-            <div class="city-card-header">
-              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
-              <span class="city-cams-count">50+ Node</span>
+          <!-- 5. Kota Semarang (COMING SOON) -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="semarang" data-city-name="Kota Semarang">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            <h3 class="city-card-name">Kota Semarang</h3>
-            <p class="city-card-province">Jawa Tengah &bull; ATCS Dishub Semarang</p>
-            <div class="city-card-action">
-              <span class="btn-city-upcoming">Segera Hadir</span>
+            
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Semarang</h3>
+              <p class="city-sub-text">Jawa Tengah &bull; ATCS Dishub Semarang</p>
+            </div>
+
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">50+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+            </div>
+
+            <div class="city-action-container">
+              <span class="btn-city-disabled">Segera Hadir</span>
             </div>
           </div>
 
-          <!-- Kota Denpasar (COMING SOON) -->
-          <div class="city-card coming-soon" data-city-id="denpasar" data-city-name="Kota Denpasar">
-            <div class="city-card-header">
-              <span class="city-status-pill upcoming">TAHAP INTEGRASI</span>
-              <span class="city-cams-count">45+ Node</span>
+          <!-- 6. Kota Denpasar (COMING SOON) -->
+          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="denpasar" data-city-name="Kota Denpasar">
+            <div class="city-card-top-row">
+              <div class="city-icon-badge muted-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </div>
+              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
             </div>
-            <h3 class="city-card-name">Kota Denpasar</h3>
-            <p class="city-card-province">Bali &bull; ATCS Denpasar</p>
-            <div class="city-card-action">
-              <span class="btn-city-upcoming">Segera Hadir</span>
+            
+            <div class="city-card-main-info">
+              <h3 class="city-name-text">Kota Denpasar</h3>
+              <p class="city-sub-text">Bali &bull; Jaringan ATCS Dishub Denpasar</p>
+            </div>
+
+            <div class="city-specs-row">
+              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">45+ Node</span></div>
+              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
+              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
+            </div>
+
+            <div class="city-action-container">
+              <span class="btn-city-disabled">Segera Hadir</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="city-modal-footer">
+        <div class="footer-left-security">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Enkripsi Node &bull; Anti-SSRF Protection &bull; By <b>Adjie Kurniawan</b> (<a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer">@adjie.apk</a>)</span>
         </div>
       </div>
     </div>

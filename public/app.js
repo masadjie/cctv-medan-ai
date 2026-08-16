@@ -1622,6 +1622,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Region Filter Tabs inside City Modal
+  const regionPills = document.querySelectorAll('.region-pill');
+  regionPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      regionPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const region = pill.getAttribute('data-region');
+
+      cityCards.forEach(card => {
+        const cardRegion = card.getAttribute('data-region');
+        if (region === 'all' || cardRegion === region) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
   cityCards.forEach(card => {
     card.addEventListener('click', () => {
       const cityId = card.getAttribute('data-city-id');
