@@ -454,12 +454,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (window.trafficAnalytics) {
         window.trafficAnalytics.setActiveCamera(matchedCam.id, `${matchedCam.name} (${matchedCam.alias})`);
       }
+      try { localStorage.setItem('cctv_last_active_stream', url); } catch (e) {}
     } else {
       const fallbackName = url.split('/').filter(Boolean).pop() || 'Lokal';
       osdCamName.textContent = 'CCTV: ' + fallbackName;
       if (window.trafficAnalytics) {
         window.trafficAnalytics.setActiveCamera(url, fallbackName);
       }
+      try { localStorage.setItem('cctv_last_active_stream', url); } catch (e) {}
     }
 
     // Reveal stop monitoring buttons
@@ -1887,7 +1889,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadAiModel();
       }
 
-      // 3. Start AI detection loop
+      // 3. Auto-load last viewed camera or primary camera (Cam #31)
+      const lastActiveStream = localStorage.getItem('cctv_last_active_stream') || 'https://atcsdishub.medan.go.id/stream/L31JAMINGINTINGISMUD/stream.m3u8';
+      loadStream(lastActiveStream);
+
+      // 4. Start AI detection loop
       if (!isDetecting) {
         detectLoop();
       }

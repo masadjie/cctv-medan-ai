@@ -11,9 +11,19 @@ class TrafficAnalytics {
     this.audioContext = null;
     this.lastAlarmTime = 0;
 
-    // Active Device tracking
-    this.activeDeviceId = 'global';
-    this.activeDeviceName = 'Standby / Belum Ada Kamera';
+    // Active Device tracking - default to selected/primary camera
+    const savedStream = typeof localStorage !== 'undefined' ? localStorage.getItem('cctv_last_active_stream') : null;
+    let initialCam = null;
+    if (typeof window !== 'undefined' && window.ATCS_MEDAN_CAMERAS) {
+      initialCam = window.ATCS_MEDAN_CAMERAS.find(c => c.url === savedStream) || window.ATCS_MEDAN_CAMERAS[0];
+    }
+    if (initialCam) {
+      this.activeDeviceId = String(initialCam.id);
+      this.activeDeviceName = `${initialCam.name} (${initialCam.alias})`;
+    } else {
+      this.activeDeviceId = '31';
+      this.activeDeviceName = 'JAMIN GINTING - ISKANDAR MUDA (Simpang JM.GINTING - ISMUD)';
+    }
 
     // Daily & Per-Device records storage keyed by YYYY-MM-DD -> { devices: { [camId]: { car, motor, total, name } } }
     this.todayKey = this.getTodayDateString();
@@ -25,6 +35,7 @@ class TrafficAnalytics {
     
     this.setupResizeListener();
     this.setupDateSelector();
+    this.setActiveCamera(this.activeDeviceId, this.activeDeviceName);
     this.updateDOMCounters(0, 0);
   }
 
@@ -102,17 +113,17 @@ class TrafficAnalytics {
 
   // Set the currently active camera to track specifically per device
   setActiveCamera(camId, camName) {
-    this.activeDeviceId = String(camId || 'global');
-    this.activeDeviceName = camName || (camId ? `CAM #${camId}` : 'Standby');
+    this.activeDeviceId = String(camId || '31');
+    this.activeDeviceName = camName || (camId ? `CAM #${camId}` : 'JAMIN GINTING - ISKANDAR MUDA');
 
     const badge = document.getElementById('telemetryDeviceLabel');
     if (badge) {
-      badge.textContent = camId === 'global' ? 'Kamera: Standby / Umum' : `CAM #${camId}: ${this.activeDeviceName}`;
+      badge.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-right:6px;box-shadow:0 0 6px #10b981;"></span><b>CAM #${this.activeDeviceId}:</b> ${this.activeDeviceName}`;
     }
 
     // Refresh UI with this specific device's counts
     this.updateDOMCounters(0, 0);
-    this.logEvent(`Beralih ke telemetri kamera: ${this.activeDeviceName}`);
+    this.logEvent(`Telemetri aktif untuk kamera: ${this.activeDeviceName}`);
   }
 
   // Get current device counts for the selected date
