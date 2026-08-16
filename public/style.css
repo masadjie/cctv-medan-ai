@@ -555,8 +555,8 @@ body.light-theme .combobox-search-input {
   display: none;
 }
 
-.main-layout.mode-warroom #warRoomView {
-  display: flex !important;
+#warRoomView:not(.war-room-active) {
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -2209,9 +2209,10 @@ body.light-theme .combobox-search-input {
 /* ==========================================================================
    WAR ROOM MATRIX (2x2 GRID CCTV WALL)
    ========================================================================== */
+/* Hidden by default; revealed by JS adding war-room-active */
 .war-room-panel {
   flex: 1;
-  display: flex;
+  display: none;
   flex-direction: column;
   background: var(--surface-layer-1);
   border: 1px solid var(--border-medium);
@@ -2221,8 +2222,12 @@ body.light-theme .combobox-search-input {
   min-height: 0;
 }
 
+.war-room-panel.war-room-active {
+  display: flex;
+}
+
 .war-room-panel.hidden {
-  display: none !important;
+  display: none;
 }
 
 .war-room-top-header {

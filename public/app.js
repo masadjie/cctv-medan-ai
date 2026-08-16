@@ -1828,9 +1828,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       b.classList.toggle('active', b.getAttribute('data-mode') === mode);
     });
 
-    // War Room: initialize players on first open
-    if (mode === 'warroom') {
-      initWarRoom();
+    // War Room: show/hide panel and initialize players on first open
+    const wrPanel = document.getElementById('warRoomView');
+    if (wrPanel) {
+      if (mode === 'warroom') {
+        wrPanel.classList.add('war-room-active');
+        initWarRoom();
+      } else {
+        wrPanel.classList.remove('war-room-active');
+      }
     }
 
     // Map needs size invalidation after DOM changes
