@@ -776,7 +776,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       });
 
-      // 2b. Standalone Motorcycles/Bicycles
+      // 2b. Standalone Motorcycles/Bicycles (Actual vehicle bodies detected)
       rawBikes.forEach((bike, bIdx) => {
         if (!usedBikeIndices.has(bIdx)) {
           candidateDetections.push({
@@ -788,23 +788,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
       });
-
-      // 2c. Standalone Riders on Roadway (detected as person with vehicle motion/aspect)
-      rawPersons.forEach((person, pIdx) => {
-        if (!usedPersonIndices.has(pIdx)) {
-          const [px, py, pw, ph] = person.bbox;
-          // Roadway threshold: person on middle-lower road zone with vertical ratio
-          if (py > canvasH * 0.12 && ph >= pw * 0.95) {
-            candidateDetections.push({
-              category: 'motor',
-              labelText: 'Sepeda Motor',
-              strokeColor: COLOR_MOTOR,
-              score: person.score * 0.92,
-              bbox: [px, py, pw, ph]
-            });
-          }
-        }
-      });
+      // (Note: Standalone billboard photos of humans without bikes are ignored and will NOT be counted as motorcycles)
     }
 
     // Step 3: Mobil, Truk & Bus Fusion
