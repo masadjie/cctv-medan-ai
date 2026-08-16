@@ -712,24 +712,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (w < 8 || h < 8) return;
       if (roi && !isBoxInRoi([x, y, w, h], roi)) return;
 
-      if (CAR_CLASSES.includes(classId)) {
-        rawCars.push({
-          bbox: [x, y, w, h],
-          score: pred.score,
-          classId
-        });
-      } else if (classId === 'motorcycle' || classId === 'bicycle') {
+      const aspectRatio = w / Math.max(1, h);
+      const isSmallVerticalBox = (w < 70 && h < 95 && aspectRatio <= 1.08);
+
+      if (classId === 'motorcycle' || classId === 'bicycle') {
         rawBikes.push({
           bbox: [x, y, w, h],
           score: pred.score,
-          classId
+          classId: 'motorcycle'
         });
       } else if (classId === 'person') {
         rawPersons.push({
           bbox: [x, y, w, h],
           score: pred.score,
-          classId
+          classId: 'person'
         });
+      } else if (CAR_CLASSES.includes(classId)) {
+        // If the model mislabeled a small vertical motorcycle/scooter as 'car'
+        if (isSmallVerticalBox && pred.score < 0.50 && classId === 'car') {
+          rawBikes.push({
+            bbox: [x, y, w, h],
+            score: pred.score,
+            classId: 'motorcycle'
+          });
+        } else {
+          rawCars.push({
+            bbox: [x, y, w, h],
+            score: pred.score,
+            classId
+          });
+        }
       }
     });
 
@@ -757,7 +769,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const yDist = Math.abs(pcy - bcy);
 
           // Rider sits directly on or slightly above the motorcycle
-          const isOverlapping = iou > 0.10 || (xDist < Math.max(pw, bw) * 0.85 && yDist < Math.max(ph, bh) * 1.2);
+          const isOverlapping = iou > 0.08 || (xDist < Math.max(pw, bw) * 0.90 && yDist < Math.max(ph, bh) * 1.3);
 
           if (isOverlapping) {
             usedPersonIndices.add(pIdx);
@@ -791,7 +803,23 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
       });
-      // (Note: Standalone billboard photos of humans without bikes are ignored and will NOT be counted as motorcycles)
+
+      // 2c. Standalone Riders on Roadway (Rider silhouettes whose bike was merged)
+      rawPersons.forEach((person, pIdx) => {
+        if (!usedPersonIndices.has(pIdx)) {
+          const [px, py, pw, ph] = person.bbox;
+          const pAspect = pw / Math.max(1, ph);
+          if (pAspect <= 1.10 && ph >= 12 && py > canvasH * 0.12) {
+            candidateDetections.push({
+              category: 'motor',
+              labelText: 'Sepeda Motor',
+              strokeColor: COLOR_MOTOR,
+              score: person.score,
+              bbox: [px, py, pw, ph]
+            });
+          }
+        }
+      });
     }
 
     // Step 3: Mobil, Truk & Bus Fusion
