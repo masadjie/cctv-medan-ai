@@ -119,6 +119,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           <span>Konsol AI</span>
         </button>
+        <button type="button" class="tab-btn" id="tabModeWarRoom" data-mode="warroom" title="Matriks CCTV Multi-Screen 4 Kamera Simultan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>War Room Matrix</span>
+        </button>
         <button type="button" class="tab-btn" id="tabModeSplit" data-mode="split">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
           <span>Layar Ganda</span>
@@ -335,15 +339,16 @@
           </div>
         </div>
 
-        <!-- Quick Favorites Row -->
+        <!-- Quick Favorites Row (Dynamic Online Cameras) -->
         <div class="hub-options-row">
           <div class="quick-presets">
-            <span class="quick-title">Favorit:</span>
-            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L31JAMINGINTINGISMUD/stream.m3u8">Jamin Ginting</button>
-            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L1RADENSALEHBALAIKOTA/stream.m3u8">Lap. Merdeka</button>
-            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L62SIMPANGPOS/stream.m3u8">Simpang Pos</button>
-            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L115ZAINULARIFIN/stream.m3u8">Sun Plaza</button>
-            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L82GATSUASRAMA/stream.m3u8">Manhattan</button>
+            <span class="quick-title">Favorit Online:</span>
+            <div id="quickFavoritesList" class="quick-favorites-chips">
+              <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L31JAMINGINTINGISMUD/stream.m3u8"><span class="dot-online-chip"></span>CAM 31 Jamin Ginting</button>
+              <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L1RADENSALEHBALAIKOTA/stream.m3u8"><span class="dot-online-chip"></span>CAM 1 Lap. Merdeka</button>
+              <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L62SIMPANGPOS/stream.m3u8"><span class="dot-online-chip"></span>CAM 62 Simpang Pos</button>
+              <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L18KATAMSOJUANDA/stream.m3u8"><span class="dot-online-chip"></span>CAM 18 Katamso Juanda</button>
+            </div>
           </div>
         </div>
       </div>
@@ -398,6 +403,7 @@
           </div>
           <div class="hud-metrics">
             <span class="hud-badge hd-badge" id="osdHdBadge" title="Super-Resolution HD Upscaler Aktif">HD 1080p AI</span>
+            <span class="hud-badge speed-badge" id="osdSpeedBadge" title="Estimasi Kecepatan Rata-rata Arus">⚡ Arus: <b>0</b> km/jam</span>
             <span class="hud-badge" id="osdFps">AI: <b>0</b> FPS</span>
           </div>
         </div>
@@ -448,6 +454,78 @@
         <div class="viewport-loader-overlay hidden" id="videoLoadingOverlay">
           <div class="sleek-spinner"></div>
           <p id="videoStateText">Menghubungkan ke Feed CCTV...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION B2: CCTV WAR ROOM MATRIX (4-SCREEN 2x2 MULTI-VIEW COMMAND CENTER) -->
+    <section class="war-room-panel hidden" id="warRoomView">
+      <div class="war-room-top-header">
+        <div class="war-room-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <h3>CCTV WAR ROOM MATRIX (4-SCREEN SIMULTANEOUS PRO)</h3>
+        </div>
+        <div class="war-room-actions">
+          <span class="live-pulse-badge">🔴 4 LIVE STREAMS</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnToggleWarRoomAi">⚡ AI Matrix: AKTIF</button>
+        </div>
+      </div>
+
+      <div class="war-room-grid">
+        <!-- Slot 1 -->
+        <div class="war-slot" id="warSlot1" data-slot="1">
+          <div class="slot-header">
+            <span class="slot-badge">SLOT 1</span>
+            <select class="slot-cam-select" id="warCamSelect1"></select>
+            <button type="button" class="btn-slot-expand" data-slot="1" title="Perbesar Slot 1">⛶</button>
+          </div>
+          <div class="slot-video-box">
+            <video id="warVideo1" playsinline muted autoplay crossOrigin="anonymous"></video>
+            <canvas id="warCanvas1"></canvas>
+            <div class="slot-osd" id="warOsd1">CAM #31: JAMIN GINTING - ISMUD</div>
+          </div>
+        </div>
+
+        <!-- Slot 2 -->
+        <div class="war-slot" id="warSlot2" data-slot="2">
+          <div class="slot-header">
+            <span class="slot-badge">SLOT 2</span>
+            <select class="slot-cam-select" id="warCamSelect2"></select>
+            <button type="button" class="btn-slot-expand" data-slot="2" title="Perbesar Slot 2">⛶</button>
+          </div>
+          <div class="slot-video-box">
+            <video id="warVideo2" playsinline muted autoplay crossOrigin="anonymous"></video>
+            <canvas id="warCanvas2"></canvas>
+            <div class="slot-osd" id="warOsd2">CAM #1: RADEN SALEH - BALAI KOTA</div>
+          </div>
+        </div>
+
+        <!-- Slot 3 -->
+        <div class="war-slot" id="warSlot3" data-slot="3">
+          <div class="slot-header">
+            <span class="slot-badge">SLOT 3</span>
+            <select class="slot-cam-select" id="warCamSelect3"></select>
+            <button type="button" class="btn-slot-expand" data-slot="3" title="Perbesar Slot 3">⛶</button>
+          </div>
+          <div class="slot-video-box">
+            <video id="warVideo3" playsinline muted autoplay crossOrigin="anonymous"></video>
+            <canvas id="warCanvas3"></canvas>
+            <div class="slot-osd" id="warOsd3">CAM #62: SIMPANG POS FLYOVER</div>
+          </div>
+        </div>
+
+        <!-- Slot 4 -->
+        <div class="war-slot" id="warSlot4" data-slot="4">
+          <div class="slot-header">
+            <span class="slot-badge">SLOT 4</span>
+            <select class="slot-cam-select" id="warCamSelect4"></select>
+            <button type="button" class="btn-slot-expand" data-slot="4" title="Perbesar Slot 4">⛶</button>
+          </div>
+          <div class="slot-video-box">
+            <video id="warVideo4" playsinline muted autoplay crossOrigin="anonymous"></video>
+            <canvas id="warCanvas4"></canvas>
+            <div class="slot-osd" id="warOsd4">CAM #18: KATAMSO - JUANDA</div>
+          </div>
         </div>
       </div>
     </section>

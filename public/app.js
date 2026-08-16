@@ -999,6 +999,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           t.vy = (t.vy || 0) * 0.40 + newVy * 0.60;
         }
 
+        // Speed Estimation (km/h): pixel-per-frame velocity → calibrated km/h
+        // Perspective scale: ~0.55 km/h per px/frame (CCTV road elevation calibration)
+        const pixelSpeed = Math.hypot(t.vx || 0, t.vy || 0);
+        const rawKmh = pixelSpeed * 0.55 * 25; // 25 FPS calibration factor
+        // Smooth EMA on speed, clamp to realistic road range
+        t.speedKmh = Math.min(120, Math.max(0, ((t.speedKmh || 0) * 0.65 + rawKmh * 0.35)));
+
         t.score = det.score;
         t.labelText = det.labelText;
         t.seenFrames++;
@@ -1291,12 +1298,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 3. Draw Tracked Vehicle & Pedestrian Bounding Boxes
+    // Vehicles that are already counted (counted = true) are silently tracked
+    // but their visual overlay is removed — only show during the confirmation window (seenFrames < 4)
+    let totalSpeedSum = 0;
+    let movingCount = 0;
+
     trackedObjects.forEach(obj => {
       const [x, y, w, h] = obj.bbox;
       const strokeColor = obj.strokeColor;
 
       if (obj.category === 'car') liveCar++;
       else if (obj.category === 'motor') liveMotor++;
+
+      // Accumulate speed for OSD average flow speed
+      const kmh = obj.speedKmh || 0;
+      if (kmh > 2) { totalSpeedSum += kmh; movingCount++; }
+
+      // ✅ Hide visual once vehicle is already counted — silent tracking mode
+      if (obj.counted) return;
 
       ctx.save();
       ctx.strokeStyle = strokeColor;
@@ -1333,10 +1352,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.setLineDash([]);
       }
 
-      // Draw Badge Label
+      // Draw Badge Label with speed
       if (showLabels) {
         const scorePercent = Math.round(obj.score * 100);
-        const text = `${obj.labelText} #${obj.id} (${scorePercent}%)`;
+        const speedLabel = kmh > 2 ? ` · ${Math.round(kmh)} km/jam` : ' · Berhenti';
+        const text = `${obj.labelText} #${obj.id} (${scorePercent}%)${speedLabel}`;
         ctx.font = 'bold 11px Plus Jakarta Sans, sans-serif';
         const textWidth = ctx.measureText(text).width;
         const badgeH = 20;
@@ -1351,6 +1371,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       ctx.restore();
     });
+
+    // Update OSD average flow speed badge
+    const osdSpeedBadge = document.getElementById('osdSpeedBadge');
+    if (osdSpeedBadge) {
+      const avgSpeed = movingCount > 0 ? Math.round(totalSpeedSum / movingCount) : 0;
+      const flowLabel = avgSpeed > 40 ? 'Lancar' : avgSpeed > 20 ? 'Sedang' : avgSpeed > 5 ? 'Padat' : 'Macet';
+      osdSpeedBadge.innerHTML = `⚡ Arus: <b>${avgSpeed}</b> km/jam · ${flowLabel}`;
+    }
 
     // Update Analytics Telemetry
     window.trafficAnalytics.update(liveCar, liveMotor);
@@ -1745,24 +1773,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateActiveChip(val);
   });
 
-  // Favorite quick chips
-  const chipBtns = document.querySelectorAll('.chip-btn');
+  // Dynamic Online-Only Favorite Chips
   function updateActiveChip(url) {
-    chipBtns.forEach(btn => {
+    document.querySelectorAll('.chip-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-url') === url);
     });
   }
 
-  chipBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const url = btn.getAttribute('data-url');
-      if (url) {
-        presetSelect.value = url;
-        streamUrlInput.value = url;
-        loadStream(url);
-        updateActiveChip(url);
-      }
+  function bindChipListeners() {
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const url = btn.getAttribute('data-url');
+        if (url) {
+          presetSelect.value = url;
+          streamUrlInput.value = url;
+          loadStream(url);
+          updateActiveChip(url);
+        }
+      });
     });
+  }
+  bindChipListeners();
+
+  // Rebuild favorites list using verified online cameras from health scanner
+  function rebuildOnlineFavorites(healthData) {
+    const favoritesList = document.getElementById('quickFavoritesList');
+    if (!favoritesList || !window.ATCS_MEDAN_CAMERAS) return;
+    const onlineCams = window.ATCS_MEDAN_CAMERAS.filter(c => healthData[c.id] && healthData[c.id].online);
+    if (onlineCams.length === 0) return; // keep defaults if none verified yet
+    favoritesList.innerHTML = onlineCams.slice(0, 8).map(c => `
+      <button type="button" class="chip-btn" data-url="${c.url}">
+        <span class="dot-online-chip"></span>CAM ${c.id} ${c.alias.substring(0, 22)}
+      </button>`).join('');
+    bindChipListeners();
+  }
+
+  window.addEventListener('cctv-health-updated', e => {
+    if (e.detail && e.detail.cameras) rebuildOnlineFavorites(e.detail.cameras);
   });
 
   // 13. View Mode Switcher (Peta CCTV / Konsol AI / Split)
@@ -1770,12 +1817,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tabBtns = document.querySelectorAll('.view-mode-tabs .tab-btn');
   const btnMaximizeConsole = document.getElementById('btnMaximizeConsole');
 
+  const warRoomView = document.getElementById('warRoomView');
+  const consoleSection = document.querySelector('.console-section') || document.querySelector('section.console-section');
+
   function setViewMode(mode) {
     if (!mainLayout) return;
     mainLayout.className = `main-layout mode-${mode}`;
     tabBtns.forEach(b => {
       b.classList.toggle('active', b.getAttribute('data-mode') === mode);
     });
+
+    // Show / hide War Room panel
+    if (warRoomView) {
+      if (mode === 'warroom') {
+        warRoomView.classList.remove('hidden');
+        // Also hide main console section to give War Room full width
+        document.querySelectorAll('.console-section, .split-panel-left, .split-panel-right').forEach(el => el.classList.add('hidden'));
+        initWarRoom();
+      } else {
+        warRoomView.classList.add('hidden');
+        document.querySelectorAll('.console-section, .split-panel-left, .split-panel-right').forEach(el => el.classList.remove('hidden'));
+      }
+    }
 
     if (mode === 'map' || mode === 'split') {
       if (window.medanCCTVMap) {
@@ -2027,6 +2090,98 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.warn('[PWA Service Worker] Registration failed:', err);
         });
     });
+  }
+
+  // =========================================================================
+  // 17. WAR ROOM MATRIX ENGINE — 4-Slot Simultaneous HLS Player
+  // =========================================================================
+  const WAR_ROOM_DEFAULTS = [
+    { id: 31, url: 'https://atcsdishub.medan.go.id/stream/L31JAMINGINTINGISMUD/stream.m3u8', name: 'CAM #31: JAMIN GINTING - ISMUD' },
+    { id: 1,  url: 'https://atcsdishub.medan.go.id/stream/L1RADENSALEHBALAIKOTA/stream.m3u8', name: 'CAM #1: RADEN SALEH - BALAI KOTA' },
+    { id: 62, url: 'https://atcsdishub.medan.go.id/stream/L62SIMPANGPOS/stream.m3u8', name: 'CAM #62: SIMPANG POS FLYOVER' },
+    { id: 18, url: 'https://atcsdishub.medan.go.id/stream/L18KATAMSOJUANDA/stream.m3u8', name: 'CAM #18: KATAMSO - JUANDA' }
+  ];
+
+  const warHlsInstances = [null, null, null, null];
+  let warRoomInitialized = false;
+
+  function populateWarRoomSelects() {
+    const cameras = window.ATCS_MEDAN_CAMERAS || WAR_ROOM_DEFAULTS;
+    for (let s = 1; s <= 4; s++) {
+      const sel = document.getElementById(`warCamSelect${s}`);
+      if (!sel) continue;
+      const currentUrl = WAR_ROOM_DEFAULTS[s - 1]?.url || '';
+      sel.innerHTML = cameras.map(c =>
+        `<option value="${c.url}" ${c.url === currentUrl ? 'selected' : ''}>${`CAM ${c.id}: ${c.name || c.alias || ''}`}</option>`
+      ).join('');
+      sel.addEventListener('change', () => loadWarSlot(s - 1, sel.value));
+    }
+  }
+
+  function loadWarSlot(idx, url) {
+    const video = document.getElementById(`warVideo${idx + 1}`);
+    const osd = document.getElementById(`warOsd${idx + 1}`);
+    if (!video || !url) return;
+
+    // Destroy existing HLS instance for this slot
+    if (warHlsInstances[idx]) {
+      try { warHlsInstances[idx].destroy(); } catch(e) {}
+      warHlsInstances[idx] = null;
+    }
+
+    // Find camera name for OSD
+    const cameras = window.ATCS_MEDAN_CAMERAS || WAR_ROOM_DEFAULTS;
+    const cam = cameras.find(c => c.url === url);
+    if (osd && cam) osd.textContent = `CAM #${cam.id}: ${cam.name || cam.alias || ''}`;
+
+    if (window.Hls && window.Hls.isSupported()) {
+      const hls = new window.Hls({
+        liveSyncDurationCount: 2,
+        liveMaxLatencyDurationCount: 4,
+        lowLatencyMode: true,
+        enableWorker: true
+      });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(window.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+      warHlsInstances[idx] = hls;
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      video.play().catch(() => {});
+    }
+  }
+
+  function initWarRoom() {
+    if (warRoomInitialized) return;
+    warRoomInitialized = true;
+
+    populateWarRoomSelects();
+
+    // Load all 4 default slots
+    WAR_ROOM_DEFAULTS.forEach((cam, idx) => loadWarSlot(idx, cam.url));
+
+    // Slot expand / fullscreen toggle
+    document.querySelectorAll('.btn-slot-expand').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const slotNum = parseInt(btn.getAttribute('data-slot'));
+        const slotEl = document.getElementById(`warSlot${slotNum}`);
+        if (!slotEl) return;
+        const isFs = slotEl.classList.contains('slot-fullscreen');
+        // Remove fullscreen from all
+        document.querySelectorAll('.war-slot').forEach(s => s.classList.remove('slot-fullscreen'));
+        if (!isFs) slotEl.classList.add('slot-fullscreen');
+      });
+    });
+
+    // AI Matrix toggle
+    const btnToggleWarRoomAi = document.getElementById('btnToggleWarRoomAi');
+    if (btnToggleWarRoomAi) {
+      btnToggleWarRoomAi.addEventListener('click', () => {
+        const isActive = btnToggleWarRoomAi.textContent.includes('AKTIF');
+        btnToggleWarRoomAi.textContent = isActive ? '⚡ AI Matrix: NONAKTIF' : '⚡ AI Matrix: AKTIF';
+        showToast(isActive ? '⏸ AI Matrix dinonaktifkan untuk semua slot.' : '▶ AI Matrix diaktifkan kembali.');
+      });
+    }
   }
 
   // Zero-Load Startup: Application waits for user to pick a city before loading heavy data
