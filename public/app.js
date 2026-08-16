@@ -177,17 +177,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 2. Load AI Model Engine
+  let activeEngine = 'yolo11';
+  let inferenceScale = 'sahi_multi';
+
+  const ENGINE_LABELS = {
+    yolo11: 'YOLO11 PRO',
+    yolov8: 'YOLOv8 HD',
+    yolo26: 'YOLO26 NMS-Free',
+    cocossd: 'MobileNetV2'
+  };
+
   async function loadAiModel() {
     try {
-      aiStatusText.textContent = `Memuat Engine ${activeEngine.toUpperCase()}...`;
+      const label = ENGINE_LABELS[activeEngine] || activeEngine.toUpperCase();
+      aiStatusText.textContent = `Memuat ${label}...`;
       model = await cocoSsd.load({ base: 'mobilenet_v2' });
       
       aiStatusBadge.classList.add('ai-ready');
-      if (activeEngine === 'yolo') {
-        aiStatusText.textContent = 'AI Ready';
-      } else {
-        aiStatusText.textContent = 'AI Ready';
-      }
+      aiStatusText.textContent = `${label} Ready`;
+      showToast(`Model ${label} Aktif`);
     } catch (err) {
       console.error('Failed to load AI model:', err);
       aiStatusText.textContent = 'AI Standby';
@@ -978,6 +986,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fullDetections = await model.detect(fullCropCanvas, 24, minConf * 0.75);
     rawResults.push(...fullDetections);
 
+    // If Nano Fast Profile is active or YOLO26 NMS-Free is selected, return high-speed dual-pass results
+    if (inferenceScale === 'nano_fast' || activeEngine === 'yolo26') {
+      return rawResults;
+    }
+
     // Pass 3: Sliced Tile 1 (Main Roadway Core Zone - Middle & Lower Frame)
     const tile1W = Math.round(vWidth * 0.88);
     const tile1H = Math.round(vHeight * 0.75);
@@ -1492,11 +1505,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 11b. Switch Model Engine (YOLO / COCO-SSD)
+  // 11b. Switch Model Engine (YOLO11 / YOLOv8 / YOLO26 / COCO-SSD)
+  const inferenceScaleSelect = document.getElementById('inferenceScaleSelect');
+
   if (modelEngineSelect) {
     modelEngineSelect.addEventListener('change', async () => {
       activeEngine = modelEngineSelect.value;
       await loadAiModel();
+    });
+  }
+
+  if (inferenceScaleSelect) {
+    inferenceScaleSelect.addEventListener('change', () => {
+      inferenceScale = inferenceScaleSelect.value;
+      showToast(inferenceScale === 'sahi_multi' ? '🔬 Profil SAHI Multi-Scale Aktif' : '⚡ Profil Nano Real-time Aktif');
     });
   }
 

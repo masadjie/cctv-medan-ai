@@ -605,8 +605,22 @@
             <label class="control-label" for="modelEngineSelect">Arsitektur Model Neural AI:</label>
             <div class="select-wrapper">
               <select id="modelEngineSelect" class="clean-select">
-                <option value="yolo">⚡ YOLO Multi-Scale Slicing SAHI (Presisi Maksimal)</option>
-                <option value="cocossd">🎯 COCO-SSD MobileNet (Ringan & Cepat)</option>
+                <option value="yolo11" selected>⚡ YOLO11 (Ultralytics) — Presisi Tinggi & Anti-Occlusion (Rekomendasi)</option>
+                <option value="yolov8">🏎️ YOLOv8 (Ultralytics) — High Recall Sepeda Motor & Mobil</option>
+                <option value="yolo26">🚀 YOLO26 NMS-Free — Arsitektur Terbaru 2026 (Ultra-Fast)</option>
+                <option value="cocossd">🎯 MobileNetV2 COCO-SSD — Mode Ringan (Low-End Hardware)</option>
+              </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          <!-- Inference Scale / Resolution Profile -->
+          <div class="control-row">
+            <label class="control-label" for="inferenceScaleSelect">Varian & Skala Inferensi Deteksi:</label>
+            <div class="select-wrapper">
+              <select id="inferenceScaleSelect" class="clean-select">
+                <option value="sahi_multi" selected>🔬 SAHI Multi-Scale Slicing (Jarak Jauh & CCTV Simpang)</option>
+                <option value="nano_fast">⚡ Nano Real-time Profile (FPS Maksimal)</option>
               </select>
               <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -616,9 +630,9 @@
           <div class="control-row">
             <div class="slider-header">
               <label class="control-label" for="confSlider">Ambang Sensitivitas Deteksi (Confidence):</label>
-              <span class="slider-value-pill" id="confVal">35%</span>
+              <span class="slider-value-pill" id="confVal">30%</span>
             </div>
-            <input type="range" id="confSlider" min="15" max="85" value="35" class="custom-range" />
+            <input type="range" id="confSlider" min="15" max="85" value="30" class="custom-range" />
           </div>
 
           <!-- Target Classes -->
