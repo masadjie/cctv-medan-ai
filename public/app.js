@@ -1816,6 +1816,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       closeCustomConfirmDialog();
       closeConfigModal();
     }
+    // Quick toggle AI with 'd' or 'D' when not typing in text input/search
+    if ((e.key === 'd' || e.key === 'D') && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      if (btnToggleAi) btnToggleAi.click();
+    }
   });
 
   // Custom Confirmation Dialog Manager
