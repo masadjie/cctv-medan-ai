@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 2. Load AI Model Engine
   let activeEngine = 'rtdetr';
-  let inferenceScale = 'sahi_multi';
+  let inferenceScale = 'transformer_dense';
   let isAnomalyDetectionEnabled = true;
   let isByteTrackEnabled = true;
   let isHelmetDetectionEnabled = true;
@@ -845,14 +845,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
       } else if (CAR_CLASSES.includes(classId)) {
-        // Small narrow vehicles misclassified by COCO as car are motorcycles
-        if (w < 70 && aspectRatio <= 1.10 && pred.score < 0.60) {
-          rawBikes.push({
-            bbox: [x, y, w, h],
-            score: pred.score,
-            classId: 'motorcycle'
-          });
-        } else if (aspectRatio >= 0.45 && aspectRatio <= 3.8 && w >= 16 && h >= 14) {
+        // High-precision vehicle detection (Mobil, Truk, Bus, Angkot, Pickup)
+        if (aspectRatio >= 0.35 && aspectRatio <= 4.2 && w >= 12 && h >= 10) {
           rawCars.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -1214,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fullCropCtx.drawImage(video, 0, 0, vWidth, vHeight);
 
     // Dynamic confidence from slider
-    const effectiveConf = Math.max(0.20, minConf);
+    const effectiveConf = Math.max(0.18, minConf);
 
     // Pass 1: If User-Defined ROI is Active, Dedicate High-Res Inference to Exact ROI Area
     if (roi && roi.width > 25 && roi.height > 25) {
@@ -1222,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       roiCanvas.height = 512;
       roiCtx.drawImage(fullCropCanvas, roi.x, roi.y, roi.width, roi.height, 0, 0, 512, 512);
 
-      const roiDetections = await model.detect(roiCanvas, 24, effectiveConf * 0.85);
+      const roiDetections = await model.detect(roiCanvas, 32, effectiveConf * 0.75);
       roiDetections.forEach(d => {
         const scaleX = roi.width / 512;
         const scaleY = roi.height / 512;
@@ -1239,8 +1233,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Pass 2: Full Frame Detection (Captures large foreground vehicles)
-    const fullDetections = await model.detect(fullCropCanvas, 24, effectiveConf);
+    // Pass 2: Full Frame Detection (Captures all foreground & midground cars and vehicles)
+    const fullDetections = await model.detect(fullCropCanvas, 36, Math.max(0.20, effectiveConf * 0.72));
     rawResults.push(...fullDetections);
 
     // If Nano Fast Profile is active or YOLO26 NMS-Free is selected, return high-speed dual-pass results
@@ -1249,16 +1243,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Pass 3: Sliced Tile 1 (Main Roadway Core Zone - Middle & Lower Traffic Corridor)
-    const tile1W = Math.round(vWidth * 0.90);
-    const tile1H = Math.round(vHeight * 0.75);
-    const tile1X = Math.round(vWidth * 0.05);
-    const tile1Y = Math.round(vHeight * 0.20);
+    const tile1W = Math.round(vWidth * 0.92);
+    const tile1H = Math.round(vHeight * 0.78);
+    const tile1X = Math.round(vWidth * 0.04);
+    const tile1Y = Math.round(vHeight * 0.18);
 
     tileCanvas1.width = 512;
     tileCanvas1.height = 512;
     tileCtx1.drawImage(fullCropCanvas, tile1X, tile1Y, tile1W, tile1H, 0, 0, 512, 512);
 
-    const tile1Detections = await model.detect(tileCanvas1, 24, effectiveConf * 0.90);
+    const tile1Detections = await model.detect(tileCanvas1, 32, Math.max(0.20, effectiveConf * 0.70));
     tile1Detections.forEach(d => {
       const scaleX = tile1W / 512;
       const scaleY = tile1H / 512;
@@ -1274,17 +1268,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Pass 4: Sliced Tile 2 (Distant Intersection Horizon Zoom - Small motorcycles & far traffic)
-    const tile2W = Math.round(vWidth * 0.65);
-    const tile2H = Math.round(vHeight * 0.55);
-    const tile2X = Math.round(vWidth * 0.18);
-    const tile2Y = Math.round(vHeight * 0.12);
+    // Pass 4: Sliced Tile 2 (Distant Intersection Horizon Zoom - Small cars & distant motor)
+    const tile2W = Math.round(vWidth * 0.70);
+    const tile2H = Math.round(vHeight * 0.58);
+    const tile2X = Math.round(vWidth * 0.15);
+    const tile2Y = Math.round(vHeight * 0.10);
 
     tileCanvas2.width = 512;
     tileCanvas2.height = 512;
     tileCtx2.drawImage(fullCropCanvas, tile2X, tile2Y, tile2W, tile2H, 0, 0, 512, 512);
 
-    const tile2Detections = await model.detect(tileCanvas2, 20, effectiveConf * 0.88);
+    const tile2Detections = await model.detect(tileCanvas2, 30, Math.max(0.20, effectiveConf * 0.68));
     tile2Detections.forEach(d => {
       const scaleX = tile2W / 512;
       const scaleY = tile2H / 512;
@@ -1302,16 +1296,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Pass 5: If Dense Attention Transformer Profile is selected, run 3rd micro-focus slice
     if (inferenceScale === 'transformer_dense') {
-      const tile3W = Math.round(vWidth * 0.70);
-      const tile3H = Math.round(vHeight * 0.60);
-      const tile3X = Math.round(vWidth * 0.25);
-      const tile3Y = Math.round(vHeight * 0.35);
+      const tile3W = Math.round(vWidth * 0.75);
+      const tile3H = Math.round(vHeight * 0.65);
+      const tile3X = Math.round(vWidth * 0.20);
+      const tile3Y = Math.round(vHeight * 0.30);
 
       tileCanvas1.width = 512;
       tileCanvas1.height = 512;
       tileCtx1.drawImage(fullCropCanvas, tile3X, tile3Y, tile3W, tile3H, 0, 0, 512, 512);
 
-      const tile3Detections = await model.detect(tileCanvas1, 24, effectiveConf * 0.85);
+      const tile3Detections = await model.detect(tileCanvas1, 30, Math.max(0.20, effectiveConf * 0.65));
       tile3Detections.forEach(d => {
         const scaleX = tile3W / 512;
         const scaleY = tile3H / 512;
