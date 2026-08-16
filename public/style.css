@@ -3265,62 +3265,151 @@ body.light-theme .combobox-search-input {
 }
 
 @media (max-width: 768px) {
+  /* Ultra-Clean Responsive Header Grid */
   .app-header {
-    flex-wrap: wrap;
-    padding: 0.5rem 0.75rem;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand actions"
+      "tabs tabs";
+    padding: 6px 10px;
+    gap: 6px 8px;
+    height: auto;
   }
 
   .header-left {
-    flex: 1 1 auto;
+    grid-area: brand;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .header-icon {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
   }
 
   .brand-title {
-    font-size: 0.95rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .brand-subtitle {
     display: none;
   }
 
-  .header-center {
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-
-  .view-mode-tabs {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .view-mode-tabs .tab-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 6px 8px;
-    font-size: 0.72rem;
-  }
-
-  .view-mode-tabs .tab-btn span {
-    font-size: 0.70rem;
-  }
-
   .header-right {
+    grid-area: actions;
+    display: flex;
+    align-items: center;
     gap: 4px;
   }
 
-  .timecode-display {
-    display: none;
+  .btn-city-badge {
+    padding: 3px 6px;
+    font-size: 0.68rem;
+    height: 30px;
+  }
+
+  .btn-city-badge span {
+    max-width: 70px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .author-header-badge {
+    height: 30px;
+    padding: 0 6px;
   }
 
   .author-header-badge span {
     display: none;
   }
 
-  /* Map Mobile Adjustments */
-  .map-floating-toolbar {
+  .btn-icon-square {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    padding: 0;
+  }
+
+  .btn-icon-square svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .timecode-display {
+    display: none;
+  }
+
+  .header-center {
+    grid-area: tabs;
+    width: 100%;
+  }
+
+  .view-mode-tabs {
+    width: 100%;
+    display: flex;
+    gap: 2px;
+  }
+
+  .view-mode-tabs .tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 5px 6px;
+    font-size: 0.68rem;
+  }
+
+  .view-mode-tabs .tab-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .view-mode-tabs .tab-btn span {
+    font-size: 0.68rem;
+  }
+
+  /* Scanner HUD on Mobile */
+  .map-scanner-hud {
     top: 8px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+  }
+
+  .scanner-hud-header {
+    margin-bottom: 5px;
+  }
+
+  .scanner-hud-title {
+    font-size: 0.68rem;
+    gap: 4px;
+  }
+
+  .btn-rescan-streams {
+    font-size: 0.58rem;
+    padding: 1px 4px;
+  }
+
+  .scanner-percent-pill {
+    font-size: 0.62rem;
+    padding: 1px 4px;
+  }
+
+  .scanner-stats-row {
+    font-size: 0.64rem;
+  }
+
+  /* Map Floating Toolbar on Mobile (Positioned Below HUD) */
+  .map-floating-toolbar {
+    top: 82px;
     left: 8px;
     right: 8px;
     flex-direction: column;
@@ -3331,22 +3420,54 @@ body.light-theme .combobox-search-input {
     width: 100%;
   }
 
+  .map-search-box input {
+    font-size: 0.72rem;
+    padding: 6px 8px 6px 28px;
+  }
+
   .map-toolbar-actions {
     width: 100%;
     justify-content: space-between;
   }
 
+  .map-stream-scan-badge {
+    display: none; /* Redundant on mobile since HUD is visible */
+  }
+
+  .layer-pill-btn {
+    padding: 3px 7px;
+    font-size: 0.64rem;
+  }
+
   .map-live-preview-card {
     left: 8px;
     right: 8px;
-    bottom: 12px;
+    bottom: 8px;
     max-width: none;
-    padding: 10px 12px;
+    padding: 8px 10px;
+  }
+
+  .map-watermark-badge {
+    bottom: 80px;
+    right: 8px;
+    font-size: 0.60rem;
+    padding: 2px 6px;
   }
 
   .preview-stats-bar {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  /* Toast Notification Clearance on Mobile */
+  .toast-host {
+    top: 8px;
+    max-width: calc(100% - 16px);
+  }
+
+  .toast {
+    font-size: 0.72rem;
+    padding: 6px 12px;
   }
 
   /* Viewport Controls Bar */
