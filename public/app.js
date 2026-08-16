@@ -199,10 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 2. Load AI Model Engine
   let activeEngine = 'rtdetr';
   let inferenceScale = 'transformer_dense';
-  let isAnomalyDetectionEnabled = true;
+  let isAnomalyDetectionEnabled = false;
   let isByteTrackEnabled = true;
-  let isHelmetDetectionEnabled = true;
-  let isOvercapacityEnabled = true;
+  let isHelmetDetectionEnabled = false;
+  let isOvercapacityEnabled = false;
 
   const ENGINE_LABELS = {
     rtdetr: 'RT-DETR Transformer',
