@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs & System
+*.log
+.DS_Store
+Thumbs.db
+
+# Cache & Build
+.npm
+.cache
+.system_generated
+.user_uploaded

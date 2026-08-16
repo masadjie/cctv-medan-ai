@@ -1,0 +1,10 @@
+{
+  "name": "cctv-ai-detector",
+  "version": "1.0.0",
+  "description": "Real-time AI CCTV Object Detection (Cars, Motorcycles, Pedestrians) with HLS Stream & YOLO support",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  }
+}

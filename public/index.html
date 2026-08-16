@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medan Traffic Vision — Sistem Pemantauan & Analisis Lalu Lintas</title>
+  <meta name="description" content="Sistem Pemantauan dan Penghitung Lalu Lintas Cerdas Kota Medan Berbasis Peta Interaktif & AI Edge Vision by Adjie Kurniawan" />
+  <meta name="author" content="Adjie Kurniawan (instagram.com/adjie.apk)" />
+
+  <!-- Favicon & PWA Metadata -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Medan CCTV AI" />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Core TensorFlow.js & Models -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <!-- Hls.js for m3u8 live streaming -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+
+  <!-- Modern Style -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="dark-theme">
+
+  <!-- ==========================================================================
+       HIGH-TECH INITIALIZATION SPLASH SCREEN (By Adjie Kurniawan)
+       ========================================================================== -->
+  <div class="splash-screen-overlay" id="appSplashScreen">
+    <div class="splash-content-card">
+      <div class="splash-radar-wrap">
+        <div class="splash-pulse-ring ring-1"></div>
+        <div class="splash-pulse-ring ring-2"></div>
+        <div class="splash-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 7l-7 5 7 5V7z" />
+            <rect x="1" y="5" width="15" height="14" rx="2.5" ry="2.5" />
+            <circle cx="8.5" cy="12" r="2.5" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="splash-brand-group">
+        <h2 class="splash-title">MEDAN TRAFFIC VISION</h2>
+        <span class="splash-badge">AI SURVEILLANCE & TELEMETRY PRO</span>
+      </div>
+
+      <div class="splash-author-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Engineered & Copyright &copy; 2026 by <b>Adjie Kurniawan</b></span>
+      </div>
+
+      <a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer" class="splash-instagram-link" title="Buka Instagram @adjie.apk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+        </svg>
+        <span>instagram.com/adjie.apk (@adjie.apk)</span>
+      </a>
+
+      <!-- Progress Bar & Status Text -->
+      <div class="splash-progress-container">
+        <div class="splash-progress-track">
+          <div class="splash-progress-fill" id="splashProgressFill"></div>
+        </div>
+        <div class="splash-status-row">
+          <span class="splash-step-text" id="splashStepText">Inisialisasi Sistem AI Surveillance...</span>
+          <span class="splash-percent-text" id="splashPercentText">0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 7l-7 5 7 5V7z" />
+            <rect x="1" y="5" width="15" height="14" rx="2.5" ry="2.5" />
+            <circle cx="8.5" cy="12" r="2.5" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title-row">
+            <h1 class="brand-title">MEDAN TRAFFIC VISION</h1>
+            <span class="version-tag">SURVEILLANCE PRO</span>
+          </div>
+          <p class="brand-subtitle">ATCS Kota Medan &bull; Deteksi Otomatis Mobil & Sepeda Motor</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Mode Switcher in Header -->
+    <div class="header-center">
+      <div class="view-mode-tabs">
+        <button type="button" class="tab-btn active" id="tabModeMap" data-mode="map">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          <span>Peta CCTV Medan</span>
+        </button>
+        <button type="button" class="tab-btn" id="tabModeConsole" data-mode="console">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Konsol Deteksi AI</span>
+        </button>
+        <button type="button" class="tab-btn" id="tabModeSplit" data-mode="split">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+          <span>Layar Ganda</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Dedicated AI Configuration Menu Button -->
+      <button id="btnOpenConfigModal" class="btn btn-secondary btn-icon" title="Buka Menu Konfigurasi AI & Video">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+
+      <!-- Theme Switcher (Dark / Light Mode) -->
+      <button id="btnThemeToggle" class="btn btn-secondary btn-icon" title="Ganti Tema (Dark / Light Mode)">
+        <svg id="iconThemeMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="iconThemeSun" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+
+      <!-- Copyright Link to Instagram -->
+      <a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer" class="author-header-badge" title="Developer: Adjie Kurniawan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+        </svg>
+        <span>@adjie.apk</span>
+      </a>
+
+      <!-- AI Engine Status Pill -->
+      <div class="status-pill" id="aiStatusBadge">
+        <span class="status-indicator"></span>
+        <span class="status-text" id="aiStatusText">Engine AI Siap</span>
+      </div>
+
+      <!-- App Fullscreen Button -->
+      <button id="btnAppFullscreen" class="btn btn-secondary btn-icon" title="Layar Penuh Aplikasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+
+      <!-- Live Clock -->
+      <div class="timecode-display" id="clockDisplay">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="liveClock">00:00:00</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workstation Layout Container -->
+  <main class="main-layout mode-map" id="mainLayout">
+    
+    <!-- SECTION A: Interactive Map View (Default Main Screen) -->
+    <section class="map-view-section" id="mapSection">
+      <div class="map-wrapper card">
+        <!-- Floating Search & Layer Toolbar on Map -->
+        <div class="map-floating-toolbar">
+          <div class="map-search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="mapSearchInput" placeholder="Cari nama simpang / jalan di Medan (e.g. Jamin Ginting, Lap. Merdeka, Sun Plaza)..." />
+          </div>
+
+          <div class="map-toolbar-actions">
+            <div class="map-layer-toggles">
+              <button type="button" class="layer-pill-btn active" data-theme="darkNight">Dark</button>
+              <button type="button" class="layer-pill-btn" data-theme="dark">Voyager</button>
+              <button type="button" class="layer-pill-btn" data-theme="osm">Street</button>
+            </div>
+            
+            <button id="btnFullscreenMap" class="btn btn-secondary btn-icon" title="Layar Penuh Peta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- The Leaflet Map Container -->
+        <div id="cctvMapContainer"></div>
+
+        <!-- Floating Live Mini-HUD Card on Map (Polished & Balanced) -->
+        <div class="map-live-preview-card" id="mapLivePreviewCard">
+          <div class="preview-card-header">
+            <div class="preview-cam-title">
+              <span class="live-dot-pulse" id="previewPulseDot"></span>
+              <span id="previewCamName">Pilih salah satu titik kamera di peta untuk memantau</span>
+            </div>
+            <div class="preview-header-actions">
+              <button type="button" class="btn-stop-monitoring hidden" id="btnResetMonitoringMap" title="Hentikan pemantauan kamera dan kembali ke mode standby">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>
+                <span>Hentikan</span>
+              </button>
+              <button type="button" class="btn-switch-to-console" id="btnMaximizeConsole" title="Buka Layar Penuh Konsol AI">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                <span>Perbesar Konsol</span>
+              </button>
+            </div>
+          </div>
+          <div class="preview-stats-bar">
+            <div class="preview-stat-item">
+              <span class="preview-stat-label">Mobil Live:</span>
+              <span class="preview-stat-num" id="mapPreviewCar">0</span>
+            </div>
+            <div class="preview-stat-item">
+              <span class="preview-stat-label">Motor Live:</span>
+              <span class="preview-stat-num motor-num" id="mapPreviewMotor">0</span>
+            </div>
+            <div class="preview-stat-item density-item">
+              <span class="density-indicator-pill" id="mapPreviewDensity">Lalu Lintas: Standby</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION B: Video Player & AI Vision Viewport -->
+    <section class="viewport-section" id="viewportSection">
+      
+      <!-- Camera Selection Toolbar with Clean Full-Width Combobox -->
+      <div class="camera-hub-panel">
+        <div class="hub-search-row">
+          
+          <!-- SEARCHABLE CAMERA COMBOBOX (FULL-WIDTH & CLEAN) -->
+          <div class="camera-picker-wrapper camera-picker-full">
+            <label class="input-label-mini" for="searchCamInput">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              PILIH & CARI TITIK CCTV (60+ LOKASI KOTA MEDAN):
+            </label>
+            
+            <div class="combobox-container" id="cameraCombobox">
+              <div class="combobox-input-wrapper">
+                <input type="text" id="searchCamInput" class="combobox-search-input" 
+                       placeholder="Ketik untuk cari simpang / nomor kamera (e.g. Jamin Ginting, Lapangan Merdeka, Sun Plaza)..." 
+                       autocomplete="off" />
+                <button type="button" class="combobox-clear-btn hidden" id="btnClearCamSelect" title="Reset Pilihan Kamera">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <button type="button" class="combobox-toggle-btn" id="btnToggleCamList" title="Buka/Tutup Daftar Kamera">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </div>
+              
+              <!-- Dropdown Search Results Popup -->
+              <div class="combobox-dropdown-list" id="cameraDropdownList">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Fallback hidden elements for internal script bindings (Obscures raw URLs) -->
+            <select id="presetSelect" style="display: none;"></select>
+            <input type="text" id="streamUrlInput" style="display: none;" value="" />
+            <button id="btnLoadStream" style="display: none;"></button>
+            <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/ogg" style="display: none;" />
+          </div>
+        </div>
+
+        <!-- Quick Favorites Row -->
+        <div class="hub-options-row">
+          <div class="quick-presets">
+            <span class="quick-title">Favorit:</span>
+            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L31JAMINGINTINGISMUD/stream.m3u8">Jamin Ginting</button>
+            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L1RADENSALEHBALAIKOTA/stream.m3u8">Lap. Merdeka</button>
+            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L62SIMPANGPOS/stream.m3u8">Simpang Pos</button>
+            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L115ZAINULARIFIN/stream.m3u8">Sun Plaza</button>
+            <button type="button" class="chip-btn" data-url="https://atcsdishub.medan.go.id/stream/L82GATSUASRAMA/stream.m3u8">Manhattan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Video Container -->
+      <div class="viewport-frame hd-upscaled-active" id="videoContainer">
+        <video id="cctvVideo" playsinline muted crossOrigin="anonymous"></video>
+        <canvas id="detectionCanvas"></canvas>
+        
+        <!-- OSD Header HUD -->
+        <div class="hud-top-bar">
+          <div class="hud-location">
+            <span class="hud-dot"></span>
+            <span id="osdCamName">Belum Ada Kamera Dipilih</span>
+          </div>
+          <div class="hud-metrics">
+            <span class="hud-badge hd-badge" id="osdHdBadge" title="Super-Resolution HD Upscaler Aktif">HD 1080p AI</span>
+            <span class="hud-badge" id="osdFps">AI: <b>0</b> FPS</span>
+          </div>
+        </div>
+
+        <!-- OSD Bottom HUD -->
+        <div class="hud-bottom-bar">
+          <div class="hud-badge-density" id="osdDensity">
+            Status: <span>STANDBY</span>
+          </div>
+          <div class="hud-timestamp" id="osdTimestamp">--:--:--</div>
+        </div>
+
+        <!-- Congestion Alert Toast -->
+        <div class="viewport-alert-overlay" id="videoAlertBanner" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span id="alertBannerText">Peringatan: Kepadatan Lalu Lintas Tinggi</span>
+        </div>
+
+        <!-- Idle Welcome / No-Camera Overlay -->
+        <div class="viewport-idle-screen" id="viewportIdleScreen">
+          <div class="idle-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2.5" ry="2.5" /></svg>
+          </div>
+          <h3>Pilih Titik Kamera CCTV</h3>
+          <p>Klik salah satu pin kamera di peta atau gunakan kolom pencarian di atas untuk memulai pemantauan dan deteksi AI.</p>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="viewport-loader-overlay hidden" id="videoLoadingOverlay">
+          <div class="sleek-spinner"></div>
+          <p id="videoStateText">Menghubungkan ke Feed CCTV...</p>
+        </div>
+      </div>
+
+      <!-- Action & Interaction Bar -->
+      <div class="viewport-controls-bar">
+        <div class="controls-group-left">
+          <button id="btnPlayPause" class="btn btn-secondary btn-icon" title="Putar / Jeda">
+            <svg id="iconPlay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg id="iconPause" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+
+          <button id="btnResetMonitoringConsole" class="btn btn-secondary" title="Hentikan siaran kamera dan kembali ke mode standby">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>
+            <span>Reset Kamera</span>
+          </button>
+
+          <button id="btnToggleAi" class="btn btn-toggle-ai active" title="Nyalakan/Matikan Deteksi AI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>AI Deteksi: AKTIF</span>
+          </button>
+
+          <button id="btnDrawRoi" class="btn btn-secondary" title="Klik lalu drag pada video untuk menentukan zona spesifik">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+            <span>Set Zona Deteksi</span>
+          </button>
+        </div>
+
+        <div class="controls-group-right">
+          <button id="btnSnapshot" class="btn btn-secondary" title="Ambil Foto Snapshot dengan Anotasi AI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Snapshot</span>
+          </button>
+
+          <button id="btnFullscreen" class="btn btn-primary" title="Layar Penuh CCTV Video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            <span>Fullscreen</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION C: Telemetry, AI Tuning & Traffic Graph (Sidebar) -->
+    <aside class="sidebar-section">
+      
+      <!-- 1. Real-time Telemetry Cards & Daily Date Selector (Redesigned & High-Polish) -->
+      <div class="panel-card telemetry-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            <span>Telemetri Kendaraan</span>
+          </div>
+          <button id="btnResetCounters" class="btn-text-action" title="Reset Hitungan Kamera & Tanggal Ini ke 0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset
+          </button>
+        </div>
+
+        <!-- Active Camera Device Status Tag -->
+        <div class="telemetry-device-chip" id="telemetryActiveDeviceBadge">
+          <span class="device-dot"></span>
+          <span id="telemetryDeviceLabel">Kamera: Standby / Umum</span>
+        </div>
+
+        <!-- Date Selector Dropdown -->
+        <div class="date-filter-bar">
+          <label for="dateFilterSelect" class="date-filter-label">Periode Rekapitulasi Data:</label>
+          <div class="select-wrapper">
+            <select id="dateFilterSelect" class="clean-select date-select">
+              <!-- Populated with YYYY-MM-DD -->
+            </select>
+            <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+
+        <div class="telemetry-grid">
+          <!-- Card: Mobil -->
+          <div class="metric-card metric-car">
+            <div class="metric-head">
+              <div class="metric-badge car-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 3C2 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"/>
+                  <circle cx="7" cy="17" r="2"/>
+                  <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <span>Mobil & Truk</span>
+              </div>
+              <div class="live-inframe-pill">Live: <b id="liveInFrameCar">0</b></div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="countCar">0</span>
+              <span class="metric-caption">Akumulasi Kamera</span>
+            </div>
+          </div>
+
+          <!-- Card: Sepeda Motor -->
+          <div class="metric-card metric-motor">
+            <div class="metric-head">
+              <div class="metric-badge motor-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="5" cy="16" r="3"/>
+                  <circle cx="19" cy="16" r="3"/>
+                  <path d="M5 16l4-7h4l3 4M12 9l-2 4h4"/>
+                </svg>
+                <span>Sepeda Motor</span>
+              </div>
+              <div class="live-inframe-pill">Live: <b id="liveInFrameMotor">0</b></div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="countMotor">0</span>
+              <span class="metric-caption">Akumulasi Kamera</span>
+            </div>
+          </div>
+
+          <!-- Card: Total Volume -->
+          <div class="metric-card metric-total">
+            <div class="metric-head">
+              <div class="metric-badge total-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span>Total Volume Kamera</span>
+              </div>
+              <div class="live-inframe-pill">Live: <b id="liveInFrameTotal">0</b></div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="countTotal">0</span>
+              <span class="metric-caption" id="trafficDensityLabel">Lalu Lintas: Standby</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Traffic Density Timeline & Logs (Expanded Clean View) -->
+      <div class="panel-card analytics-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>Tren Kepadatan Real-time</span>
+          </div>
+          <button id="btnExportCsv" class="btn-text-action" title="Unduh Rekapitulasi Data Harian CSV">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Unduh CSV
+          </button>
+        </div>
+
+        <!-- Timeline Canvas -->
+        <div class="chart-box">
+          <canvas id="trafficChart"></canvas>
+          <div class="chart-legend-row">
+            <span class="legend-badge"><span class="dot dot-car"></span> Mobil</span>
+            <span class="legend-badge"><span class="dot dot-motor"></span> Sepeda Motor</span>
+          </div>
+        </div>
+
+        <!-- Activity Log Feed -->
+        <div class="log-container">
+          <div class="log-header-sub">Riwayat Aktivitas Sistem</div>
+          <div class="log-stream" id="activityLogList">
+            <div class="log-entry">
+              <span class="entry-time">--:--:--</span>
+              <span class="entry-msg">Sistem AI Siap. Pilih titik kamera CCTV untuk mulai memantau.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Copyright & Instagram Attribution -->
+        <div class="sidebar-copyright-footer">
+          <p class="copyright-main">
+            &copy; 2026 <b>Medan Traffic Vision Pro</b>
+          </p>
+          <p class="copyright-sub">
+            Engineered by <b>Adjie Kurniawan</b> &bull; 
+            <a href="https://instagram.com/adjie.apk" target="_blank" rel="noopener noreferrer" class="footer-ig-link">@adjie.apk</a>
+          </p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-host" id="toastContainer"></div>
+
+  <!-- DEDICATED AI & VIDEO CONFIGURATION MODAL DIALOG -->
+  <div class="modal-backdrop" id="configModal">
+    <div class="modal-card modal-card-config">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Konfigurasi Neural AI & Parameter Video</span>
+        </div>
+        <button id="btnCloseConfigModalX" class="btn-icon-close" title="Tutup Modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Engine Selector -->
+        <div class="control-row">
+          <label class="control-label" for="modelEngineSelect">Arsitektur Model Neural AI:</label>
+          <div class="select-wrapper">
+            <select id="modelEngineSelect" class="clean-select">
+              <option value="yolo">⚡ YOLO Multi-Scale Slicing SAHI (Presisi Maksimal)</option>
+              <option value="cocossd">🎯 COCO-SSD MobileNet (Ringan & Cepat)</option>
+            </select>
+            <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+
+        <!-- Confidence Slider -->
+        <div class="control-row">
+          <div class="slider-header">
+            <label class="control-label" for="confSlider">Ambang Sensitivitas Deteksi (Confidence):</label>
+            <span class="slider-value-pill" id="confVal">35%</span>
+          </div>
+          <input type="range" id="confSlider" min="15" max="85" value="35" class="custom-range" />
+        </div>
+
+        <!-- Target Classes -->
+        <div class="control-row">
+          <label class="control-label">Target Klasifikasi Kendaraan Aktif:</label>
+          <div class="class-filter-pills">
+            <label class="filter-pill car-pill active">
+              <input type="checkbox" id="detectCars" checked />
+              <span class="pill-color-indicator"></span>
+              <span>Mobil, Truk & Bus</span>
+            </label>
+            <label class="filter-pill motor-pill active">
+              <input type="checkbox" id="detectMotor" checked />
+              <span class="pill-color-indicator"></span>
+              <span>Sepeda Motor</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="config-toggles-grid">
+          <label class="clean-checkbox" title="Tingkatkan resolusi & ketajaman frame CCTV dengan neural filter super-resolution">
+            <input type="checkbox" id="hdUpscaleToggle" checked />
+            <span class="checkbox-box"></span>
+            <span>HD Super-Resolution Upscaler (1080p Enhanced)</span>
+          </label>
+          <label class="clean-checkbox">
+            <input type="checkbox" id="showLabelsToggle" checked />
+            <span class="checkbox-box"></span>
+            <span>Tampilkan Label Kelas & Akurasi Bounding Box</span>
+          </label>
+          <label class="clean-checkbox">
+            <input type="checkbox" id="audioAlertToggle" />
+            <span class="checkbox-box"></span>
+            <span>Alarm Audio Kepadatan Lalu Lintas</span>
+          </label>
+          <label class="clean-checkbox" title="Aktifkan bila browser memblokir koneksi video langsung">
+            <input type="checkbox" id="useProxyToggle" />
+            <span class="checkbox-box"></span>
+            <span>Bypass CORS Proxy Engine</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnSaveConfigModal" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Simpan & Terapkan Konfigurasi</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom In-App Confirmation Dialog Modal -->
+  <div class="modal-backdrop" id="customConfirmModal">
+    <div class="modal-card modal-card-sm">
+      <div class="modal-header">
+        <div class="modal-title warning-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span id="confirmModalTitle">Konfirmasi Reset Hitungan</span>
+        </div>
+        <button id="btnCancelConfirmX" class="btn-icon-close" title="Tutup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-modal-text" id="confirmModalMsg">Apakah Anda yakin ingin mereset total akumulasi hitungan kendaraan untuk tanggal terpilih ke 0? Tindakan ini tidak dapat dibatalkan.</p>
+      </div>
+      <div class="modal-footer gap-actions">
+        <button id="btnCancelConfirm" class="btn btn-secondary">Batal</button>
+        <button id="btnAcceptConfirm" class="btn btn-danger">Ya, Reset ke 0</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Snapshot Modal -->
+  <div class="modal-backdrop" id="snapshotModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Tangkapan Layar AI Terverifikasi</span>
+        </div>
+        <button id="btnCloseModal" class="btn-icon-close" title="Tutup Modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-image-preview">
+          <img id="snapshotImg" alt="Snapshot AI" />
+        </div>
+        <p class="snapshot-telemetry-text" id="snapshotInfo">Total: 0 Mobil, 0 Sepeda Motor</p>
+      </div>
+      <div class="modal-footer">
+        <a id="btnDownloadSnapshot" download="cctv_ai_snapshot.jpg" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Unduh Gambar (.jpg)</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="cctv_medan_data.js"></script>
+  <script src="analytics.js"></script>
+  <script src="map.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
