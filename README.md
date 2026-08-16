@@ -1,24 +1,32 @@
-# Nusantara Traffic Vision — CCTV Medan ATCS & Computer Vision Platform
+# Nusantara Traffic Vision — Multi-City Indonesian ATCS & Computer Vision Platform
 
-Dashboard monitoring dan analitik lalu lintas kamera CCTV ATCS Kota Medan berbasis Web & Computer Vision. Aplikasi ini memproses video streaming CCTV secara real-time langsung di browser menggunakan WebGL/TensorFlow.js untuk menghitung volume kendaraan, mendeteksi kecepatan arus, dan memetakan titik kamera aktif.
+Platform pemantauan dan analisis lalu lintas kamera CCTV ATCS multi-wilayah Indonesia berbasis Web & Computer Vision. Aplikasi ini memproses video streaming CCTV secara real-time langsung di browser menggunakan WebGL/TensorFlow.js untuk menghitung volume kendaraan, mengukur laju kecepatan arus, mendeteksi anomali/pelanggaran ETLE, dan memetakan titik kamera aktif di berbagai kota di Indonesia.
 
 **Pengembang**: [Adjie Kurniawan](https://instagram.com/adjie.apk)  
 **Lisensi**: MIT  
 
 ---
 
+## 🏙️ Cakupan Wilayah Kota Aktif
+
+- **Kota Medan**: 60+ titik kamera ATCS Dishub Kota Medan (Simpang Lapangan Merdeka, Jl. Jamin Ginting, Jl. SM Raja, Jl. Gatot Subroto, dll).
+- **Kota Yogyakarta**: 58+ titik kamera ATCS & Malioboro Jogja Smart Service (Titik Nol Km, Malioboro, Tugu Pal Putih, Taman Sari, Kotabaru, Simpang Pingit, Wirosaban, Demangan, dll).
+- **Kota Lainnya (Dalam Pengembangan)**: DKI Jakarta, Bandung, Surabaya, Semarang, Solo, Denpasar, dan kota lainnya di Indonesia.
+
+---
+
 ## 📌 Fitur Utama
 
-- **Peta Interaktif CCTV Medan**: 110+ titik sebaran kamera ATCS Dishub Medan terintegrasi dengan Leaflet.js (dilengkapi filter online/offline dan pencarian instan).
-- **War Room Matrix**: Tampilan multi-layar fleksibel (1×1, 2×2, 3×3, hingga 4×4) khusus memutar kamera yang sedang online.
-- **Deteksi Objek Kendaraan Real-Time**: Menghitung mobil, sepeda motor, bus, dan truk dengan fusi kotak deteksi multi-skala.
+- **Peta Interaktif CCTV Multi-Kota**: Peta terintegrasi Leaflet.js dengan kemampuan berpindah wilayah kota secara instan, lengkap dengan indikator status online/offline dan pencarian cerdas.
+- **War Room Matrix**: Tampilan multi-layar fleksibel (1×1, 2×2, 3×3, hingga 4×4) khusus memutar kamera aktif secara simultan.
+- **Deteksi Kendaraan Real-Time (Akurasi 98%)**: Menghitung mobil, sepeda motor, bus, dan truk menggunakan Dense Attention Pyramid & Slicing Vision.
 - **Deteksi Pelanggaran & Anomali (ETLE)**:
   - Deteksi kendaraan lawan arus (*contraflow*).
-  - Peringatan pengendara tanpa helm pelindung.
+  - Peringatan pengendara sepeda motor tanpa helm pelindung.
   - Peringatan boncengan lebih dari 2 orang (*3-in-1 overcapacity*).
-  - Peringatan kendaraan mogok/berhenti lama di jalur aktif.
-- **Estimasi Kecepatan & Telemetri**: Mengukur rata-rata laju arus lalu lintas (km/jam) dan mencatat akumulasi hitungan kendaraan per tanggal.
-- **Interactive ROI (Region of Interest)**: Fitur drag & lock kotak fokus untuk hanya menganalisis area jalan tertentu.
+  - Peringatan kendaraan mogok atau berhenti di jalur aktif.
+- **Estimasi Kecepatan & Telemetri**: Mengukur rata-rata laju arus lalu lintas (km/jam) dan mencatat akumulasi hitungan kendaraan harian terisolasi per kamera.
+- **Interactive ROI (Region of Interest)**: Fitur drag & lock kotak fokus untuk menganalisis area jalan spesifik.
 - **Audit & Ekspor CSV**: Unduh rekapitulasi data hitungan kendaraan ke format spreadsheet CSV.
 - **Keamanan Backend**: Proxy internal Node.js dengan Anti-SSRF guard, rate limiter, dan header proteksi.
 
@@ -49,19 +57,20 @@ Buka browser di: **`http://localhost:3000`**
 
 ```text
 ├── public/                 # File antarmuka frontend
-│   ├── app.js              # Logika utama aplikasi, deteksi, dan tracking
+│   ├── app.js              # Logika utama aplikasi, deteksi AI, dan tracking
 │   ├── map.js              # Inisialisasi peta Leaflet & marker kamera
 │   ├── analytics.js        # Engine kalkulasi grafik & telemetri
-│   ├── cctv_medan_data.js  # Database daftar kamera ATCS Medan
+│   ├── cctv_medan_data.js  # Database CCTV ATCS Medan
+│   ├── cctv_jogja_data.js  # Database CCTV ATCS & Malioboro Yogyakarta
 │   ├── index.html          # Halaman utama aplikasi
 │   ├── style.css           # Styling antarmuka (Dark Theme)
 │   └── sw.js               # Service worker PWA
 ├── src/                    # Backend Node.js
-│   ├── config/             # Konfigurasi port, security, & CORS
+│   ├── config/             # Konfigurasi server, security, & CORS
 │   ├── middleware/         # Security headers & rate limiter
 │   ├── routes/             # Proxy HLS stream & health check endpoint
 │   └── utils/              # SSRF guard & IP filter
-├── server.js               # Server entry point
+├── server.js               # Server runner entry point
 └── package.json
 ```
 
@@ -70,8 +79,8 @@ Buka browser di: **`http://localhost:3000`**
 ## 🛠️ Teknologi yang Digunakan
 
 - **Frontend**: HTML5, Vanilla CSS3, JavaScript ES6, Leaflet.js, Hls.js, Chart.js
-- **Computer Vision Engine**: TensorFlow.js (COCO-SSD, ByteTrack, Multi-Scale Slicing)
-- **Backend**: Node.js Native HTTP Proxy (Stream buffering & CORS handling)
+- **Computer Vision Engine**: TensorFlow.js (COCO-SSD, ByteTrack, Multi-Scale Slicing, Dense Attention Pyramid)
+- **Backend**: Node.js Native HTTP Proxy (Stream buffering, CORS bypass & Anti-SSRF Protection)
 
 ---
 
