@@ -92,10 +92,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Hard timeout guarantee (never gets stuck)
-  setTimeout(dismissSplashScreen, 2500);
-  runSplashSequence();
-
   // DOM Elements
   const video = document.getElementById('cctvVideo');
   const canvas = document.getElementById('detectionCanvas');
@@ -3615,15 +3611,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `<svg viewBox="0 0 ${W} ${H}" fill="currentColor">${rects}</svg>`;
   }
 
-  // Restore saved city on boot if available
-  const savedCity = localStorage.getItem('cctv_selected_city');
-  if (savedCity === 'jogja' || savedCity === 'medan' || savedCity === 'bandung') {
-    const card = document.querySelector(`.city-card[data-city-id="${savedCity}"]`);
-    if (card) {
-      const cityName = card.getAttribute('data-city-name');
-      const lat = parseFloat(card.getAttribute('data-lat'));
-      const lon = parseFloat(card.getAttribute('data-lon'));
-      activateCity(savedCity, cityName, lat, lon);
-    }
-  }
+  // Launch Splash Sequence now that all variables & functions are ready
+  setTimeout(dismissSplashScreen, 2500);
+  runSplashSequence();
 });
