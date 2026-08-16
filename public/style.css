@@ -3359,14 +3359,58 @@ body.light-theme .combobox-search-input {
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.02em;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.gateway-hero-desc-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 720px;
+  margin-bottom: 0.6rem;
 }
 
 .gateway-hero-desc {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  max-width: 680px;
-  line-height: 1.4;
+  font-size: 0.84rem;
+  color: var(--text-body);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.hero-signature-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 0.74rem;
+  color: var(--text-body);
+  transition: all 0.2s ease;
+}
+
+.hero-signature-chip:hover {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+}
+
+.hero-signature-chip svg {
+  width: 13px;
+  height: 13px;
+  color: #f59e0b;
+}
+
+.hero-signature-chip b {
+  color: #ffffff;
+}
+
+.hero-signature-chip a {
+  color: #f59e0b;
+  text-decoration: none;
+  font-weight: 700;
 }
 
 /* Giant Search Box */
