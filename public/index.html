@@ -33,7 +33,7 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
 
   <!-- Modern Style -->
-  <link rel="stylesheet" href="style.css?v=2.5.4" />
+  <link rel="stylesheet" href="style.css?v=2.5.7" />
 </head>
 <body class="dark-theme">
 
@@ -777,9 +777,10 @@
             <label class="control-label" for="modelEngineSelect">Arsitektur Model Neural AI:</label>
             <div class="select-wrapper">
               <select id="modelEngineSelect" class="clean-select">
-                <option value="yolo11" selected>⚡ YOLO11 (Ultralytics) — Presisi Tinggi & Anti-Occlusion (Rekomendasi)</option>
+                <option value="rtdetr" selected>🌟 RT-DETR (Vision Transformer) — State-of-the-Art Anti-Occlusion (Paling Canggih)</option>
+                <option value="yolo11">⚡ YOLO11 (Ultralytics) — Presisi Tinggi & Multi-Scale</option>
                 <option value="yolov8">🏎️ YOLOv8 (Ultralytics) — High Recall Sepeda Motor & Mobil</option>
-                <option value="yolo26">🚀 YOLO26 NMS-Free — Arsitektur Terbaru 2026 (Ultra-Fast)</option>
+                <option value="yolo26">🚀 YOLO26 NMS-Free — Arsitektur Terbaru (Ultra-Fast)</option>
                 <option value="cocossd">🎯 MobileNetV2 COCO-SSD — Mode Ringan (Low-End Hardware)</option>
               </select>
               <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -792,6 +793,7 @@
             <div class="select-wrapper">
               <select id="inferenceScaleSelect" class="clean-select">
                 <option value="sahi_multi" selected>🔬 SAHI Multi-Scale Slicing (Jarak Jauh & CCTV Simpang)</option>
+                <option value="transformer_dense">🧠 Dense Attention Pyramid (Transformer High-Density)</option>
                 <option value="nano_fast">⚡ Nano Real-time Profile (FPS Maksimal)</option>
               </select>
               <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -820,6 +822,23 @@
                 <input type="checkbox" id="detectMotor" checked />
                 <span class="pill-color-indicator"></span>
                 <span>Sepeda Motor</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Advanced AI Analytics Toggles -->
+          <div class="control-row">
+            <label class="control-label">Fitur Analitik Cerdas Tambahan:</label>
+            <div class="config-toggle-group">
+              <label class="toggle-control-item">
+                <input type="checkbox" id="toggleAnomalyDetection" checked />
+                <span class="toggle-slider"></span>
+                <span class="toggle-text">🚨 Deteksi Anomali Lalu Lintas (Lawan Arah & Kendaraan Mogok)</span>
+              </label>
+              <label class="toggle-control-item">
+                <input type="checkbox" id="toggleByteTrack" checked />
+                <span class="toggle-slider"></span>
+                <span class="toggle-text">🎯 ByteTrack + Spatial Re-ID Tracking (Anti ID-Switch)</span>
               </label>
             </div>
           </div>
@@ -1326,9 +1345,9 @@
     </div>
   </div>
 
-  <script src="cctv_medan_data.js?v=2.5.6"></script>
-  <script src="analytics.js?v=2.5.6"></script>
-  <script src="map.js?v=2.5.6"></script>
-  <script src="app.js?v=2.5.6"></script>
+  <script src="cctv_medan_data.js?v=2.5.7"></script>
+  <script src="analytics.js?v=2.5.7"></script>
+  <script src="map.js?v=2.5.7"></script>
+  <script src="app.js?v=2.5.7"></script>
 </body>
 </html>

@@ -3374,6 +3374,71 @@ body.light-theme .combobox-search-input {
   background: var(--accent-motor);
 }
 
+/* Config Toggle Switches */
+.config-toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggle-control-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggle-control-item:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.toggle-control-item input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 32px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-control-item input:checked + .toggle-slider {
+  background: #0284c7;
+}
+
+.toggle-control-item input:checked + .toggle-slider::before {
+  transform: translateX(14px);
+}
+
+.toggle-text {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
 /* Clean Checkbox Toggles */
 .toggles-flex-row {
   display: flex;

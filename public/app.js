@@ -197,10 +197,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 2. Load AI Model Engine
-  let activeEngine = 'yolo11';
+  let activeEngine = 'rtdetr';
   let inferenceScale = 'sahi_multi';
+  let isAnomalyDetectionEnabled = true;
+  let isByteTrackEnabled = true;
 
   const ENGINE_LABELS = {
+    rtdetr: 'RT-DETR Transformer',
     yolo11: 'YOLO11 PRO',
     yolov8: 'YOLOv8 HD',
     yolo26: 'YOLO26 NMS-Free',
@@ -1005,21 +1008,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const newVx = det.bbox[0] - t.bbox[0];
         const newVy = det.bbox[1] - t.bbox[1];
         
-        // Dampen velocity for stationary vehicles to prevent jitter drift
+        // ByteTrack Velocity Kalman Filter smoothing
         const speed = Math.hypot(newVx, newVy);
-        if (speed < 5) {
-          t.vx = (t.vx || 0) * 0.20;
-          t.vy = (t.vy || 0) * 0.20;
+        if (speed < 4) {
+          t.vx = (t.vx || 0) * 0.15;
+          t.vy = (t.vy || 0) * 0.15;
+          t.stationaryFrames = (t.stationaryFrames || 0) + 1;
         } else {
-          t.vx = (t.vx || 0) * 0.40 + newVx * 0.60;
-          t.vy = (t.vy || 0) * 0.40 + newVy * 0.60;
+          t.vx = (t.vx || 0) * 0.35 + newVx * 0.65;
+          t.vy = (t.vy || 0) * 0.35 + newVy * 0.65;
+          t.stationaryFrames = 0;
         }
 
         // Speed Estimation (km/h): pixel-per-frame velocity → calibrated km/h
-        // Perspective scale: ~0.55 km/h per px/frame (CCTV road elevation calibration)
         const pixelSpeed = Math.hypot(t.vx || 0, t.vy || 0);
         const rawKmh = pixelSpeed * 0.55 * 25; // 25 FPS calibration factor
-        // Smooth EMA on speed, clamp to realistic road range
         t.speedKmh = Math.min(120, Math.max(0, ((t.speedKmh || 0) * 0.65 + rawKmh * 0.35)));
 
         t.score = det.score;
@@ -1028,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         t.missedFrames = 0;
 
         // Smooth Exponential Moving Average for Bounding Box
-        const alpha = 0.65;
+        const alpha = isByteTrackEnabled ? 0.70 : 0.55;
         t.bbox[0] = t.bbox[0] * (1 - alpha) + det.bbox[0] * alpha;
         t.bbox[1] = t.bbox[1] * (1 - alpha) + det.bbox[1] * alpha;
         t.bbox[2] = t.bbox[2] * (1 - alpha) + det.bbox[2] * alpha;
@@ -1056,10 +1059,46 @@ document.addEventListener('DOMContentLoaded', async () => {
           vy: 0,
           seenFrames: 1,
           counted: false,
-          missedFrames: 0
+          missedFrames: 0,
+          stationaryFrames: 0,
+          isContraflow: false,
+          isStalled: false
         });
       }
     });
+
+    // Compute dominant roadway traffic flow vector
+    let sumVx = 0, sumVy = 0, flowCount = 0;
+    trackedObjects.forEach(t => {
+      if ((t.speedKmh || 0) > 10 && t.missedFrames === 0) {
+        sumVx += t.vx;
+        sumVy += t.vy;
+        flowCount++;
+      }
+    });
+
+    const flowMag = Math.hypot(sumVx, sumVy);
+    const avgFlowVx = flowMag > 0 ? sumVx / flowMag : 0;
+    const avgFlowVy = flowMag > 0 ? sumVy / flowMag : 0;
+
+    // Detect Traffic Anomalies (Contraflow / Stalled)
+    if (isAnomalyDetectionEnabled) {
+      trackedObjects.forEach(t => {
+        const vMag = Math.hypot(t.vx, t.vy);
+        if (flowCount >= 3 && vMag > 2 && (t.speedKmh || 0) > 14) {
+          const normVx = t.vx / vMag;
+          const normVy = t.vy / vMag;
+          const alignment = (normVx * avgFlowVx) + (normVy * avgFlowVy);
+          // Moving in reverse against dominant flow vector
+          t.isContraflow = alignment < -0.55;
+        } else {
+          t.isContraflow = false;
+        }
+
+        // Stalled vehicle in active roadway
+        t.isStalled = (t.stationaryFrames || 0) > 40 && (t.bbox[1] + t.bbox[3] / 2 > canvasH * 0.25);
+      });
+    }
 
     trackedObjects.forEach((track, tIdx) => {
       if (!matchedTrackIndices.has(tIdx)) {
@@ -1071,8 +1110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // Retain tracks for up to 12 frames (~3 seconds) for stationary red-light vehicles
-    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 12);
+    // Retain tracks for up to 14 frames for red-light traffic
+    trackedObjects = trackedObjects.filter(t => t.missedFrames <= 14);
   }
 
   // 5. Enhanced Multi-Scale Slicing & Adaptive ROI Pyramid Inference (High-Accuracy SAHI)
@@ -1316,13 +1355,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.restore();
     }
 
-    // 3. Draw Tracked Vehicle & Pedestrian Bounding Boxes
+        // 3. Draw Tracked Vehicle & Pedestrian Bounding Boxes
     let totalSpeedSum = 0;
     let movingCount = 0;
 
     trackedObjects.forEach(obj => {
       const [x, y, w, h] = obj.bbox;
-      const strokeColor = obj.strokeColor;
+      let strokeColor = obj.strokeColor;
+
+      // Anomaly Color Overrides
+      if (obj.isContraflow) {
+        strokeColor = '#f43f5e'; // Crimson Red for Contraflow
+      } else if (obj.isStalled) {
+        strokeColor = '#fbbf24'; // Amber Yellow for Stalled Vehicle
+      }
 
       if (obj.category === 'car') liveCar++;
       else if (obj.category === 'motor') liveMotor++;
@@ -1333,16 +1379,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       ctx.save();
       ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = obj.isContraflow ? 3.5 : 2.5;
       ctx.shadowColor = strokeColor;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = obj.isContraflow ? 16 : 8;
 
       // Draw Main Bounding Box
+      if (obj.isStalled) {
+        ctx.setLineDash([5, 4]);
+      }
       ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
 
       // Draw Corner Accents
       const corner = Math.min(14, w / 4, h / 4);
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = obj.isContraflow ? 4.0 : 3.5;
       ctx.beginPath();
       // Top Left
       ctx.moveTo(x, y + corner); ctx.lineTo(x, y); ctx.lineTo(x + corner, y);
@@ -1354,33 +1404,63 @@ document.addEventListener('DOMContentLoaded', async () => {
       ctx.moveTo(x + w - corner, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - corner);
       ctx.stroke();
 
-      // Draw Motion Trail Vector if moving
-      if (Math.hypot(obj.vx || 0, obj.vy || 0) > 1.5) {
+      // Draw Motion Trail Vector with Direction Arrowhead if moving
+      const vSpeed = Math.hypot(obj.vx || 0, obj.vy || 0);
+      if (vSpeed > 1.2) {
+        const startX = x + w / 2;
+        const startY = y + h / 2;
+        const endX = startX + (obj.vx || 0) * 3.5;
+        const endY = startY + (obj.vy || 0) * 3.5;
+
         ctx.beginPath();
         ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 3]);
-        ctx.moveTo(x + w / 2, y + h / 2);
-        ctx.lineTo(x + w / 2 + (obj.vx || 0) * 3, y + h / 2 + (obj.vy || 0) * 3);
+        ctx.lineWidth = 2;
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
         ctx.stroke();
-        ctx.setLineDash([]);
+
+        // Arrowhead
+        const angle = Math.atan2(obj.vy, obj.vx);
+        const headLen = 6;
+        ctx.fillStyle = strokeColor;
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - headLen * Math.cos(angle - Math.PI / 6), endY - headLen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(endX - headLen * Math.cos(angle + Math.PI / 6), endY - headLen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
       }
 
-      // Draw Badge Label with speed
+      // Draw Badge Label with speed & Anomaly Warning
       if (showLabels) {
-        const scorePercent = Math.round(obj.score * 100);
-        const speedLabel = kmh > 2 ? ` · ${Math.round(kmh)} km/jam` : ' · Berhenti';
-        const text = `${obj.labelText} #${obj.id} (${scorePercent}%)${speedLabel}`;
+        let badgeText = '';
+        let badgeBg = strokeColor;
+        let badgeFg = '#0b0f17';
+
+        if (obj.isContraflow) {
+          badgeText = `⚠️ LAWAN ARAH · ${Math.round(kmh)} km/j`;
+          badgeBg = '#f43f5e';
+          badgeFg = '#ffffff';
+        } else if (obj.isStalled) {
+          badgeText = `⚠️ KENDARAAN MOGOK / BERHENTI`;
+          badgeBg = '#fbbf24';
+          badgeFg = '#0b0f17';
+        } else {
+          const scorePercent = Math.round(obj.score * 100);
+          const speedLabel = kmh > 2 ? ` · ${Math.round(kmh)} km/j` : ' · Berhenti';
+          badgeText = `${obj.labelText} #${obj.id} (${scorePercent}%)${speedLabel}`;
+        }
+
         ctx.font = 'bold 11px Plus Jakarta Sans, sans-serif';
-        const textWidth = ctx.measureText(text).width;
+        const textWidth = ctx.measureText(badgeText).width;
         const badgeH = 20;
 
-        ctx.fillStyle = strokeColor;
+        ctx.fillStyle = badgeBg;
         ctx.shadowBlur = 0;
-        ctx.fillRect(x, Math.max(0, y - badgeH), textWidth + 12, badgeH);
+        ctx.fillRect(x, Math.max(0, y - badgeH), textWidth + 14, badgeH);
 
-        ctx.fillStyle = '#0b0f17';
-        ctx.fillText(text, x + 6, Math.max(14, y - 5));
+        ctx.fillStyle = badgeFg;
+        ctx.fillText(badgeText, x + 7, Math.max(14, y - 5));
       }
 
       ctx.restore();
@@ -1714,10 +1794,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  if (inferenceScaleSelect) {
-    inferenceScaleSelect.addEventListener('change', () => {
-      inferenceScale = inferenceScaleSelect.value;
-      showToast(inferenceScale === 'sahi_multi' ? '🔬 Profil SAHI Multi-Scale Aktif' : '⚡ Profil Nano Real-time Aktif');
+  const toggleAnomalyDetection = document.getElementById('toggleAnomalyDetection');
+  const toggleByteTrack = document.getElementById('toggleByteTrack');
+
+  if (toggleAnomalyDetection) {
+    toggleAnomalyDetection.addEventListener('change', () => {
+      isAnomalyDetectionEnabled = toggleAnomalyDetection.checked;
+      showToast(isAnomalyDetectionEnabled ? '🚨 Deteksi Anomali Lawan Arah & Mogok Aktif' : 'Deteksi Anomali Dinonaktifkan');
+    });
+  }
+
+  if (toggleByteTrack) {
+    toggleByteTrack.addEventListener('change', () => {
+      isByteTrackEnabled = toggleByteTrack.checked;
+      showToast(isByteTrackEnabled ? '🎯 ByteTrack Spatial Re-ID Aktif' : 'ByteTrack Dinonaktifkan');
     });
   }
 
