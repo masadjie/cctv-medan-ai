@@ -31,8 +31,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     splashScreen.classList.add('fade-out');
     setTimeout(() => {
       try { splashScreen.remove(); } catch (e) {}
-      // Show City Selector Modal after Splash Screen
-      openCitySelectorModal();
+
+      // Auto-restore previously selected city from localStorage
+      const savedCity = localStorage.getItem('cctv_selected_city');
+      if (savedCity === 'medan') {
+        activateCity('medan', 'Kota Medan', 3.5896, 98.6738);
+      } else {
+        // Show City Selector Gateway for first-time visitors
+        openCitySelectorModal();
+      }
     }, 550);
   }
 

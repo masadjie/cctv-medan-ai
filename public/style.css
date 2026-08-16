@@ -3082,9 +3082,18 @@ body.light-theme .combobox-search-input {
 }
 
 .about-app-badge svg {
-  width: 12px;
-  height: 12px;
+  width: 12px !important;
+  height: 12px !important;
+  max-width: 12px !important;
+  max-height: 12px !important;
+  flex-shrink: 0 !important;
   color: #10b981;
+}
+
+.about-app-card svg {
+  max-width: 14px !important;
+  max-height: 14px !important;
+  flex-shrink: 0 !important;
 }
 
 .about-version-tag {
