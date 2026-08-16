@@ -1798,7 +1798,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (onlineCams.length === 0) return; // keep defaults if none verified yet
     favoritesList.innerHTML = onlineCams.slice(0, 3).map(c => `
       <button type="button" class="chip-btn" data-url="${c.url}">
-        <span class="dot-online-chip"></span>CAM ${c.id} ${c.alias.substring(0, 22)}
+        <span class="dot-online-chip"></span>CAM ${c.id} ${c.alias.substring(0, 18)}
       </button>`).join('');
     bindChipListeners();
   }
