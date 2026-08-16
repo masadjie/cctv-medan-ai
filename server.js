@@ -138,37 +138,6 @@ function probeStreamServerSide(streamUrl, timeoutMs = 3500) {
   });
 }
 
-// Background Batch Health Checker (Silent, Non-blocking)
-async function refreshAllCCTVHealth() {
-  if (atcsCameras.length === 0) return;
-  const batchSize = 6;
-  let online = 0;
-  let offline = 0;
-
-  for (let i = 0; i < atcsCameras.length; i += batchSize) {
-    const batch = atcsCameras.slice(i, i + batchSize);
-    await Promise.all(batch.map(async (cam) => {
-      const res = await probeStreamServerSide(cam.url);
-      cctvHealthCache.cameras[cam.id] = {
-        online: res.online,
-        latencyMs: res.latencyMs,
-        checkedAt: new Date().toISOString()
-      };
-      if (res.online) online++;
-      else offline++;
-    }));
-    await new Promise(r => setTimeout(r, 100));
-  }
-
-  cctvHealthCache.onlineCount = online;
-  cctvHealthCache.offlineCount = offline;
-  cctvHealthCache.lastChecked = new Date().toISOString();
-}
-
-// Run initial check and recurring 60s background refresh
-setTimeout(refreshAllCCTVHealth, 1500);
-setInterval(refreshAllCCTVHealth, 60000);
-
 // ==========================================================================
 // HTTP SERVER & SECURITY ROUTER
 // ==========================================================================
