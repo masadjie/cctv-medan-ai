@@ -513,10 +513,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     let finalUrl = url;
-    const isExternalGovStream = url.includes('bandung.go.id') || url.includes('medan.go.id') || url.includes('jogjakota.go.id');
-    const isProxyEnabled = useProxyToggle ? useProxyToggle.checked : true;
+    const isBandungStream = url.includes('bandung.go.id') || url.includes('pelindung');
+    const isProxyEnabled = useProxyToggle ? useProxyToggle.checked : false;
 
-    if ((isProxyEnabled || isExternalGovStream) && (url.startsWith('http://') || url.startsWith('https://'))) {
+    if (!isBandungStream && isProxyEnabled && (url.startsWith('http://') || url.startsWith('https://'))) {
       finalUrl = `/proxy?url=${encodeURIComponent(url)}`;
     }
 
@@ -3060,9 +3060,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     video.onplaying = hideLoader;
     video.onloadeddata = hideLoader;
 
-    // Respect the proxy toggle setting — same behaviour as main stream player
+    // Respect the proxy toggle setting — Bandung streams are always loaded direct
     const useProxyToggle = document.getElementById('useProxyToggle');
-    const useProxy = useProxyToggle && useProxyToggle.checked;
+    const isBandungStream = url.includes('bandung.go.id') || url.includes('pelindung');
+    const useProxy = !isBandungStream && useProxyToggle && useProxyToggle.checked;
     const finalUrl = useProxy && (url.startsWith('http://') || url.startsWith('https://'))
       ? `/proxy?url=${encodeURIComponent(url)}`
       : url;
