@@ -770,6 +770,24 @@ class MedanCCTVMap {
     this.currentTileLayer.addTo(this.map);
   }
 
+  switchCity(cityId, cameras, centerLat, centerLon, cityName) {
+    this.cityId = cityId;
+    this.cameras = cameras || [];
+    this.cacheKey = `cctv_health_cache_${cityId}_v2`;
+    this.healthStatus = {};
+    this.onlineCount = 0;
+    this.offlineCount = 0;
+    this.currentScanIndex = -1;
+    this.isCheckingHls = false;
+
+    if (this.map) {
+      this.map.setView([centerLat, centerLon], 13);
+      this.loadCachedHealth();
+      this.renderMarkers();
+      this.startHlsBackgroundChecker(0);
+    }
+  }
+
   invalidateSize() {
     if (this.map) {
       setTimeout(() => this.map.invalidateSize(), 150);

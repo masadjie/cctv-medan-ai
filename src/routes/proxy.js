@@ -36,17 +36,20 @@ function handleProxyRoute(req, res, parsedUrl) {
     const isHttps = targetObj.protocol === 'https:';
     const httpModule = isHttps ? https : http;
 
+    const isJogja = targetObj.hostname.includes('jogjakota.go.id');
+    const isMedan = targetObj.hostname.includes('medan.go.id');
+
     const options = {
       hostname: targetObj.hostname,
       port: targetObj.port || (isHttps ? 443 : 80),
       path: targetObj.pathname + targetObj.search,
       method: req.method,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         'Accept': '*/*',
-        'Accept-Language': 'id,en-US;q=0.9,en;q=0.8',
-        'Referer': `${targetObj.protocol}//${targetObj.host}/`,
-        'Origin': `${targetObj.protocol}//${targetObj.host}`
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': isJogja ? 'https://cctv.jogjakota.go.id/' : (isMedan ? 'https://atcsdishub.medan.go.id/' : `${targetObj.protocol}//${targetObj.host}/`),
+        'Origin': isJogja ? 'https://cctv.jogjakota.go.id' : (isMedan ? 'https://atcsdishub.medan.go.id' : `${targetObj.protocol}//${targetObj.host}`)
       },
       timeout: SECURITY_CONFIG.proxyTimeoutMs || 10000,
       rejectUnauthorized: false

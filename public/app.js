@@ -227,9 +227,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 2b. Populate CCTV Medan Preset Select Dropdown
+  let currentCityId = localStorage.getItem('cctv_selected_city') || 'medan';
+
+  function getCurrentCityCameras() {
+    if (currentCityId === 'jogja') {
+      return window.ATCS_JOGJA_CAMERAS || [];
+    }
+    return window.ATCS_MEDAN_CAMERAS || [];
+  }
+
+  // 2b. Populate CCTV Preset Select Dropdown
   function initCameraDirectory() {
-    if (!window.ATCS_MEDAN_CAMERAS || !presetSelect) return;
+    if (!presetSelect) return;
+    const currentCams = getCurrentCityCameras();
+    const isJogja = currentCityId === 'jogja';
     
     presetSelect.innerHTML = '';
 
@@ -239,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const optSim = document.createElement('option');
     optSim.value = 'simulation_traffic';
-    optSim.textContent = '🎬 LIVE TRAFFIC FEED (Simulasi Realistis Kendaraan Medan)';
+    optSim.textContent = `🎬 LIVE TRAFFIC FEED (Simulasi Realistis ${isJogja ? 'Yogyakarta' : 'Medan'})`;
     optGroupSim.appendChild(optSim);
 
     const optWebcam = document.createElement('option');
@@ -254,15 +265,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     presetSelect.appendChild(optGroupSim);
 
-    // ATCS Medan CCTV Group
+    // Active City CCTV Group
     const optGroupAtcs = document.createElement('optgroup');
-    optGroupAtcs.label = `🚦 ATCS Dishub Kota Medan (${window.ATCS_MEDAN_CAMERAS.length} Titik CCTV Aktif)`;
+    optGroupAtcs.label = isJogja
+      ? `🚦 ATCS & Malioboro Kota Yogyakarta (${currentCams.length} Titik CCTV Aktif)`
+      : `🚦 ATCS Dishub Kota Medan (${currentCams.length} Titik CCTV Aktif)`;
 
-    window.ATCS_MEDAN_CAMERAS.forEach((cam) => {
+    currentCams.forEach((cam, idx) => {
       const opt = document.createElement('option');
       opt.value = cam.url;
-      opt.textContent = `[No. ${cam.id}] ${cam.name} (${cam.alias})`;
-      if (cam.id === 31) {
+      opt.textContent = `[No. ${cam.id}] ${cam.name} (${cam.alias || cam.name})`;
+      if (idx === 0) {
         opt.selected = true;
       }
       optGroupAtcs.appendChild(opt);
@@ -314,10 +327,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // 2. 60+ ATCS Cameras with Real-Time Health Status
+    // 2. Active City ATCS Cameras with Real-Time Health Status
     const healthMap = window.medanCCTVMap ? window.medanCCTVMap.healthStatus : {};
 
-    (window.ATCS_MEDAN_CAMERAS || []).forEach(cam => {
+    getCurrentCityCameras().forEach(cam => {
       const match = !q || 
         cam.name.toLowerCase().includes(q) || 
         cam.alias.toLowerCase().includes(q) || 
@@ -353,7 +366,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (matchCount === 0) {
-      cameraDropdownList.innerHTML = '<div class="combobox-no-results">Kamera / Simpang tidak ditemukan</div>';
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'combobox-item disabled';
+      emptyDiv.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">Tidak ada CCTV ditemukan untuk pencarian ini</span>';
+      cameraDropdownList.appendChild(emptyDiv);
     }
   }
 
@@ -463,7 +479,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Dynamic OSD matching & Button State
-    const matchedCam = (window.ATCS_MEDAN_CAMERAS || []).find(c => c.url === url || (url.includes('/stream/') && url.includes(c.url.split('/stream/')[1]?.split('/')[0])));
+    const currentCams = getCurrentCityCameras();
+    const matchedCam = currentCams.find(c => c.url === url || (url.includes('/stream/') && url.includes(c.url.split('/stream/')[1]?.split('/')[0])) || url.includes(c.url));
     if (matchedCam) {
       osdCamName.textContent = `CAM ${matchedCam.id}: ${matchedCam.name} (${matchedCam.alias})`;
       if (searchCamInput) {
@@ -2042,14 +2059,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindChipListeners();
 
   // Rebuild favorites list using verified online cameras from health scanner
-  function rebuildOnlineFavorites(healthData) {
+  function rebuildOnlineFavorites(healthData = {}) {
     const favoritesList = document.getElementById('quickFavoritesList');
-    if (!favoritesList || !window.ATCS_MEDAN_CAMERAS) return;
-    const onlineCams = window.ATCS_MEDAN_CAMERAS.filter(c => healthData[c.id] && healthData[c.id].online);
-    if (onlineCams.length === 0) return; // keep defaults if none verified yet
-    favoritesList.innerHTML = onlineCams.slice(0, 3).map(c => `
+    const currentCams = getCurrentCityCameras();
+    if (!favoritesList || currentCams.length === 0) return;
+    const onlineCams = currentCams.filter(c => healthData[c.id] && healthData[c.id].online);
+    const pool = onlineCams.length > 0 ? onlineCams : currentCams;
+    favoritesList.innerHTML = pool.slice(0, 3).map(c => `
       <button type="button" class="chip-btn" data-url="${c.url}">
-        <span class="dot-online-chip"></span>CAM ${c.id} ${c.alias.substring(0, 18)}
+        <span class="dot-online-chip"></span>CAM ${c.id} ${(c.alias || c.name).substring(0, 18)}
       </button>`).join('');
     bindChipListeners();
   }
@@ -2270,10 +2288,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function activateCity(cityId, cityName, lat, lon) {
-    if (cityId === 'medan') {
+    if (cityId === 'medan' || cityId === 'jogja') {
+      currentCityId = cityId;
+      localStorage.setItem('cctv_selected_city', cityId);
       if (currentCityLabel) currentCityLabel.textContent = cityName;
-      localStorage.setItem('cctv_selected_city', 'medan');
       closeCitySelectorModal();
+
+      cityCards.forEach(c => {
+        c.classList.toggle('active', c.getAttribute('data-city-id') === cityId);
+      });
 
       // Hide standby placeholder and reveal map
       if (mapStandbyOverlay) {
@@ -2288,30 +2311,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       showToast(`🏙️ ${cityName} Terpilih — Memuat Data CCTV & Neural Engine...`);
 
-      // 1. Initialize Map on-demand
+      const currentCams = getCurrentCityCameras();
+
+      // 1. Initialize Map / Switch City
       if (window.medanCCTVMap && !window.medanCCTVMap.isInitialized) {
+        window.medanCCTVMap.cameras = currentCams;
         window.medanCCTVMap.init();
-      } else if (window.medanCCTVMap && window.medanCCTVMap.map) {
-        window.medanCCTVMap.map.setView([lat, lon], 13);
-        window.medanCCTVMap.startHlsBackgroundChecker();
+      } else if (window.medanCCTVMap) {
+        window.medanCCTVMap.switchCity(cityId, currentCams, lat, lon, cityName);
       }
 
-      // 2. Lazy Load AI Model Engine
+      // 2. Re-populate UI Dropdowns & Favorites
+      initCameraDirectory();
+      renderComboboxItems();
+      rebuildOnlineFavorites();
+
+      // 3. Rebuild War Room if active
+      if (warRoomInitialized) {
+        buildWarRoomGrid(warCurrentCols, warCurrentRows, true);
+      }
+
+      // 4. Lazy Load AI Model Engine
       if (!model) {
         await loadAiModel();
       }
 
-      // 3. Auto-load last viewed camera or primary camera (Cam #31)
-      const lastActiveStream = localStorage.getItem('cctv_last_active_stream') || 'https://atcsdishub.medan.go.id/stream/L31JAMINGINTINGISMUD/stream.m3u8';
-      loadStream(lastActiveStream);
+      // 5. Auto-load primary camera for this city
+      const primaryUrl = currentCams.length > 0 ? currentCams[0].url : 'simulation_traffic';
+      loadStream(primaryUrl);
 
-      // 4. Start AI detection loop
+      // 6. Start AI detection loop
       if (!isDetecting) {
         detectLoop();
       }
 
       isCityActivated = true;
-      showToast(`✅ 60+ Kamera ATCS ${cityName} Siap Dipantau`);
+      showToast(`✅ ${currentCams.length}+ Kamera ATCS ${cityName} Siap Dipantau`);
     } else {
       showToast(`⏳ Node CCTV ${cityName} sedang dalam tahap integrasi pipeline stream.`);
     }
@@ -2371,14 +2406,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   let warTotalSlots = 4;
 
   function getWarOnlineCameras() {
-    const all = window.ATCS_MEDAN_CAMERAS || [];
+    const all = getCurrentCityCameras();
     const health = window.medanCCTVMap && window.medanCCTVMap.healthStatus ? window.medanCCTVMap.healthStatus : {};
     let online = all.filter(c => health[c.id] && health[c.id].online);
     
     // Check localStorage cache if map healthStatus is not yet in memory
     if (online.length === 0) {
       try {
-        const raw = localStorage.getItem('cctv_medan_stream_health_v2');
+        const raw = localStorage.getItem(`cctv_health_cache_${currentCityId}_v2`);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && parsed.cameras) {
@@ -2504,8 +2539,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = document.getElementById(`warComboList${slotIdx}`);
     if (!list) return;
     const query = filterText.toLowerCase().trim();
-    const allCams = window.ATCS_MEDAN_CAMERAS && window.ATCS_MEDAN_CAMERAS.length > 0
-      ? window.ATCS_MEDAN_CAMERAS
+    const currentCams = getCurrentCityCameras();
+    const allCams = currentCams && currentCams.length > 0
+      ? currentCams
       : WAR_ROOM_DEFAULTS;
     const health = window.medanCCTVMap && window.medanCCTVMap.healthStatus ? window.medanCCTVMap.healthStatus : {};
 
@@ -2822,5 +2858,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `<svg viewBox="0 0 ${W} ${H}" fill="currentColor">${rects}</svg>`;
   }
 
-  // Zero-Load Startup: Application waits for user to pick a city before loading heavy data
+  // Restore saved city on boot if available
+  const savedCity = localStorage.getItem('cctv_selected_city');
+  if (savedCity === 'jogja' || savedCity === 'medan') {
+    const card = document.querySelector(`.city-card[data-city-id="${savedCity}"]`);
+    if (card) {
+      const cityName = card.getAttribute('data-city-name');
+      const lat = parseFloat(card.getAttribute('data-lat'));
+      const lon = parseFloat(card.getAttribute('data-lon'));
+      activateCity(savedCity, cityName, lat, lon);
+    }
+  }
 });

@@ -1207,25 +1207,30 @@
             <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
           </div>
 
-          <!-- 7. Kota Yogyakarta -->
-          <div class="city-card coming-soon-card" data-region="jawa" data-city-id="jogja" data-city-name="Kota Yogyakarta" data-search="yogyakarta jogja diy malioboro tugu">
+          <!-- 7. Kota Yogyakarta (ACTIVE) -->
+          <div class="city-card" data-region="jawa" data-city-id="jogja" data-city-name="Kota Yogyakarta" data-lat="-7.7956" data-lon="110.3695" data-cams="58+" data-search="yogyakarta jogja diy malioboro tugu atcs dishub jss">
             <div class="city-card-top-row">
-              <div class="city-icon-badge muted-icon">
+              <div class="city-icon-badge">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </div>
-              <span class="city-status-chip upcoming-chip">TAHAP INTEGRASI</span>
+              <span class="city-status-chip active-chip"><span class="pulse-dot green"></span> AKTIF (58+ CCTV)</span>
             </div>
             <div class="city-card-main-info">
               <h3 class="city-name-text">Kota Yogyakarta</h3>
-              <p class="city-sub-text">DI Yogyakarta &bull; ATCS Dishub DIY</p>
+              <p class="city-sub-text">DI Yogyakarta &bull; ATCS & Malioboro Jogja Smart Service</p>
             </div>
             <div class="city-specs-row">
-              <div class="spec-col"><span class="spec-label">Proyeksi</span><span class="spec-val">65+ Node</span></div>
-              <div class="spec-col"><span class="spec-label">Status</span><span class="spec-val amber-val">Proses API</span></div>
-              <div class="spec-col"><span class="spec-label">Protokol</span><span class="spec-val">HLS / m3u8</span></div>
-              <div class="spec-col"><span class="spec-label">Wilayah</span><span class="spec-val">DI Yogyakarta</span></div>
+              <div class="spec-col"><span class="spec-label">Latency</span><span class="spec-val emerald-val">~90ms</span></div>
+              <div class="spec-col"><span class="spec-label">AI Engine</span><span class="spec-val">Dense Pyramid</span></div>
+              <div class="spec-col"><span class="spec-label">Cakupan</span><span class="spec-val">Malioboro, Tugu, Simpang</span></div>
+              <div class="spec-col"><span class="spec-label">Koneksi</span><span class="spec-val">HLS Live Stream</span></div>
             </div>
-            <div class="city-action-container"><span class="btn-city-disabled">Segera Hadir</span></div>
+            <div class="city-action-container">
+              <button type="button" class="btn-city-connect-action">
+                <span>Hubungkan ke Kota Yogyakarta</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
           </div>
 
           <!-- 8. Kota Surakarta / Solo -->
@@ -1355,9 +1360,10 @@
     </div>
   </div>
 
-  <script src="cctv_medan_data.js?v=2.6.3"></script>
-  <script src="analytics.js?v=2.6.3"></script>
-  <script src="map.js?v=2.6.3"></script>
-  <script src="app.js?v=2.6.3"></script>
+  <script src="cctv_medan_data.js?v=2.6.4"></script>
+  <script src="cctv_jogja_data.js?v=2.6.4"></script>
+  <script src="analytics.js?v=2.6.4"></script>
+  <script src="map.js?v=2.6.4"></script>
+  <script src="app.js?v=2.6.4"></script>
 </body>
 </html>
