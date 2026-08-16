@@ -1298,8 +1298,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 3. Draw Tracked Vehicle & Pedestrian Bounding Boxes
-    // Vehicles that are already counted (counted = true) are silently tracked
-    // but their visual overlay is removed — only show during the confirmation window (seenFrames < 4)
     let totalSpeedSum = 0;
     let movingCount = 0;
 
@@ -1313,9 +1311,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Accumulate speed for OSD average flow speed
       const kmh = obj.speedKmh || 0;
       if (kmh > 2) { totalSpeedSum += kmh; movingCount++; }
-
-      // ✅ Hide visual once vehicle is already counted — silent tracking mode
-      if (obj.counted) return;
 
       ctx.save();
       ctx.strokeStyle = strokeColor;
