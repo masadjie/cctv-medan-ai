@@ -466,7 +466,12 @@
           <h3>CCTV WAR ROOM MATRIX (4-SCREEN SIMULTANEOUS PRO)</h3>
         </div>
         <div class="war-room-actions">
-          <span class="live-pulse-badge">🔴 4 LIVE STREAMS</span>
+          <!-- Global Search -->
+          <div class="war-room-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="warRoomGlobalSearch" class="war-room-search-input" placeholder="Cari kamera online..." autocomplete="off" />
+          </div>
+          <span class="live-pulse-badge" id="warRoomOnlineBadge">🟢 0 Online</span>
           <button type="button" class="btn btn-secondary btn-sm" id="btnToggleWarRoomAi">⚡ AI Matrix: AKTIF</button>
         </div>
       </div>
@@ -476,7 +481,18 @@
         <div class="war-slot" id="warSlot1" data-slot="1">
           <div class="slot-header">
             <span class="slot-badge">SLOT 1</span>
-            <select class="slot-cam-select" id="warCamSelect1"></select>
+            <div class="slot-cam-combo" id="warCombo1">
+              <button type="button" class="slot-combo-trigger" id="warComboTrigger1">
+                <span class="combo-label" id="warComboLabel1">CAM #31: JAMIN GINTING - ISMUD</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="slot-combo-dropdown" id="warComboDropdown1">
+                <div class="combo-search-wrap">
+                  <input type="text" class="combo-search-input" placeholder="Cari kamera..." data-slot="1" autocomplete="off" />
+                </div>
+                <div class="combo-list" id="warComboList1"></div>
+              </div>
+            </div>
             <button type="button" class="btn-slot-expand" data-slot="1" title="Perbesar Slot 1">⛶</button>
           </div>
           <div class="slot-video-box">
@@ -490,7 +506,18 @@
         <div class="war-slot" id="warSlot2" data-slot="2">
           <div class="slot-header">
             <span class="slot-badge">SLOT 2</span>
-            <select class="slot-cam-select" id="warCamSelect2"></select>
+            <div class="slot-cam-combo" id="warCombo2">
+              <button type="button" class="slot-combo-trigger" id="warComboTrigger2">
+                <span class="combo-label" id="warComboLabel2">CAM #1: RADEN SALEH - BALAI KOTA</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="slot-combo-dropdown" id="warComboDropdown2">
+                <div class="combo-search-wrap">
+                  <input type="text" class="combo-search-input" placeholder="Cari kamera..." data-slot="2" autocomplete="off" />
+                </div>
+                <div class="combo-list" id="warComboList2"></div>
+              </div>
+            </div>
             <button type="button" class="btn-slot-expand" data-slot="2" title="Perbesar Slot 2">⛶</button>
           </div>
           <div class="slot-video-box">
@@ -504,7 +531,18 @@
         <div class="war-slot" id="warSlot3" data-slot="3">
           <div class="slot-header">
             <span class="slot-badge">SLOT 3</span>
-            <select class="slot-cam-select" id="warCamSelect3"></select>
+            <div class="slot-cam-combo" id="warCombo3">
+              <button type="button" class="slot-combo-trigger" id="warComboTrigger3">
+                <span class="combo-label" id="warComboLabel3">CAM #62: SIMPANG POS FLYOVER</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="slot-combo-dropdown" id="warComboDropdown3">
+                <div class="combo-search-wrap">
+                  <input type="text" class="combo-search-input" placeholder="Cari kamera..." data-slot="3" autocomplete="off" />
+                </div>
+                <div class="combo-list" id="warComboList3"></div>
+              </div>
+            </div>
             <button type="button" class="btn-slot-expand" data-slot="3" title="Perbesar Slot 3">⛶</button>
           </div>
           <div class="slot-video-box">
@@ -518,7 +556,18 @@
         <div class="war-slot" id="warSlot4" data-slot="4">
           <div class="slot-header">
             <span class="slot-badge">SLOT 4</span>
-            <select class="slot-cam-select" id="warCamSelect4"></select>
+            <div class="slot-cam-combo" id="warCombo4">
+              <button type="button" class="slot-combo-trigger" id="warComboTrigger4">
+                <span class="combo-label" id="warComboLabel4">CAM #18: KATAMSO - JUANDA</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="slot-combo-dropdown" id="warComboDropdown4">
+                <div class="combo-search-wrap">
+                  <input type="text" class="combo-search-input" placeholder="Cari kamera..." data-slot="4" autocomplete="off" />
+                </div>
+                <div class="combo-list" id="warComboList4"></div>
+              </div>
+            </div>
             <button type="button" class="btn-slot-expand" data-slot="4" title="Perbesar Slot 4">⛶</button>
           </div>
           <div class="slot-video-box">

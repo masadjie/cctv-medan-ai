@@ -2324,8 +2324,52 @@ body.light-theme .combobox-search-input {
   border-radius: 4px;
 }
 
-.slot-cam-select {
+/* ---- War Room Global Search Bar ---- */
+.war-room-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0 8px;
+  gap: 6px;
+  transition: border-color 0.2s;
+}
+.war-room-search-wrap:focus-within {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+}
+.war-room-search-wrap svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.war-room-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-heading);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  width: 180px;
+  padding: 5px 0;
+}
+.war-room-search-input::placeholder { color: var(--text-muted); }
+
+/* ---- Slot Camera Custom Combobox ---- */
+.slot-cam-combo {
   flex: 1;
+  position: relative;
+}
+
+.slot-combo-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
   background: var(--surface-layer-2);
   border: 1px solid var(--border-subtle);
   color: var(--text-heading);
@@ -2334,7 +2378,101 @@ body.light-theme .combobox-search-input {
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.slot-combo-trigger:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+}
+.slot-combo-trigger svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.combo-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dropdown panel */
+.slot-combo-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #111318;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 6px;
+  z-index: 9999;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.7);
+  overflow: hidden;
+  min-width: 280px;
+  max-width: 340px;
+}
+.slot-combo-dropdown.open { display: block; }
+
+.combo-search-wrap {
+  padding: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.combo-search-input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(56,189,248,0.25);
+  border-radius: 4px;
+  color: var(--text-heading);
+  font-size: 0.75rem;
+  padding: 5px 10px;
   outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.combo-search-input:focus { border-color: #38bdf8; }
+.combo-search-input::placeholder { color: var(--text-muted); }
+
+.combo-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.combo-list::-webkit-scrollbar { width: 4px; }
+.combo-list::-webkit-scrollbar-track { background: transparent; }
+.combo-list::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.3); border-radius: 4px; }
+
+.combo-item {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.combo-item:hover {
+  background: rgba(56,189,248,0.12);
+  color: #ffffff;
+}
+
+.combo-no-results {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 12px;
+  text-align: center;
+}
+
+/* Old native select (hidden, kept for graceful fallback) */
+.slot-cam-select {
+  display: none;
 }
 
 .btn-slot-expand {

@@ -2093,7 +2093,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // =========================================================================
-  // 17. WAR ROOM MATRIX ENGINE — 4-Slot Simultaneous HLS Player
+  // 17. WAR ROOM MATRIX ENGINE — Online-Only Searchable Camera Picker
   // =========================================================================
   const WAR_ROOM_DEFAULTS = [
     { id: 31, url: 'https://atcsdishub.medan.go.id/stream/L31JAMINGINTINGISMUD/stream.m3u8', name: 'CAM #31: JAMIN GINTING - ISMUD' },
@@ -2104,18 +2104,101 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const warHlsInstances = [null, null, null, null];
   let warRoomInitialized = false;
+  let warOnlineCameras = [];  // Only verified-online cameras shown in picker
 
-  function populateWarRoomSelects() {
-    const cameras = window.ATCS_MEDAN_CAMERAS || WAR_ROOM_DEFAULTS;
-    for (let s = 1; s <= 4; s++) {
-      const sel = document.getElementById(`warCamSelect${s}`);
-      if (!sel) continue;
-      const currentUrl = WAR_ROOM_DEFAULTS[s - 1]?.url || '';
-      sel.innerHTML = cameras.map(c =>
-        `<option value="${c.url}" ${c.url === currentUrl ? 'selected' : ''}>${`CAM ${c.id}: ${c.name || c.alias || ''}`}</option>`
-      ).join('');
-      sel.addEventListener('change', () => loadWarSlot(s - 1, sel.value));
+  // Get online cameras from health scanner, fallback to defaults
+  function getWarOnlineCameras() {
+    const all = window.ATCS_MEDAN_CAMERAS || [];
+    const health = window.medanCCTVMap && window.medanCCTVMap.healthStatus ? window.medanCCTVMap.healthStatus : {};
+    const online = all.filter(c => health[c.id] && health[c.id].online);
+    // Fallback: if scanner hasn't run yet, use all cameras
+    return online.length > 0 ? online : all.length > 0 ? all : WAR_ROOM_DEFAULTS;
+  }
+
+  function buildComboList(slotIdx, filterText = '') {
+    const list = document.getElementById(`warComboList${slotIdx}`);
+    if (!list) return;
+    const query = filterText.toLowerCase().trim();
+    const cameras = warOnlineCameras;
+    const filtered = query
+      ? cameras.filter(c => {
+          const name = `CAM ${c.id} ${c.name || c.alias || ''}`.toLowerCase();
+          return name.includes(query);
+        })
+      : cameras;
+
+    list.innerHTML = filtered.length === 0
+      ? `<div class="combo-no-results">Tidak ada kamera ditemukan</div>`
+      : filtered.map(c => {
+          const label = `CAM ${c.id}: ${c.name || c.alias || ''}`;
+          return `<div class="combo-item" data-url="${c.url}" data-label="${label}" data-slot="${slotIdx}">${label}</div>`;
+        }).join('');
+
+    // Bind click on items
+    list.querySelectorAll('.combo-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const url = item.getAttribute('data-url');
+        const label = item.getAttribute('data-label');
+        const s = parseInt(item.getAttribute('data-slot'));
+        const labelEl = document.getElementById(`warComboLabel${s}`);
+        if (labelEl) labelEl.textContent = label;
+        closeAllCombos();
+        loadWarSlot(s - 1, url);
+      });
+    });
+  }
+
+  function openCombo(slotIdx) {
+    closeAllCombos();
+    const dropdown = document.getElementById(`warComboDropdown${slotIdx}`);
+    if (dropdown) {
+      dropdown.classList.add('open');
+      const input = dropdown.querySelector('.combo-search-input');
+      if (input) { input.value = ''; input.focus(); buildComboList(slotIdx, ''); }
     }
+  }
+
+  function closeAllCombos() {
+    document.querySelectorAll('.slot-combo-dropdown').forEach(d => d.classList.remove('open'));
+  }
+
+  function populateWarRoomCombos() {
+    warOnlineCameras = getWarOnlineCameras();
+
+    // Update online badge count
+    const badge = document.getElementById('warRoomOnlineBadge');
+    if (badge) badge.textContent = `🟢 ${warOnlineCameras.length} Online`;
+
+    for (let s = 1; s <= 4; s++) {
+      // Bind trigger button
+      const trigger = document.getElementById(`warComboTrigger${s}`);
+      if (trigger) {
+        trigger.onclick = (e) => { e.stopPropagation(); openCombo(s); };
+      }
+      // Bind per-slot search input
+      const searchInput = document.querySelector(`#warComboDropdown${s} .combo-search-input`);
+      if (searchInput) {
+        searchInput.addEventListener('input', () => buildComboList(s, searchInput.value));
+        searchInput.addEventListener('click', e => e.stopPropagation());
+      }
+      buildComboList(s, '');
+    }
+
+    // Global search filters all open comboboxes
+    const globalSearch = document.getElementById('warRoomGlobalSearch');
+    if (globalSearch) {
+      globalSearch.addEventListener('input', () => {
+        const q = globalSearch.value;
+        for (let s = 1; s <= 4; s++) buildComboList(s, q);
+      });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.slot-cam-combo') && !e.target.closest('.war-room-search-wrap')) {
+        closeAllCombos();
+      }
+    }, { once: false });
   }
 
   function loadWarSlot(idx, url) {
@@ -2155,7 +2238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (warRoomInitialized) return;
     warRoomInitialized = true;
 
-    populateWarRoomSelects();
+    populateWarRoomCombos();
 
     // Load all 4 default slots
     WAR_ROOM_DEFAULTS.forEach((cam, idx) => loadWarSlot(idx, cam.url));
@@ -2167,10 +2250,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const slotEl = document.getElementById(`warSlot${slotNum}`);
         if (!slotEl) return;
         const isFs = slotEl.classList.contains('slot-fullscreen');
-        // Remove fullscreen from all
         document.querySelectorAll('.war-slot').forEach(s => s.classList.remove('slot-fullscreen'));
         if (!isFs) slotEl.classList.add('slot-fullscreen');
       });
+    });
+
+    // Re-populate when health scanner finishes (more cameras become verified online)
+    window.addEventListener('cctv-health-updated', () => {
+      warOnlineCameras = getWarOnlineCameras();
+      const badge = document.getElementById('warRoomOnlineBadge');
+      if (badge) badge.textContent = `🟢 ${warOnlineCameras.length} Online`;
+      for (let s = 1; s <= 4; s++) buildComboList(s, '');
     });
 
     // AI Matrix toggle
@@ -2179,7 +2269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnToggleWarRoomAi.addEventListener('click', () => {
         const isActive = btnToggleWarRoomAi.textContent.includes('AKTIF');
         btnToggleWarRoomAi.textContent = isActive ? '⚡ AI Matrix: NONAKTIF' : '⚡ AI Matrix: AKTIF';
-        showToast(isActive ? '⏸ AI Matrix dinonaktifkan untuk semua slot.' : '▶ AI Matrix diaktifkan kembali.');
+        showToast(isActive ? '⏸ AI Matrix dinonaktifkan.' : '▶ AI Matrix diaktifkan kembali.');
       });
     }
   }
