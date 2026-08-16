@@ -1933,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Storage Destination & Quality Configs
   let storageDestination = localStorage.getItem('cctv_storage_dest') || 'local'; // 'local' | 'drive'
-  let recordingBitrate = parseInt(localStorage.getItem('cctv_rec_bitrate') || '3000000', 10);
+  let recordingBitrate = parseInt(localStorage.getItem('cctv_rec_bitrate') || '3500000', 10);
   let recordingMode = localStorage.getItem('cctv_rec_mode') || 'annotated'; // 'annotated' | 'raw'
   let autoDownloadRecording = localStorage.getItem('cctv_auto_dl_rec') !== 'false';
 
