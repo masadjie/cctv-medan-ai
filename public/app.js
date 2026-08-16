@@ -374,10 +374,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // 2. Active City ATCS Cameras with Real-Time Health Status
+    // 2. Active City ATCS Cameras with Real-Time Health Status (Prioritize Online at the top)
     const healthMap = window.medanCCTVMap ? window.medanCCTVMap.healthStatus : {};
+    const cityCameras = getCurrentCityCameras();
+    const sortedCams = [...cityCameras].sort((a, b) => {
+      const aStatus = healthMap[a.id];
+      const bStatus = healthMap[b.id];
+      const aOnline = aStatus ? aStatus.online : true;
+      const bOnline = bStatus ? bStatus.online : true;
+      if (aOnline === bOnline) return (a.id || 0) - (b.id || 0);
+      return aOnline ? -1 : 1;
+    });
 
-    getCurrentCityCameras().forEach(cam => {
+    sortedCams.forEach(cam => {
       const match = !q || 
         cam.name.toLowerCase().includes(q) || 
         cam.alias.toLowerCase().includes(q) || 
