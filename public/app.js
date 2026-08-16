@@ -110,6 +110,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showLabelsToggle = document.getElementById('showLabelsToggle');
   const btnExportCsv = document.getElementById('btnExportCsv');
 
+  // Real-time confidence slider live update
+  if (confSlider && confVal) {
+    confSlider.addEventListener('input', () => {
+      confVal.textContent = `${confSlider.value}%`;
+    });
+  }
+
+  // Filter pills visual toggle synchronization
+  if (detectCars) {
+    detectCars.addEventListener('change', () => {
+      const parentPill = detectCars.closest('.filter-pill');
+      if (parentPill) parentPill.classList.toggle('active', detectCars.checked);
+    });
+  }
+  if (detectMotor) {
+    detectMotor.addEventListener('change', () => {
+      const parentPill = detectMotor.closest('.filter-pill');
+      if (parentPill) parentPill.classList.toggle('active', detectMotor.checked);
+    });
+  }
+
   // Modal Elements
   const snapshotModal = document.getElementById('snapshotModal');
   const snapshotImg = document.getElementById('snapshotImg');
