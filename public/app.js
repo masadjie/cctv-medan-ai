@@ -2677,6 +2677,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  const btnResetCitySelection = document.getElementById('btnResetCitySelection');
+
+  function resetCitySelection() {
+    isCityActivated = false;
+    currentCityId = null;
+    try {
+      localStorage.removeItem('cctv_selected_city');
+      localStorage.removeItem('cctv_last_active_stream');
+    } catch (e) {}
+
+    // 1. Reset active camera / stream & AI loop
+    resetActiveCameraMonitoring();
+
+    // 2. Update city label in header
+    if (currentCityLabel) {
+      currentCityLabel.textContent = 'Pilih Wilayah Kota';
+    }
+
+    // 3. Remove active class from all city cards
+    cityCards.forEach(c => c.classList.remove('active'));
+
+    // 4. Show standby overlay on map
+    if (mapStandbyOverlay) {
+      mapStandbyOverlay.classList.remove('hidden');
+    }
+
+    // 5. Hide scanner HUD on map
+    const mapScannerHud = document.getElementById('mapScannerHud');
+    const mapStreamScanBadge = document.getElementById('mapStreamScanBadge');
+    if (mapScannerHud) mapScannerHud.classList.add('hidden');
+    if (mapStreamScanBadge) mapStreamScanBadge.classList.add('hidden');
+
+    // 6. Close modal & notify
+    closeCitySelectorModal();
+    showToast('🔄 Pilihan kota telah direset ke mode Standby.');
+  }
+
+  if (btnResetCitySelection) {
+    btnResetCitySelection.addEventListener('click', resetCitySelection);
+  }
+
   if (btnOpenCityModal) {
     btnOpenCityModal.addEventListener('click', openCitySelectorModal);
   }

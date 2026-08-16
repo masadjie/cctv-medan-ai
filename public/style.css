@@ -5106,6 +5106,39 @@ body.light-theme .combobox-search-input {
   line-height: 1.1;
 }
 
+.gateway-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-gateway-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-gateway-reset:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.btn-gateway-reset svg {
+  width: 14px;
+  height: 14px;
+}
+
 .btn-gateway-close {
   display: inline-flex;
   align-items: center;
