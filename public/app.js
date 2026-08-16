@@ -50,6 +50,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Click on Brand Header (Nusantara Traffic Vision) reloads the app to main dashboard
+  const brandBadge = document.getElementById('brandBadge');
+  if (brandBadge) {
+    brandBadge.addEventListener('click', () => {
+      window.location.reload();
+    });
+    brandBadge.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.reload();
+      }
+    });
+  }
+
   async function advanceSplash(percent, message, duration = 220) {
     if (isSplashDismissed) return;
     if (splashProgressFill) splashProgressFill.style.width = `${percent}%`;
