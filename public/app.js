@@ -249,11 +249,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function getCurrentCityCameras() {
     if (currentCityId === 'jogja') {
-      return window.ATCS_JOGJA_CAMERAS || [];
+      return window.ATCS_JOGJA_CAMERAS || window.CCTV_JOGJA_DATA || [];
     } else if (currentCityId === 'bandung') {
-      return window.CCTV_BANDUNG_DATA || [];
+      return window.ATCS_BANDUNG_CAMERAS || window.CCTV_BANDUNG_DATA || [];
     }
-    return window.ATCS_MEDAN_CAMERAS || [];
+    return window.ATCS_MEDAN_CAMERAS || window.CCTV_MEDAN_DATA || [];
   }
 
   // 2b. Populate CCTV Preset Select Dropdown

@@ -635,16 +635,21 @@ class MedanCCTVMap {
     const query = filterText.toLowerCase().trim();
 
     this.cameras.forEach(cam => {
-      if (!cam.lat || !cam.lon) return;
+      const lat = cam.lat !== undefined ? cam.lat : cam.latitude;
+      const lon = cam.lon !== undefined ? cam.lon : (cam.lng !== undefined ? cam.lng : cam.longitude);
+      if (lat === undefined || lon === undefined || isNaN(lat) || isNaN(lon)) return;
+
+      const camName = cam.name || cam.title || `CCTV #${cam.id}`;
+      const camAlias = cam.alias || cam.category || camName;
 
       const matches = !query || 
-        cam.name.toLowerCase().includes(query) || 
-        cam.alias.toLowerCase().includes(query) || 
+        camName.toLowerCase().includes(query) || 
+        camAlias.toLowerCase().includes(query) || 
         cam.id.toString().includes(query);
 
       if (!matches) return;
 
-      const marker = L.marker([cam.lat, cam.lon], {
+      const marker = L.marker([lat, lon], {
         icon: this.createCustomIcon(cam, cam.id === this.selectedCameraId)
       });
 
