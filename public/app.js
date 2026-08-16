@@ -1933,6 +1933,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `${m}:${s}`;
   }
 
+  let recFrameInterval = null;
+
+  function getOptimalRecordingMimeType() {
+    const types = [
+      'video/webm;codecs=vp8',
+      'video/mp4;codecs=avc1.42E01E',
+      'video/mp4;codecs=avc1',
+      'video/mp4',
+      'video/webm;codecs=h264',
+      'video/webm',
+      'video/webm;codecs=vp9'
+    ];
+    for (const t of types) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)) {
+        return t;
+      }
+    }
+    return 'video/webm';
+  }
+
   function drawRecordingFrame() {
     if (!isRecording) return;
 
@@ -1944,9 +1964,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       recCompositeCanvas.height = h;
     }
 
-    // 1. Draw raw video frame
+    // 1. Draw raw video frame (Hardware Video Surface)
     try {
-      recCompositeCtx.drawImage(video, 0, 0, w, h);
+      if (video.readyState >= 2) {
+        recCompositeCtx.drawImage(video, 0, 0, w, h);
+      }
     } catch (e) {}
 
     // 2. Overlay live AI Detection Bounding Boxes & HUD if annotated mode is active
@@ -1972,8 +1994,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const camLabel = osdCamName ? osdCamName.textContent : 'CCTV Live';
       recCompositeCtx.fillText(`| ${camLabel} | ${new Date().toLocaleString('id-ID')}`, 110, h - 13);
     }
-
-    recAnimationId = requestAnimationFrame(drawRecordingFrame);
   }
 
   function startLiveRecording() {
@@ -1994,23 +2014,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       drawRecordingFrame();
 
-      const stream = recCompositeCanvas.captureStream(30);
+      // Dedicated 30 FPS Frame Pump (Decoupled from AI inference thread for silky-smooth motion)
+      if (recFrameInterval) clearInterval(recFrameInterval);
+      recFrameInterval = setInterval(drawRecordingFrame, 1000 / 30);
 
-      // Select best supported MIME type
-      let mimeType = 'video/webm;codecs=vp9';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp8';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/mp4';
-      }
+      const stream = recCompositeCanvas.captureStream(30);
+      const mimeType = getOptimalRecordingMimeType();
 
       mediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        videoBitsPerSecond: recordingBitrate
+        videoBitsPerSecond: Math.min(recordingBitrate, 2500000) // Optimal smooth bitrate
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -2020,7 +2033,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
       mediaRecorder.onstop = handleRecordingComplete;
-
       mediaRecorder.start(1000); // 1s slice chunks
 
       // Update UI to active recording state
@@ -2053,6 +2065,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isRecording || !mediaRecorder) return;
 
     clearInterval(recordingTimerInterval);
+    if (recFrameInterval) {
+      clearInterval(recFrameInterval);
+      recFrameInterval = null;
+    }
     cancelAnimationFrame(recAnimationId);
 
     if (btnRecord) {
@@ -3141,6 +3157,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const warRecBadge = document.getElementById('warRecBadge');
   const warRecTimer = document.getElementById('warRecTimer');
 
+  let warRecFrameInterval = null;
+
   function drawWarRecordingFrame() {
     if (!isWarRecording) return;
 
@@ -3226,8 +3244,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentCityId === 'jogja') cityTitle = 'KOTA YOGYAKARTA';
     else if (currentCityId === 'bandung') cityTitle = 'KOTA BANDUNG';
     warRecCtx.fillText(`| NUSANTARA TRAFFIC VISION • ${cityTitle} (${warTotalSlots} KAMERA) | ${new Date().toLocaleString('id-ID')}`, 460, totalH - 15);
-
-    warRecAnimId = requestAnimationFrame(drawWarRecordingFrame);
   }
 
   function startWarRoomRecording() {
@@ -3238,22 +3254,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       drawWarRecordingFrame();
 
-      const stream = warRecCanvas.captureStream(30);
+      // Dedicated 30 FPS Frame Pump for Multi-Grid
+      if (warRecFrameInterval) clearInterval(warRecFrameInterval);
+      warRecFrameInterval = setInterval(drawWarRecordingFrame, 1000 / 30);
 
-      let mimeType = 'video/webm;codecs=vp9';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp8';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/mp4';
-      }
+      const stream = warRecCanvas.captureStream(30);
+      const mimeType = getOptimalRecordingMimeType();
 
       warMediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        videoBitsPerSecond: Math.max(3500000, recordingBitrate) // High bitrate for crystal-clear multi-grid
+        videoBitsPerSecond: 3000000 // 3.0 Mbps smooth encoding
       });
 
       warMediaRecorder.ondataavailable = (event) => {
@@ -3294,6 +3304,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isWarRecording || !warMediaRecorder) return;
 
     clearInterval(warRecTimerInterval);
+    if (warRecFrameInterval) {
+      clearInterval(warRecFrameInterval);
+      warRecFrameInterval = null;
+    }
     cancelAnimationFrame(warRecAnimId);
 
     if (btnWarRecord) {
