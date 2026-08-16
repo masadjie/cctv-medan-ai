@@ -1822,28 +1822,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function setViewMode(mode) {
     if (!mainLayout) return;
+    // The CSS handles show/hide of all panels via .mode-* classes
     mainLayout.className = `main-layout mode-${mode}`;
     tabBtns.forEach(b => {
       b.classList.toggle('active', b.getAttribute('data-mode') === mode);
     });
 
-    // Show / hide War Room panel
-    if (warRoomView) {
-      if (mode === 'warroom') {
-        warRoomView.classList.remove('hidden');
-        // Also hide main console section to give War Room full width
-        document.querySelectorAll('.console-section, .split-panel-left, .split-panel-right').forEach(el => el.classList.add('hidden'));
-        initWarRoom();
-      } else {
-        warRoomView.classList.add('hidden');
-        document.querySelectorAll('.console-section, .split-panel-left, .split-panel-right').forEach(el => el.classList.remove('hidden'));
-      }
+    // War Room: initialize players on first open
+    if (mode === 'warroom') {
+      initWarRoom();
     }
 
+    // Map needs size invalidation after DOM changes
     if (mode === 'map' || mode === 'split') {
-      if (window.medanCCTVMap) {
-        window.medanCCTVMap.invalidateSize();
-      }
+      setTimeout(() => {
+        if (window.medanCCTVMap) window.medanCCTVMap.invalidateSize();
+      }, 80);
     }
   }
 
