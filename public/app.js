@@ -713,23 +713,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (roi && !isBoxInRoi([x, y, w, h], roi)) return;
 
       const aspectRatio = w / Math.max(1, h);
-      const isSmallVerticalBox = (w < 70 && h < 95 && aspectRatio <= 1.08);
+      const isSmallOrVertical = (w < 85 && h < 115 && aspectRatio <= 1.20);
+      const isRoadArea = (y > canvasH * 0.10);
 
-      if (classId === 'motorcycle' || classId === 'bicycle') {
+      // Classes identified in journal literature (car, truck, bus, motorbike/motorcycle, bicycle, person/rider)
+      if (classId === 'motorcycle' || classId === 'bicycle' || classId === 'motorbike') {
         rawBikes.push({
           bbox: [x, y, w, h],
-          score: pred.score,
+          score: Math.max(pred.score, 0.40),
           classId: 'motorcycle'
         });
       } else if (classId === 'person') {
-        rawPersons.push({
-          bbox: [x, y, w, h],
-          score: pred.score,
-          classId: 'person'
-        });
+        // In traffic camera POV, persons on the roadway are motorcycle riders
+        if (isRoadArea && (aspectRatio <= 1.15 || h >= 14)) {
+          rawPersons.push({
+            bbox: [x, y, w, h],
+            score: pred.score,
+            classId: 'person'
+          });
+        }
       } else if (CAR_CLASSES.includes(classId)) {
-        // If the model mislabeled a small vertical motorcycle/scooter as 'car'
-        if (isSmallVerticalBox && pred.score < 0.50 && classId === 'car') {
+        // Address small object classification challenge noted in YOLO research:
+        // Small/narrow vehicles with lower confidence are motorcycles/scooters
+        if (isSmallOrVertical && pred.score < 0.58 && classId === 'car' && (w < 65 || aspectRatio <= 0.95)) {
           rawBikes.push({
             bbox: [x, y, w, h],
             score: pred.score,
@@ -769,7 +775,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const yDist = Math.abs(pcy - bcy);
 
           // Rider sits directly on or slightly above the motorcycle
-          const isOverlapping = iou > 0.08 || (xDist < Math.max(pw, bw) * 0.90 && yDist < Math.max(ph, bh) * 1.3);
+          const isOverlapping = iou > 0.05 || (xDist < Math.max(pw, bw) * 0.95 && yDist < Math.max(ph, bh) * 1.4);
 
           if (isOverlapping) {
             usedPersonIndices.add(pIdx);
@@ -784,7 +790,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               category: 'motor',
               labelText: 'Sepeda Motor',
               strokeColor: COLOR_MOTOR,
-              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.12),
+              score: Math.min(0.99, Math.max(person.score, bike.score) + 0.15),
               bbox: [minX, minY, maxX - minX, maxY - minY]
             });
           }
@@ -798,23 +804,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             category: 'motor',
             labelText: 'Sepeda Motor',
             strokeColor: COLOR_MOTOR,
-            score: bike.score,
+            score: Math.max(bike.score, 0.35),
             bbox: [...bike.bbox]
           });
         }
       });
 
-      // 2c. Standalone Riders on Roadway (Rider silhouettes whose bike was merged)
+      // 2c. Standalone Riders on Roadway (Rider silhouettes whose bike chassis was merged in low light)
       rawPersons.forEach((person, pIdx) => {
         if (!usedPersonIndices.has(pIdx)) {
           const [px, py, pw, ph] = person.bbox;
           const pAspect = pw / Math.max(1, ph);
-          if (pAspect <= 1.10 && ph >= 12 && py > canvasH * 0.12) {
+          if (pAspect <= 1.15 && ph >= 12 && py > canvasH * 0.10) {
             candidateDetections.push({
               category: 'motor',
               labelText: 'Sepeda Motor',
               strokeColor: COLOR_MOTOR,
-              score: person.score,
+              score: Math.max(person.score, 0.30),
               bbox: [px, py, pw, ph]
             });
           }
@@ -982,7 +988,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tileCanvas1.height = 448;
     tileCtx1.drawImage(fullCropCanvas, tile1X, tile1Y, tile1W, tile1H, 0, 0, 448, 448);
 
-    const tile1Detections = await model.detect(tileCanvas1, 20, minConf * 0.68);
+    const tile1Detections = await model.detect(tileCanvas1, 30, Math.min(minConf * 0.50, 0.22));
     tile1Detections.forEach(d => {
       const scaleX = tile1W / 448;
       const scaleY = tile1H / 448;
@@ -1008,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tileCanvas2.height = 448;
     tileCtx2.drawImage(fullCropCanvas, tile2X, tile2Y, tile2W, tile2H, 0, 0, 448, 448);
 
-    const tile2Detections = await model.detect(tileCanvas2, 18, minConf * 0.65);
+    const tile2Detections = await model.detect(tileCanvas2, 28, Math.min(minConf * 0.48, 0.20));
     tile2Detections.forEach(d => {
       const scaleX = tile2W / 448;
       const scaleY = tile2H / 448;
