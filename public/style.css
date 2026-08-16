@@ -1248,6 +1248,45 @@ body.light-theme .combobox-search-input {
   gap: 6px;
 }
 
+.theme-selector-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.theme-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--surface-layer-2);
+  border: 1px solid var(--border-medium);
+  color: var(--text-heading);
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theme-pill-btn:hover {
+  background: var(--surface-layer-3);
+  color: var(--text-pure);
+}
+
+.theme-pill-btn.active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.theme-pill-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
 .input-action-combo input {
   flex: 1;
   background: var(--surface-layer-2);

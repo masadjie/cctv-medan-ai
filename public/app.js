@@ -1548,25 +1548,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // 14. Dark / Light Mode Theme Switcher
-  const btnThemeToggle = document.getElementById('btnThemeToggle');
-  const iconThemeMoon = document.getElementById('iconThemeMoon');
-  const iconThemeSun = document.getElementById('iconThemeSun');
+  // 14. Dark / Light Mode Theme Switcher (Integrated into Settings Modal)
+  const btnThemeDark = document.getElementById('btnThemeDark');
+  const btnThemeLight = document.getElementById('btnThemeLight');
 
   function applyTheme(theme) {
     if (theme === 'light') {
       document.body.classList.add('light-theme');
       document.body.classList.remove('dark-theme');
-      if (iconThemeMoon) iconThemeMoon.classList.add('hidden');
-      if (iconThemeSun) iconThemeSun.classList.remove('hidden');
+      if (btnThemeLight) btnThemeLight.classList.add('active');
+      if (btnThemeDark) btnThemeDark.classList.remove('active');
       if (window.medanCCTVMap && window.medanCCTVMap.isInitialized) {
         window.medanCCTVMap.switchTileTheme('dark'); // Clean Voyager for light theme
       }
     } else {
       document.body.classList.add('dark-theme');
       document.body.classList.remove('light-theme');
-      if (iconThemeMoon) iconThemeMoon.classList.remove('hidden');
-      if (iconThemeSun) iconThemeSun.classList.add('hidden');
+      if (btnThemeDark) btnThemeDark.classList.add('active');
+      if (btnThemeLight) btnThemeLight.classList.remove('active');
       if (window.medanCCTVMap && window.medanCCTVMap.isInitialized) {
         window.medanCCTVMap.switchTileTheme('darkNight');
       }
@@ -1578,12 +1577,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const savedTheme = localStorage.getItem('cctv_theme_preference') || 'dark';
   applyTheme(savedTheme);
 
-  if (btnThemeToggle) {
-    btnThemeToggle.addEventListener('click', () => {
-      const isLight = document.body.classList.contains('light-theme');
-      const newTheme = isLight ? 'dark' : 'light';
-      applyTheme(newTheme);
-      showToast(newTheme === 'light' ? '☀️ Mode Terang (Light Mode) Aktif' : '🌙 Mode Gelap (Dark Mode) Aktif');
+  if (btnThemeDark) {
+    btnThemeDark.addEventListener('click', () => {
+      applyTheme('dark');
+      showToast('🌙 Mode Gelap (Dark Mode) Aktif');
+    });
+  }
+
+  if (btnThemeLight) {
+    btnThemeLight.addEventListener('click', () => {
+      applyTheme('light');
+      showToast('☀️ Mode Terang (Light Mode) Aktif');
     });
   }
 

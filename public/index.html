@@ -134,15 +134,9 @@
         <svg class="chevron-mini" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
 
-      <!-- Dedicated AI Configuration Menu Button -->
-      <button id="btnOpenConfigModal" class="btn btn-secondary btn-icon-square" title="Konfigurasi AI & Video">
+      <!-- Dedicated Settings & Theme Menu Button -->
+      <button id="btnOpenConfigModal" class="btn btn-secondary btn-icon-square" title="Pengaturan AI, Video & Tema">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
-
-      <!-- Theme Switcher (Dark / Light Mode) -->
-      <button id="btnThemeToggle" class="btn btn-secondary btn-icon-square" title="Ganti Tema (Dark / Light Mode)">
-        <svg id="iconThemeMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg id="iconThemeSun" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
 
       <!-- Copyright Link to Instagram -->
@@ -155,12 +149,6 @@
         <span>@adjie.apk</span>
       </a>
 
-      <!-- AI Engine Status Pill -->
-      <div class="status-pill" id="aiStatusBadge">
-        <span class="status-indicator"></span>
-        <span class="status-text" id="aiStatusText">YOLOv8 Active</span>
-      </div>
-
       <!-- App Fullscreen Button -->
       <button id="btnAppFullscreen" class="btn btn-secondary btn-icon-square" title="Layar Penuh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
@@ -171,6 +159,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span id="liveClock">00:00:00</span>
       </div>
+
+      <!-- Hidden AI status element for internal binding -->
+      <div id="aiStatusBadge" style="display: none;"><span id="aiStatusText"></span></div>
     </div>
   </header>
 
@@ -530,6 +521,21 @@
       </div>
 
       <div class="modal-body">
+        <!-- Theme Switcher Row -->
+        <div class="control-row">
+          <label class="control-label">Tema Tampilan Aplikasi:</label>
+          <div class="theme-selector-pills">
+            <button type="button" class="theme-pill-btn active" id="btnThemeDark" data-set-theme="dark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <span>Mode Gelap (Dark Surveillance)</span>
+            </button>
+            <button type="button" class="theme-pill-btn" id="btnThemeLight" data-set-theme="light">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              <span>Mode Terang (Light Mode)</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Engine Selector -->
         <div class="control-row">
           <label class="control-label" for="modelEngineSelect">Arsitektur Model Neural AI:</label>
