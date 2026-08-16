@@ -177,18 +177,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       aiStatusBadge.classList.add('ai-ready');
       if (activeEngine === 'yolo') {
-        aiStatusText.textContent = 'YOLOv8 Multi-Scale Active';
-        showToast('Engine YOLO Multi-Scale Aktif');
-        window.trafficAnalytics.logEvent('Engine YOLO Multi-Scale aktif.');
+        aiStatusText.textContent = 'AI Ready';
       } else {
-        aiStatusText.textContent = 'COCO-SSD Active';
-        showToast('Engine COCO-SSD Aktif');
-        window.trafficAnalytics.logEvent('Engine COCO-SSD aktif.');
+        aiStatusText.textContent = 'AI Ready';
       }
     } catch (err) {
       console.error('Failed to load AI model:', err);
-      aiStatusText.textContent = 'AI Offline';
-      showToast('Gagal memuat engine AI.');
+      aiStatusText.textContent = 'AI Standby';
     }
   }
 
