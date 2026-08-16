@@ -817,9 +817,16 @@ class MedanCCTVMap {
       // 3. Center and zoom
       const zoomLevel = cityId === 'jogja' ? 14 : 13;
       this.map.setView([centerLat, centerLon], zoomLevel);
-      this.loadCachedHealth();
+      const cacheState = this.loadCachedHealth();
       this.renderMarkers();
-      this.startHlsBackgroundChecker(0);
+      
+      // Only initiate scan if not already complete in cache
+      if (cacheState === 'resume') {
+        const nextIndex = this.currentScanIndex + 1;
+        setTimeout(() => this.startHlsBackgroundChecker(nextIndex), 350);
+      } else if (cacheState === false) {
+        setTimeout(() => this.startHlsBackgroundChecker(0), 350);
+      }
     }
   }
 
