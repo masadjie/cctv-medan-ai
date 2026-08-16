@@ -2125,10 +2125,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ---- Slot HTML Factory ----
-  function buildSlotHtml(idx) {
-    const cam = WAR_ROOM_DEFAULTS[idx] || WAR_ROOM_DEFAULTS[idx % WAR_ROOM_DEFAULTS.length];
+  function buildSlotHtml(idx, cam = null) {
+    if (!cam) cam = WAR_ROOM_DEFAULTS[idx % WAR_ROOM_DEFAULTS.length];
     const slotNum = idx + 1;
-    const label = cam ? `CAM #${cam.id}: ${cam.name}` : `SLOT ${slotNum}`;
+    const label = cam ? `CAM #${cam.id}: ${cam.name || cam.alias || ''}` : `SLOT ${slotNum}`;
     return `
       <div class="war-slot" id="warSlot${slotNum}" data-slot="${slotNum}">
         <div class="slot-header">
@@ -2156,7 +2156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ---- Build / Rebuild Grid ----
-  function buildWarRoomGrid(cols, rows) {
+  function buildWarRoomGrid(cols, rows, randomize = false) {
     const grid = document.getElementById('warRoomGrid');
     if (!grid) return;
 
@@ -2175,21 +2175,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
-    // Rebuild slot HTML
-    grid.innerHTML = Array.from({ length: newTotal }, (_, i) => buildSlotHtml(i)).join('');
+    // Build camera pool: random online or fallback to defaults
+    const pool = randomize
+      ? shuffleArray(warOnlineCameras.length > 0 ? warOnlineCameras : WAR_ROOM_DEFAULTS)
+      : WAR_ROOM_DEFAULTS;
+
+    // Rebuild slot HTML (label from pool)
+    grid.innerHTML = Array.from({ length: newTotal }, (_, i) => {
+      const cam = pool[i % pool.length];
+      return buildSlotHtml(i, cam);
+    }).join('');
 
     // Bind all slot interactions
     bindAllSlots();
 
-    // Auto-load streams
+    // Auto-load streams from pool
     for (let i = 0; i < newTotal; i++) {
-      const cam = WAR_ROOM_DEFAULTS[i] || WAR_ROOM_DEFAULTS[i % WAR_ROOM_DEFAULTS.length];
+      const cam = pool[i % pool.length];
       if (cam) loadWarSlot(i, cam.url);
     }
 
     // Update badge
     const badge = document.getElementById('warRoomOnlineBadge');
-    if (badge) badge.textContent = `🟢 ${warOnlineCameras.length} Online · ${cols}×${rows}`;
+    if (badge) badge.textContent = `🟢 ${warOnlineCameras.length} Online`;
   }
 
   // ---- Bind Slot Controls ----
@@ -2305,16 +2313,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // ---- Random shuffle helper ----
+  function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   function initWarRoom() {
     if (warRoomInitialized) return;
     warRoomInitialized = true;
 
     warOnlineCameras = getWarOnlineCameras();
 
-    // Build default 2×2 grid
-    buildWarRoomGrid(2, 2);
+    // Show picker screen first, hide grid + header controls
+    showWarRoomPicker();
 
-    // Layout switcher buttons
+    // Layout switcher buttons in header — re-pick layout & re-randomize
     document.querySelectorAll('.wr-layout-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const cols = parseInt(btn.getAttribute('data-cols'));
@@ -2339,7 +2357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!e.target.closest('.slot-cam-combo') && !e.target.closest('.war-room-search-wrap')) closeAllCombos();
     });
 
-    // War Room Fullscreen button (native browser fullscreen)
+    // Fullscreen button
     const btnFullscreen = document.getElementById('btnWarRoomFullscreen');
     if (btnFullscreen) {
       btnFullscreen.addEventListener('click', () => {
@@ -2358,7 +2376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('cctv-health-updated', () => {
       warOnlineCameras = getWarOnlineCameras();
       const badge = document.getElementById('warRoomOnlineBadge');
-      if (badge) badge.textContent = `🟢 ${warOnlineCameras.length} Online · ${warCurrentCols}×${warCurrentRows}`;
+      if (badge) badge.textContent = `🟢 ${warOnlineCameras.length} Online`;
       for (let s = 1; s <= warTotalSlots; s++) buildComboList(s, '');
     });
 
@@ -2367,10 +2385,87 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnAi) {
       btnAi.addEventListener('click', () => {
         const on = btnAi.textContent.includes('AKTIF');
-        btnAi.textContent = on ? '⚡ AI: NONAKTIF' : '⚡ AI: AKTIF';
+        btnAi.textContent = on ? '⚡ AI: OFF' : '⚡ AI: AKTIF';
         showToast(on ? '⏸ AI Matrix dinonaktifkan.' : '▶ AI Matrix aktif.');
       });
     }
+  }
+
+  // ---- Grid Picker Screen ----
+  const GRID_OPTIONS = [
+    { cols: 1, rows: 1, label: '1',  desc: 'Fokus Tunggal',   icon: '▪' },
+    { cols: 2, rows: 1, label: '2',  desc: 'Dual View',       icon: '▪▪' },
+    { cols: 2, rows: 2, label: '4',  desc: 'Quad Screen',     icon: '▪▪\n▪▪' },
+    { cols: 3, rows: 2, label: '6',  desc: 'Hexa Screen',     icon: '▪▪▪\n▪▪▪' },
+    { cols: 4, rows: 2, label: '8',  desc: 'Octa Screen',     icon: '▪▪▪▪\n▪▪▪▪' },
+    { cols: 3, rows: 3, label: '9',  desc: '9 Screen',        icon: '▪▪▪\n▪▪▪\n▪▪▪' },
+    { cols: 4, rows: 3, label: '12', desc: '12 Screen',       icon: '▪▪▪▪\n▪▪▪▪\n▪▪▪▪' },
+    { cols: 4, rows: 4, label: '16', desc: 'Mega Wall',       icon: '▪▪▪▪\n▪▪▪▪\n▪▪▪▪\n▪▪▪▪' },
+  ];
+
+  function showWarRoomPicker() {
+    const grid = document.getElementById('warRoomGrid');
+    const header = document.getElementById('warRoomHeader');
+    if (header) header.style.display = 'none';  // hide top controls during picking
+
+    // Inject picker into grid area
+    if (grid) {
+      grid.style.gridTemplateColumns = '';
+      grid.style.gridTemplateRows = '';
+      grid.innerHTML = `
+        <div class="wr-picker-screen" id="wrPickerScreen">
+          <div class="wr-picker-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <h2>Pilih Jumlah Kamera</h2>
+            <p>Pilih layout tampilan, kamera online akan dipilih secara otomatis</p>
+            <span class="wr-picker-badge" id="wrPickerOnlineBadge">🟢 ${warOnlineCameras.length} Kamera Online Tersedia</span>
+          </div>
+          <div class="wr-picker-grid">
+            ${GRID_OPTIONS.map(opt => `
+              <button class="wr-picker-card" data-cols="${opt.cols}" data-rows="${opt.rows}">
+                <div class="wr-picker-icon wr-icon-${opt.cols}x${opt.rows}">
+                  ${buildPickerIconSvg(opt.cols, opt.rows)}
+                </div>
+                <div class="wr-picker-num">${opt.label}</div>
+                <div class="wr-picker-desc">${opt.desc}</div>
+              </button>
+            `).join('')}
+          </div>
+        </div>`;
+
+      // Bind picker card clicks
+      grid.querySelectorAll('.wr-picker-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const cols = parseInt(card.getAttribute('data-cols'));
+          const rows = parseInt(card.getAttribute('data-rows'));
+          // Remove picker, show header, build grid with random cameras
+          if (header) header.style.display = '';
+          buildWarRoomGrid(cols, rows, true); // true = randomize
+          // Sync layout switcher active state
+          document.querySelectorAll('.wr-layout-btn').forEach(b => {
+            b.classList.toggle('active',
+              parseInt(b.getAttribute('data-cols')) === cols &&
+              parseInt(b.getAttribute('data-rows')) === rows);
+          });
+        });
+      });
+    }
+  }
+
+  function buildPickerIconSvg(cols, rows) {
+    const pad = 1, gap = 1;
+    const W = 48, H = 36;
+    const cellW = (W - pad * 2 - gap * (cols - 1)) / cols;
+    const cellH = (H - pad * 2 - gap * (rows - 1)) / rows;
+    let rects = '';
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = pad + c * (cellW + gap);
+        const y = pad + r * (cellH + gap);
+        rects += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cellW.toFixed(1)}" height="${cellH.toFixed(1)}" rx="1"/>`;
+      }
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" fill="currentColor">${rects}</svg>`;
   }
 
   // Zero-Load Startup: Application waits for user to pick a city before loading heavy data
