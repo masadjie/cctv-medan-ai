@@ -46,11 +46,23 @@ cd cctv-medan-ai
 npm install
 ```
 
-### 3. Jalankan Server
+### 3. Jalankan Aplikasi (API + Frontend)
+
+**Cara Cepat (Otomatis Buka Browser):**
 ```bash
-npm run dev
+./run.sh
 ```
-Buka browser di: **`http://localhost:3000`**
+*Atau di Windows (Command Prompt):*
+```cmd
+run.bat
+```
+
+*Atau menggunakan NPM:*
+```bash
+npm run dev     # Mode Live Reload Development
+npm start       # Mode Production
+```
+Aplikasi & API akan aktif pada: **`http://localhost:3000`**
 
 ---
 
